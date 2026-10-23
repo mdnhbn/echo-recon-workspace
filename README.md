@@ -61,7 +61,9 @@ cd ~/Tools/02-Custom/echo-recon-workspace
 bash run.sh
 ```
 
-Leave the terminal open. Open Firefox and visit **http://127.0.0.1:8001**. Port 8001 keeps this edition separate from older Echo instances on port 8000.
+Leave the terminal open. On a desktop session, the launcher opens **http://127.0.0.1:8001** in your default browser once the server is ready. If no browser opens, visit that address manually. Port 8001 keeps this edition separate from older Echo instances on port 8000.
+
+For a headless session or automated development test, use `bash run.sh --no-browser` (Windows: `.\run.ps1 -NoBrowser`). Headless WSL prints the address for your Windows browser rather than opening a terminal text browser.
 
 1. Click **Open demo / ডেমো দেখুন**.
 2. Watch the phase states. The demo deliberately simulates a Nuclei timeout.

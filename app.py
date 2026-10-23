@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 """Local entry point; installing or running as root is unnecessary."""
 import os
+import argparse
 from pathlib import Path
 import signal
+import threading
+from werkzeug.serving import make_server
+from echo_recon import __version__
+from echo_recon.browser import URL, has_desktop, open_when_ready
 from echo_recon.web import create_app
 from echo_recon.locking import InstanceLock
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Echo Recon local dashboard")
+    parser.add_argument("--no-browser", action="store_true", help="Start the server without opening a browser")
+    args = parser.parse_args()
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         raise SystemExit("Run as your normal user, not root.")
     os.umask(0o077)
@@ -19,16 +27,29 @@ if __name__ == "__main__":
     except RuntimeError as exc:
         raise SystemExit(str(exc))
     app = create_app()
+    browser_stop = threading.Event()
 
     def stop(signum, frame):
+        browser_stop.set()
         app.extensions["echo_manager"].close()
         raise SystemExit(0)
 
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
-    print("Echo Recon 6.1 — http://127.0.0.1:8001 (local only)")
+    print(f"Echo Recon {__version__} — {URL} (local only)", flush=True)
+    server = None
     try:
-        app.run(host="127.0.0.1", port=8001, debug=False, use_reloader=False, threaded=True)
+        # Bind first: never open another app's page if this port is already occupied.
+        server = make_server("127.0.0.1", 8001, app, threaded=True)
+        if not args.no_browser and has_desktop():
+            threading.Thread(target=open_when_ready, args=(browser_stop,), daemon=True).start()
+        elif not args.no_browser:
+            print(f"No desktop session detected. Open {URL} in your browser.", flush=True)
+        print("Local development server. Keep this terminal open; Ctrl+C stops it.", flush=True)
+        server.serve_forever()
     finally:
+        browser_stop.set()
+        if server:
+            server.server_close()
         app.extensions["echo_manager"].close()
         instance_lock.release()

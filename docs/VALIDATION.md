@@ -1,5 +1,12 @@
 # Release validation — 2026-10-24
 
+## 6.1.1 automatic browser startup
+
+- Kali desktop: starting `run.sh` opened Firefox automatically at `127.0.0.1:8001`; the dashboard title and version 6.1.1 were confirmed in a VM screenshot.
+- Browser opening starts only after this process binds the port and readiness succeeds. Headless/no-browser modes remain available.
+- Local Linux and Windows suites: 25 tests total on each; 24 passed and the other platform's process test skipped. Readiness and stop-before-open behavior use a mocked browser, so tests do not open windows.
+- Native Windows localhost HTTP startup/demo/report/history/duplicate-instance/live-block checks passed with `--no-browser`.
+
 ## 6.1 Windows and contribution update
 
 - Local Windows: 23 tests total; 22 passed and the Linux-only process test skipped. Windows child-tree cancellation and cross-process instance locking passed.

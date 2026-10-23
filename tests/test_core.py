@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from echo_recon.runner import Result, run
 from echo_recon.locking import InstanceLock
+from echo_recon.browser import open_when_ready, URL
 from echo_recon.security import redact, resolve_public, scoped_urls, validate_scope
 from echo_recon.service import Manager
 from echo_recon.storage import Store
@@ -195,6 +196,23 @@ class LockTests(unittest.TestCase):
                 owner.release()
             allowed = subprocess.run([sys.executable, "-c", code, str(path)], capture_output=True, text=True)
             self.assertEqual(allowed.returncode, 0, allowed.stderr)
+
+
+class BrowserTests(unittest.TestCase):
+    def test_browser_waits_for_readiness(self):
+        probes = iter([False, True])
+        opened = []
+        def opener(url, **kwargs):
+            opened.append(url)
+            return True
+        self.assertTrue(open_when_ready(threading.Event(), probe=lambda: next(probes), opener=opener))
+        self.assertEqual(opened, [URL])
+
+    def test_stop_prevents_browser_open(self):
+        stopped = threading.Event()
+        stopped.set()
+        self.assertFalse(open_when_ready(stopped, probe=lambda: self.fail("Should not probe"),
+                                         opener=lambda *a, **k: self.fail("Should not open")))
 
 
 class WebTests(unittest.TestCase):

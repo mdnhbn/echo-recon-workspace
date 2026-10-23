@@ -75,7 +75,7 @@ If multiple Python installations exist, choose one explicitly:
 .\install.ps1 -PythonExe 'C:\Path\To\python.exe'
 ```
 
-Open **http://127.0.0.1:8001**, then click **Open demo**. You can inspect/download reports and test contributions. Stop the server with Ctrl+C. The application uses a Windows file lock so another instance cannot alter recovery state for the same data directory.
+The default browser opens **http://127.0.0.1:8001** after the local server is ready. If it does not open, enter that address yourself, then click **Open demo**. You can inspect/download reports and test contributions. Stop the server with Ctrl+C. The application uses a Windows file lock so another instance cannot alter recovery state for the same data directory. Use `.\run.ps1 -NoBrowser` to disable browser opening; for a WSL launch use `.\run-wsl.ps1 -NoBrowser`. Headless WSL normally needs you to open the address in Windows yourself.
 
 ### If PowerShell blocks a script
 

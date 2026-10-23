@@ -57,11 +57,13 @@ cd ~/Tools/02-Custom/echo-recon-workspace
 bash run.sh
 ```
 
-Terminal খোলা রাখুন। Kali-র Firefox-এ লিখুন:
+Terminal খোলা রাখুন। Desktop session-এ server প্রস্তুত হলে default browser নিজে থেকে dashboard খুলবে। না খুললে Kali-র Firefox-এ লিখুন:
 
 **http://127.0.0.1:8001**
 
 `127.0.0.1` মানে আপনার নিজের Kali। পুরোনো Echo-এর 8000 port-এর সঙ্গে মিশে না যাওয়ার জন্য নতুন সংস্করণ 8001 ব্যবহার করে।
+
+Browser নিজে থেকে খুলতে না চাইলে `bash run.sh --no-browser` দিন। সরাসরি Windows-এ একই option: `.\run.ps1 -NoBrowser`। Desktop ছাড়া WSL session-এ Windows browser-এ ঠিকানাটি নিজে খুলুন।
 
 ## ৪. প্রথমে Demo দেখুন
 

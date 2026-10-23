@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.1.1 — 2026-10-24
+
+- Restored automatic browser opening on desktop startup, after binding and readiness checks.
+- Added `--no-browser` / PowerShell `-NoBrowser` for headless/test use.
+- Browser launch failure is nonfatal and shows the manual localhost address. Headless Linux/WSL does not start a terminal text browser.
+
 ## 6.1.0 — 2026-10-24
 
 - Added English/Bengali contribution guides, issue forms, a PR template and a code of conduct.

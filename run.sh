@@ -11,4 +11,4 @@ if [[ ! -x .venv/bin/python ]]; then
 fi
 export PATH="$HOME/.local/bin:$HOME/go/bin:/usr/local/go/bin:$PATH"
 umask 077
-exec .venv/bin/python app.py
+exec .venv/bin/python app.py "$@"
