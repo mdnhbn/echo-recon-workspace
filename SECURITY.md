@@ -11,6 +11,7 @@ This is a **single-user local assessment application**, not a hosted service, fi
 - Output caps bound stored evidence, not every file an external crawler may write. Review `data/scratch` disk usage after large runs. Private local evidence is not automatically deleted.
 - Common credential strings are masked best-effort. Personal data, unusual secrets and Photon raw files can remain. Review/redact before export or publication. Do not commit `data`, `.env`, logs, tokens or real scan reports.
 - No results are sent to an AI service. No API keys are requested in the UI.
+- Native Windows supports demo/history/reports, not live scanner execution. Use Kali WSL2 for the Linux toolchain. Windows uses inherited NTFS permissions; Unix `chmod` calls do not establish a private Windows ACL. Keep native and WSL environments/data separate and in private user-owned locations.
 - Third-party tools/templates may be incompatible, unavailable or wrong. Human validation is necessary. A completed command or an empty finding list is not proof of security.
 
 Report an application issue to the repository maintainer without posting credentials or target evidence publicly. For a discovered issue in someone else's system, follow that owner's reporting process rather than attaching it to this project.

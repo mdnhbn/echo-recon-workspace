@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch
 
 from echo_recon.runner import Result, run
+from echo_recon.locking import InstanceLock
 from echo_recon.security import redact, resolve_public, scoped_urls, validate_scope
 from echo_recon.service import Manager
 from echo_recon.storage import Store
@@ -88,6 +89,24 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(result.status, "output_limit")
         self.assertLessEqual(len(result.stdout.encode()) + len(result.stderr.encode()), 1000)
 
+    @unittest.skipUnless(os.name == "nt", "Windows process tree")
+    def test_windows_cancel_removes_child_tree(self):
+        import csv
+        import io
+        import subprocess
+        event = threading.Event()
+        child = "import subprocess,sys,time; p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']); print(p.pid,flush=True);time.sleep(30)"
+        timer = threading.Timer(.6, event.set)
+        timer.start()
+        result = run([sys.executable, "-c", child], cancel=event)
+        timer.join()
+        self.assertEqual(result.status, "cancelled")
+        pid = result.stdout.strip()
+        self.assertTrue(pid.isdigit(), result.stdout)
+        check = subprocess.run(["tasklist.exe", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], capture_output=True, text=True, check=True)
+        rows = list(csv.reader(io.StringIO(check.stdout)))
+        self.assertFalse(any(len(row) > 1 and row[1] == pid for row in rows))
+
     @unittest.skipUnless(os.name == "posix", "Linux process groups")
     def test_cancel_removes_child_process_group(self):
         event = threading.Event()
@@ -161,6 +180,23 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(job["phases"][-1]["status"], "timeout")
 
 
+class LockTests(unittest.TestCase):
+    def test_second_process_cannot_lock_until_release(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "server.lock"
+            owner = InstanceLock(path).acquire()
+            code = "from echo_recon.locking import InstanceLock;import sys;lock=InstanceLock(sys.argv[1]).acquire();lock.release()"
+            try:
+                blocked = subprocess.run([sys.executable, "-c", code, str(path)], capture_output=True, text=True)
+                self.assertNotEqual(blocked.returncode, 0)
+                self.assertIn("already has a running dashboard", blocked.stderr)
+            finally:
+                owner.release()
+            allowed = subprocess.run([sys.executable, "-c", code, str(path)], capture_output=True, text=True)
+            self.assertEqual(allowed.returncode, 0, allowed.stderr)
+
+
 class WebTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -181,6 +217,16 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.client.get("/", environ_overrides={"REMOTE_ADDR": "192.168.1.5"}).status_code, 403)
         self.assertEqual(self.client.post("/api/jobs", json={"demo": True}).status_code, 403)
         self.assertEqual(self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf, "Origin": "https://evil.net"}).status_code, 403)
+
+    def test_native_windows_mode_blocks_live_but_allows_demo(self):
+        manager = self.app.extensions["echo_manager"]
+        manager.allow_live = False
+        response = self.client.post("/api/jobs", json={"domain": "example.com", "scope": ["example.com"], "authorized": True, "understands_limits": True}, headers={"X-CSRF-Token": self.csrf})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("WSL2", response.json["error"])
+        self.assertFalse(manager.active)
+        demo = self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf})
+        self.assertEqual(demo.status_code, 202)
 
     def test_demo_report_download_and_cancel(self):
         response = self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf})

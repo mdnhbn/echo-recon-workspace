@@ -1,8 +1,12 @@
-# Echo Recon 6.0
+# Echo Recon 6.1
 
 A local assessment dashboard with explicit host scope, cancellable processes, persistent history and evidence-first reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); upgraded for the mdnhbn collaboration.
 
-**[বাংলা নির্দেশনা / Bengali guide →](README.bn.md)** · [Tool setup](docs/TOOLS.md) · [Architecture](docs/ARCHITECTURE.md) · [Security and limitations](SECURITY.md) · [Changes](CHANGELOG.md)
+**[বাংলা নির্দেশনা / Bengali guide →](README.bn.md)** · [Windows / WSL2](docs/WINDOWS.md) · [Contribute](CONTRIBUTING.md) · [বাংলায় অবদান](CONTRIBUTING.bn.md) · [Tool setup](docs/TOOLS.md) · [Security](SECURITY.md)
+
+**Students, classmates and other contributors are welcome.** Fork this public repository, create a branch and submit a pull request. Maintainers review and merge changes; contributors do not need direct write access. Bug/feature issue forms and a PR template are included. See [CONTRIBUTING.md](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Licensed under **[MIT](LICENSE)**, with original attribution retained. You may use, modify and redistribute under its terms.
 
 The original eight tools remain: **DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun and Nuclei**. This edition improves how they are controlled and how results are interpreted. It does not add password attacks, WAF evasion, exploitation or autonomous AI actions.
 
@@ -21,6 +25,16 @@ The original eight tools remain: **DNSRecon, Subfinder, ProjectDiscovery HTTPX, 
 - Kali Linux or another current Linux distribution, Python **3.11+**, Git and `python3-venv`.
 - A normal user account. Do **not** run the application as root.
 - Network access for installation. Optional assessment tools are separate; the demo does not require them.
+
+### Windows support
+
+| Environment | Supported workflow |
+|---|---|
+| Kali Linux / Kali VirtualBox | Full Linux dashboard and eight separately installed tool adapters. |
+| Windows with Kali WSL2 | Full Linux workflow, opened in a Windows browser. |
+| Native Windows with Python 3.11+ | Dashboard, simulated demo, history, report exports and development tests. Live scanning requires Kali WSL2. |
+
+Follow the **[English/Bengali Windows guide](docs/WINDOWS.md)**. Native Windows includes `install.ps1` and `run.ps1`; `run-wsl.ps1` starts an already installed Linux copy. Environments/data remain separate. No WSL installation, reboot, admin change or execution-policy weakening happens automatically.
 
 ## Download and install on Kali
 
@@ -119,6 +133,8 @@ bash -n install.sh run.sh
 
 Tests use mocked scanner responses, simulated DNS and local child processes. They cover command failures, cancellation, output bounds, DNS/scope validation, persistent state, CSRF/Host controls and report escaping. They do not scan public targets. Live adapter compatibility depends on installed tool versions; this release is not a certification that every external scanner works on every environment.
 
+On native Windows use `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`. CI covers Ubuntu and Windows on Python 3.11 and 3.13. Full Kali WSL provisioning/network integration is not claimed as covered by that matrix.
+
 ## Attribution and licensing
 
-Original concept/project: **Ahammed**, [ahammed18122002-art/auto-rec](https://github.com/ahammed18122002-art/auto-rec), source snapshot `f3fbf45`. This edition was requested by **mdnhbn**, who states the original author is a collaborating classmate and supplied the project. Attribution is retained. See [NOTICE.md](NOTICE.md). No new open-source license has been assigned on behalf of the original author; being public does not imply unrestricted reuse. Agree on a license together before inviting general redistribution.
+Original concept/project: **Ahammed**, [ahammed18122002-art/auto-rec](https://github.com/ahammed18122002-art/auto-rec), source snapshot `f3fbf45`. This edition was requested by **mdnhbn**, who states the original author is a collaborating classmate and supplied the project. Attribution is retained. The maintainer selected the [MIT license](LICENSE) for this collaboration. See [NOTICE.md](NOTICE.md). Third-party tools keep their own licenses.

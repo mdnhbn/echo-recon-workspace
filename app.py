@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import signal
 from echo_recon.web import create_app
+from echo_recon.locking import InstanceLock
 
 
 if __name__ == "__main__":
@@ -13,13 +14,10 @@ if __name__ == "__main__":
     data = Path(__file__).resolve().parent / "data"
     data.mkdir(mode=0o700, exist_ok=True)
     # Acquire before recovery so a second instance cannot mark an active run interrupted.
-    if os.name == "posix":
-        import fcntl
-        instance_lock = (data / "server.lock").open("a")
-        try:
-            fcntl.flock(instance_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise SystemExit("This data directory already has a running dashboard.")
+    try:
+        instance_lock = InstanceLock(data / "server.lock").acquire()
+    except RuntimeError as exc:
+        raise SystemExit(str(exc))
     app = create_app()
 
     def stop(signum, frame):
@@ -28,5 +26,9 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
-    print("Echo Recon 6.0 — http://127.0.0.1:8001 (local only)")
-    app.run(host="127.0.0.1", port=8001, debug=False, use_reloader=False, threaded=True)
+    print("Echo Recon 6.1 — http://127.0.0.1:8001 (local only)")
+    try:
+        app.run(host="127.0.0.1", port=8001, debug=False, use_reloader=False, threaded=True)
+    finally:
+        app.extensions["echo_manager"].close()
+        instance_lock.release()

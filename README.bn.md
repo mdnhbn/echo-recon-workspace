@@ -1,8 +1,18 @@
-# Echo Recon 6.0 — বাংলা নির্দেশনা
+# Echo Recon 6.1 — বাংলা নির্দেশনা
 
 এটি Kali Linux-এ নিজের কম্পিউটারে চালানোর একটি dashboard। আগের আটটি টুল—**DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun ও Nuclei**—রয়েছে। নতুন সংস্করণে ভুল ফল শনাক্ত করা, পরীক্ষা বন্ধ করা, ইতিহাস রাখা ও প্রমাণসহ রিপোর্ট দেখানো উন্নত হয়েছে।
 
-[English README](README.md) · [আটটি টুলের সেটআপ](docs/TOOLS.md) · [সীমাবদ্ধতা](SECURITY.md)
+[English README](README.md) · [Windows/WSL নির্দেশনা](docs/WINDOWS.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [আটটি টুলের সেটআপ](docs/TOOLS.md) · [সীমাবদ্ধতা](SECURITY.md)
+
+## শিক্ষার্থী ও সহপাঠীদের অবদান
+
+যে কেউ এই public repository **Fork → নতুন branch → পরিবর্তন → Pull Request** পদ্ধতিতে অবদান রাখতে পারবেন। Maintainer review করে মূল project-এ যোগ করবেন। সরাসরি মূল repo-তে সবার write access লাগবে না। Bug/feature form ও PR template দেওয়া আছে। [বাংলা contributor guide](CONTRIBUTING.bn.md) এবং [আচরণবিধি](CODE_OF_CONDUCT.md) দেখুন। Project-এ মূল লেখকের credit-সহ **[MIT license](LICENSE)** আছে।
+
+## Windows-এ ব্যবহার
+
+- **Windows + Kali WSL2:** আটটি টুলসহ Linux workflow; Windows browser-এ dashboard খুলবেন।
+- **সরাসরি Windows + Python:** dashboard, demo, history, report ও development test। Live assessment-এর জন্য Kali WSL2 লাগবে।
+- `install.ps1`, `run.ps1` এবং আগে ইনস্টল করা WSL copy চালানোর `run-wsl.ps1` আছে। বিস্তারিত [Windows নির্দেশনা](docs/WINDOWS.md)। Windows ও Linux-এর `.venv`/`data` আলাদা রাখবেন।
 
 ## ১. আগে যা লাগবে
 
@@ -141,4 +151,4 @@ bash -n install.sh run.sh
 
 এগুলো mock ফল ও local process দিয়ে চলে; কোনো public target scan করে না।
 
-মূল project: **Ahammed**, [auto-rec](https://github.com/ahammed18122002-art/auto-rec)। Upgrade collaboration: **mdnhbn**। মূল লেখকের হয়ে নতুন license দেওয়া হয়নি। দুজন আলোচনা করে redistribution-এর license ঠিক করুন। বিস্তারিত [NOTICE.md](NOTICE.md)।
+মূল project: **Ahammed**, [auto-rec](https://github.com/ahammed18122002-art/auto-rec)। Upgrade collaboration: **mdnhbn**। Maintainer-এর নির্দেশনায় **[MIT license](LICENSE)** যোগ করা হয়েছে। বাইরের tool-গুলোর নিজস্ব license বহাল। বিস্তারিত [NOTICE.md](NOTICE.md)।

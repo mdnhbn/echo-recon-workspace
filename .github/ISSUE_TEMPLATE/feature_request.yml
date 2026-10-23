@@ -1,0 +1,36 @@
+name: Feature request / নতুন সুবিধার প্রস্তাব
+description: Propose a focused improvement for contributors to discuss.
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English or বাংলা is welcome. Describe the need before suggesting an implementation. Keep proposals compatible with the project's local, explicitly scoped assessment design.
+  - type: textarea
+    id: need
+    attributes:
+      label: What problem would this solve? / কোন সমস্যার সমাধান হবে?
+      description: Explain who needs this and give a small example using synthetic data.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested change / প্রস্তাবিত পরিবর্তন
+      description: Describe the expected behavior and any simpler alternatives.
+    validations:
+      required: true
+  - type: textarea
+    id: platform
+    attributes:
+      label: Kali, Windows and testing / পরিবেশ ও পরীক্ষা
+      description: Note platform needs, optional dependencies, privacy or scope implications, and how the feature could be tested with mocks or the offline demo.
+  - type: dropdown
+    id: help
+    attributes:
+      label: Would you like to help? / আপনি অংশ নিতে চান?
+      options:
+        - I am sharing an idea
+        - I can help with documentation or translation
+        - I can help with testing
+        - I would like to work on the code

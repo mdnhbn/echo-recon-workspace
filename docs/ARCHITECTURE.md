@@ -16,6 +16,7 @@ Flask API ── input/scope validation ── one assessment manager
 | File | Responsibility |
 |---|---|
 | `app.py` | Normal-user entry point; loopback listener; graceful signal handling. |
+| `echo_recon/locking.py` | Cross-process Linux/Windows instance lock, acquired before history recovery. |
 | `echo_recon/web.py` | API, session/CSRF, request boundaries, escaped reports. |
 | `echo_recon/security.py` | Exact-host scope, DNS preflight, output URL filtering, best-effort secret masking. |
 | `echo_recon/storage.py` | Short-lived SQLite connections and persistent job snapshots. |
@@ -35,6 +36,8 @@ Flask API ── input/scope validation ── one assessment manager
 - `GET /reports/<id>.html` and `.json`: evidence exports. HTML is self-contained.
 
 There is no arbitrary command API, web installer, root/sudo request, remote-agent interface, automatic target expansion or AI integration.
+
+Native Windows mode supports dashboard/demo/history/report development and rejects live assessments server-side. Full Linux tool execution on Windows uses Kali WSL2 and a separate Linux environment. See `docs/WINDOWS.md`.
 
 ## State semantics
 

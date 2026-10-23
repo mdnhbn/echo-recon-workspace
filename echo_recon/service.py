@@ -9,6 +9,7 @@ import uuid
 from .runner import run
 from .security import hostname, redact, resolve_public, scoped_urls, validate_scope
 from .tools import TOOLS, command, diagnostics, parse_findings
+from . import __version__
 
 
 def now():
@@ -24,10 +25,12 @@ def clean_object(value):
 
 
 class Manager:
-    def __init__(self, store, data_dir, execute=run, resolver=socket.getaddrinfo, check_tools=diagnostics):
+    def __init__(self, store, data_dir, execute=run, resolver=socket.getaddrinfo,
+                 check_tools=diagnostics, allow_live=True):
         self.store, self.data_dir = store, Path(data_dir)
         self.execute, self.resolver = execute, resolver
         self.check_tools = check_tools
+        self.allow_live = allow_live
         self.lock = threading.RLock()
         self.active = {}
         self.store.interrupt_old_jobs()
@@ -43,6 +46,8 @@ class Manager:
         if demo:
             domain, scope = "example.com", ["example.com"]
         else:
+            if not self.allow_live:
+                raise ValueError("Native Windows supports demo/history/reports. Use Kali in WSL2 for live assessments; see docs/WINDOWS.md.")
             if payload.get("authorized") is not True or payload.get("understands_limits") is not True:
                 raise ValueError("Confirm ownership/permission and third-party traffic limitations.")
             domain, scope = validate_scope(payload.get("domain"), payload.get("scope"))
@@ -61,7 +66,7 @@ class Manager:
             if self.active:
                 raise RuntimeError("An assessment is already active. Stop it or wait.")
             job_id = uuid.uuid4().hex
-            job = {"id": job_id, "domain": domain, "scope": scope, "demo": demo,
+            job = {"id": job_id, "version": __version__, "domain": domain, "scope": scope, "demo": demo,
                    "status": "running", "created": now(), "updated": now(),
                    "settings": {"rate": rate, "timeout": timeout}, "log": [],
                    "phases": [{"tool": name, "label": TOOLS[name][0], "status": "pending",

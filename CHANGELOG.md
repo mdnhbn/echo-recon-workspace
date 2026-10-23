@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.1.0 — 2026-10-24
+
+- Added English/Bengali contribution guides, issue forms, a PR template and a code of conduct.
+- Applied the maintainer-selected MIT license while preserving Ahammed's original credit.
+- Added native Windows installers/launchers for dashboard/demo/history/report development.
+- Added a Windows launcher and bilingual guide for the full Kali WSL2 workflow; native unsupported live assessments are blocked.
+- Added Windows single-instance locking and best-effort process-tree cancellation, with platform-specific tests.
+- Expanded CI to Linux and Windows on Python 3.11/3.13.
+
 ## 6.0.0 — 2026-10-24
 
 - Retained all eight tool adapters; active stages are explicit opt-ins.

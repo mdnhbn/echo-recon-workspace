@@ -21,7 +21,14 @@ def terminate(proc):
         if os.name == "posix":
             os.killpg(proc.pid, signal.SIGTERM)
         else:
-            proc.terminate()
+            # taskkill is invoked directly; no shell or interpolated command text.
+            killer = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "taskkill.exe")
+            try:
+                subprocess.run([killer, "/PID", str(proc.pid), "/T", "/F"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                               timeout=3, check=False)
+            except OSError:
+                proc.terminate()
         proc.wait(timeout=1)
     except (ProcessLookupError, subprocess.TimeoutExpired):
         try:
@@ -29,7 +36,7 @@ def terminate(proc):
                 os.killpg(proc.pid, signal.SIGKILL)
             else:
                 proc.kill()
-        except ProcessLookupError:
+        except (ProcessLookupError, OSError):
             pass
 
 

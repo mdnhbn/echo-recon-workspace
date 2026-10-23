@@ -1,5 +1,6 @@
 """Loopback-only Flask application, no installer or arbitrary-command API."""
 import atexit
+import os
 from pathlib import Path
 import secrets
 from urllib.parse import urlsplit
@@ -23,6 +24,7 @@ def create_app(data_dir=None, testing=False, **manager_options):
     store = Store(folder / "history.sqlite3")
     if not testing:
         store.path.chmod(0o600)
+    manager_options.setdefault("allow_live", os.name != "nt")
     manager = Manager(store, folder, **manager_options)
     app.extensions.update(echo_store=store, echo_manager=manager)
     atexit.register(manager.close)
@@ -62,7 +64,8 @@ def create_app(data_dir=None, testing=False, **manager_options):
     @app.get("/")
     def index():
         session.setdefault("csrf", secrets.token_hex(32))
-        return render_template("index.html", csrf=session["csrf"], version=__version__)
+        return render_template("index.html", csrf=session["csrf"], version=__version__,
+                               native_windows=os.name == "nt")
 
     @app.get("/api/tools")
     def tools():
