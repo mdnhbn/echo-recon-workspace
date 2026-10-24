@@ -13,7 +13,7 @@ from echo_recon.web import create_app
 class SetupLauncherTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.root = Path(self.tmp.name)
+        self.root = Path(self.tmp.name).resolve()
         self.data = self.root / "data"
         self.data.mkdir()
         (self.root / "setup_tools.py").write_text("# test fixture", encoding="utf-8")

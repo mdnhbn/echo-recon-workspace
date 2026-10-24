@@ -195,13 +195,17 @@ class InstallerTests(unittest.TestCase):
 
     def test_photon_checks_official_origin_and_pinned_commit(self):
         installer = self.installer(health("photon"), health())
-        with patch.object(installer, "package_present", return_value=True), patch.object(Path, "is_file", autospec=True, side_effect=lambda path: True if str(path) == "/usr/bin/git" else path.exists() and not path.is_dir()):
+        # Prerequisite availability belongs to separate apt tests. Do not probe
+        # host /usr/bin paths here: Windows normalizes their path separators.
+        with patch.object(installer, "prerequisites", return_value=None) as prerequisites:
             self.assertEqual(installer.install(), 0)
+        prerequisites.assert_called_once_with(["photon"])
         git_calls = [args for args, _ in self.commands.calls if args[0] == "/usr/bin/git"]
         fetch = next(args for args in git_calls if "fetch" in args)
         self.assertEqual(fetch[-4:], ["--depth", "1", "origin", setup.PHOTON_COMMIT])
         self.assertTrue(any(args[-3:] == ["checkout", "--detach", setup.PHOTON_COMMIT] for args in git_calls))
         self.assertTrue(any(setup.PHOTON_URL in args for args in git_calls))
+        self.assertFalse(any(args[0] == "/usr/bin/sudo" for args, _ in self.commands.calls))
 
     def test_photon_origin_mismatch_is_rejected_before_fetch(self):
         installer = self.installer()
