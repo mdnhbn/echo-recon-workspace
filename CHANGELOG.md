@@ -1,8 +1,9 @@
 # Changelog
 
-## 6.6.1 — 2026-10-24
+## 6.6.2 — 2026-10-24
 
 - Removed the full-screen Matrix canvas, rotating header icon, progress pulse, smooth scrolling and report-chevron transition to reduce browser rendering work. Dark/light layouts and all interface controls remain.
+- Fixed signed APT publishing so each release replaces the previous feed indexes cleanly.
 
 ## 6.6.0 — 2026-10-24
 
