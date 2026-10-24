@@ -53,6 +53,9 @@ class PortableLinuxTests(unittest.TestCase):
         trust = patch.object(setup.ssl, "get_default_verify_paths", return_value=SimpleNamespace(cafile="/fixture/ca.pem", capath=None))
         trust.start()
         self.addCleanup(trust.stop)
+        machine = patch.object(setup.platform, "machine", return_value="x86_64")
+        machine.start()
+        self.addCleanup(machine.stop)
         process = patch.object(setup.subprocess, "run", side_effect=AssertionError("real process forbidden"))
         network = patch.object(setup.urllib.request, "build_opener", side_effect=AssertionError("real network forbidden"))
         for guard in (process, network):
