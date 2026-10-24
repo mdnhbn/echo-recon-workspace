@@ -32,16 +32,9 @@ jobs:
           bash -n install.sh run.sh packaging/build-deb.sh
       - name: Build the Debian package
         run: bash packaging/build-deb.sh "$RUNNER_TEMP/deb"
-      - name: Check out the APT repository branch
-        uses: actions/checkout@v4
-        with:
-          ref: apt-repo
-          path: apt-repo
-          persist-credentials: true
-          fetch-depth: 1
       - name: Publish package and signed repository metadata
-        working-directory: apt-repo
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APT_REPO_SIGNING_KEY: ${{ secrets.APT_REPO_SIGNING_KEY }}
           APT_REPO_SIGNING_PASSPHRASE: ${{ secrets.APT_REPO_SIGNING_PASSPHRASE }}
           APT_REPO_SIGNING_FINGERPRINT: ${{ vars.APT_REPO_SIGNING_FINGERPRINT }}
@@ -60,6 +53,18 @@ jobs:
             echo 'The private key does not match APT_REPO_SIGNING_FINGERPRINT.' >&2
             exit 1
           fi
+          APT_REPO="$RUNNER_TEMP/echo-recon-apt-repo"
+          mkdir -p "$APT_REPO"
+          git -C "$APT_REPO" init --initial-branch=apt-repo
+          git -C "$APT_REPO" config user.name 'github-actions[bot]'
+          git -C "$APT_REPO" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$APT_REPO" remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git -C "$APT_REPO" ls-remote --exit-code origin refs/heads/apt-repo >/dev/null; then
+            git -C "$APT_REPO" fetch --depth 1 origin apt-repo
+            git -C "$APT_REPO" reset --hard FETCH_HEAD
+          fi
+          cd "$APT_REPO"
+
           printf '%s\n' "$actual_fingerprint" > KEY-FINGERPRINT.txt
           gpg --batch --export "$actual_fingerprint" > archive-keyring.gpg
 
@@ -67,8 +72,17 @@ jobs:
           package="$RUNNER_TEMP/deb/echo-recon_${version}_all.deb"
           test -s "$package"
           mkdir -p pool/main/e/echo-recon
+          destination="pool/main/e/echo-recon/echo-recon_${version}_all.deb"
+          if [[ -f "$destination" ]]; then
+            if cmp -s "$package" "$destination"; then
+              echo "Echo Recon $version is already published."
+              exit 0
+            fi
+            echo "Version $version was already published with different package contents. Bump the version." >&2
+            exit 1
+          fi
           find pool/main/e/echo-recon -maxdepth 1 -type f -name 'echo-recon_*.deb' -delete
-          cp "$package" "pool/main/e/echo-recon/"
+          cp "$package" "$destination"
           for architecture in amd64 arm64; do
             mkdir -p "dists/stable/main/binary-$architecture"
             dpkg-scanpackages --multiversion pool /dev/null > "dists/stable/main/binary-$architecture/Packages"
@@ -91,8 +105,10 @@ jobs:
           Repository URL: https://raw.githubusercontent.com/mdnhbn/echo-recon-workspace/apt-repo
           Archive signing fingerprint: $actual_fingerprint
           EOF
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
+          if git diff --cached --quiet; then
+            echo 'APT repository is already current.'
+            exit 0
+          fi
           git commit -m "Publish Echo Recon $version APT package"
           git push origin HEAD:apt-repo
