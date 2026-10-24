@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.6.1 — 2026-10-24
+
+- Removed the full-screen Matrix canvas, rotating header icon, progress pulse, smooth scrolling and report-chevron transition to reduce browser rendering work. Dark/light layouts and all interface controls remain.
+
 ## 6.6.0 — 2026-10-24
 
 - Added Nikto as the ninth selectable tool and optional standalone check / Nuclei fallback, with bounded tuning categories and per-host time/rate controls.

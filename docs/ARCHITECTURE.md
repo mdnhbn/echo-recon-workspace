@@ -74,7 +74,7 @@ Tool readiness is a local help/identity result, not an external network/API or p
 
 ## Presentation, data and extension
 
-`static/theme.js` switches the shared DOM without resetting form values/jobs; local browser storage remembers the choice. Both layouts use the reduced-motion-aware Matrix canvas. The bilingual [usage guides](USAGE.md) explain field/rate/time/report semantics.
+`static/theme.js` switches the shared DOM without resetting form values/jobs; local browser storage remembers the choice. Both layouts are static and omit the Matrix canvas and motion effects to reduce browser work. The bilingual [usage guides](USAGE.md) explain field/rate/time/report semantics.
 
 Production does not create demo jobs or preload findings. Mock fixtures stay in temporary directories. Offline legacy cleanup only removes explicitly flagged demos while the server is stopped; it cannot relaunch a manager or infer deletion from a domain/status.
 

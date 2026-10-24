@@ -10,7 +10,7 @@
 - স্বাভাবিকভাবে চালু করলে missing tool আছে কি না দেখে প্রয়োজন হলে installer শুরু করে।
 - Windows-এর tool এখন `C:\Users\আপনার-নাম\Tools\EchoRecon\tooling`-এ থাকে। ফলে desktop shortcut দিয়ে চালালেও একই tool পাওয়া যায়।
 - সরাসরি Windows, Kali VirtualBox, WSL এবং সমর্থিত Linux family-এর আলাদা সেটআপ আছে। Windows-এর native adapter চালাতে WSL বাধ্যতামূলক নয়।
-- Dark/Light layout এক ক্লিকে বদলায়; form-এর লেখা থাকে। দুই layout-এই Matrix animation আছে; reduced-motion পছন্দ মেনে চলে।
+- Dark/Light layout এক ক্লিকে বদলায়; form-এর লেখা থাকে। Browser-এর resource কমাতে Matrix background ও অন্য animation সরানো হয়েছে।
 - আগে থেকে বানানো scan result বা demo data নেই। ব্যর্থতা, সময় শেষ হওয়া ও অসম্পূর্ণ ফল report-এ দেখা যায়।
 - Nikto-কে নবম tool হিসেবে যোগ করা হয়েছে। Nuclei ও Nikto দুটো বাছলে Nuclei পাওয়া না গেলে বা ব্যর্থ হলে Nikto চেষ্টা করে; শুধু Nikto বাছলেও চলে। এর check সীমিত রাখা হয়েছে।
 

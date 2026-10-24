@@ -9,7 +9,7 @@ A local assessment dashboard with nine fixed tool adapters, explicit host scope,
 - The installer sets up the dashboard and missing backends together. Normal startup also checks local tools and starts automatic setup when needed; verified working tools are kept.
 - Native Windows tools use a stable user folder, `~/Tools/EchoRecon/tooling`, so installation from a packaged application remains visible when a desktop shortcut starts the dashboard.
 - Native Windows, Kali VirtualBox, WSL and supported Linux package-manager families have dedicated setup paths. Windows no longer requires WSL for its native adapters.
-- Both layouts keep the same form and evidence controls. The Light/Dark button switches in one click; both include Matrix animation and respect reduced-motion preferences.
+- Both layouts keep the same form and evidence controls. The Light/Dark button switches in one click. The animated Matrix background and other motion effects are removed to reduce browser resource use.
 - History starts empty. There are no generated demo findings. Reports retain errors, timeouts, incomplete output and unverified findings.
 - Added Nikto as an optional standalone web-server check and a fallback when a selected Nuclei phase is missing, unverified or fails. Its checks are narrowed to informational, misconfiguration/default-file and software-identification groups.
 

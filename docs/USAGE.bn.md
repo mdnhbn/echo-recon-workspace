@@ -23,7 +23,7 @@ Header-এর **Light layout / হালকা** চাপলে dashboard-এ�
 
 Layout বদলালে form-এ লেখা নাম, চলমান job ও দেখানো ফল একই জায়গায় থাকে। Browser-এর local storage চালু থাকলে এই dashboard address-এর জন্য পছন্দটি একই browser-এ মনে রাখে। নতুন browser/profile, storage পরিষ্কার করা বা storage বন্ধ থাকলে default dark layout আসতে পারে। একই address-এর আরেকটি tab খোলা থাকলে browser storage event সমর্থিত অবস্থায় সেটিও সংরক্ষিত পছন্দ অনুসরণ করে।
 
-দুই layout-এই background-এর matrix animation আছে; reduced-motion preference থাকলে animation বন্ধ থাকে। এই বোতাম dashboard-এর চেহারা বদলায়, scan setting নয়। App-এর ভেতরে নির্দেশনা দেখতে header-এর **How to use / ব্যবহারবিধি** অথবা sidebar-এর **Full usage guide / বিস্তারিত নিয়ম** চাপুন।
+দুই layout-এই স্থির background থাকে। Browser-এর কাজ কমাতে Matrix canvas, ঘূর্ণায়মান icon, progress pulse ও smooth scrolling সরানো হয়েছে। Light/Dark বোতাম dashboard-এর চেহারা বদলায়, scan setting নয়। App-এর ভেতরে নির্দেশনা দেখতে header-এর **How to use / ব্যবহারবিধি** অথবা sidebar-এর **Full usage guide / বিস্তারিত নিয়ম** চাপুন।
 
 ## ২. Automatic setup ও টুল যাচাই
 

@@ -157,30 +157,6 @@ $("download-tools").addEventListener("click", () => showDownloads());
 $("download-tools-top").addEventListener("click", () => showDownloads());
 $("close-downloads").addEventListener("click", () => $("tool-downloads").close());
 
-// Original Echo-style binary rain. Respect reduced motion and pause hidden tabs.
-const rain = $("rain");
-if (rain && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-  const ctx = rain.getContext("2d");
-  let drops = [];
-  function resizeRain() {
-    rain.width = innerWidth;
-    rain.height = innerHeight;
-    drops = Array.from({length: Math.ceil(innerWidth / 18)}, () => Math.random() * -60);
-  }
-  addEventListener("resize", resizeRain);
-  resizeRain();
-  setInterval(() => {
-    if (document.hidden) return;
-    ctx.fillStyle = "rgba(12, 17, 15, .09)";
-    ctx.fillRect(0, 0, rain.width, rain.height);
-    ctx.fillStyle = "rgba(89, 180, 121, .28)";
-    ctx.font = "15px monospace";
-    drops.forEach((drop, index) => {
-      ctx.fillText(Math.random() > .5 ? "1" : "0", index * 18, drop * 18);
-      drops[index] = drop * 18 > rain.height && Math.random() > .975 ? -2 : drop + .5;
-    });
-  }, 70);
-}
 history().then(jobs => {
   const requested = new URLSearchParams(location.search).get("job");
   const selected = jobs?.find(job => job.id === requested) || jobs?.find(job => !terminal.has(job.status));

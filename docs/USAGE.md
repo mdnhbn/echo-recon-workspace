@@ -23,7 +23,7 @@ The header's **Light layout / হালকা** button switches the dashboard to
 
 Changing the layout keeps your form values, running job and displayed results in place. The choice is remembered for this dashboard address in the same browser when local browser storage is available. A new browser/profile, cleared storage or blocked storage may start with the default dark layout. Another open tab for the same address follows the saved choice when browser storage events are available.
 
-The background matrix animation is available in both layouts; reduced-motion preferences disable it. This switch changes dashboard presentation, not the scan settings. For the built-in instructions, click **How to use / ব্যবহারবিধি** in the header or **Full usage guide / বিস্তারিত নিয়ম** in the sidebar.
+Both layouts use a static background; the Matrix canvas, rotating icon, progress pulse and smooth scrolling are removed to reduce browser resource use. The Light/Dark switch changes dashboard presentation, not scan settings. For the built-in instructions, click **How to use / ব্যবহারবিধি** in the header or **Full usage guide / বিস্তারিত নিয়ম** in the sidebar.
 
 ## 2. Automatic setup and checking the tools
 

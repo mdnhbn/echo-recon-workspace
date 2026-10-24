@@ -16,13 +16,6 @@ html[data-theme="light"] {
   --red: #a1433c;
   --warning: #956326;
 }
-html[data-theme="light"] #rain {
-  /* The renderer paints dark trails. Invert them to white so the falling
-     digits remain visible on a light page without covering it in black. */
-  filter: invert(1) hue-rotate(180deg) blur(1.2px);
-  mix-blend-mode: multiply;
-  opacity: .5;
-}
 html[data-theme="light"] .sidebar {
   width: 240px;
   padding: 32px 22px 22px;
@@ -156,7 +149,4 @@ html[data-theme="light"] #usage-guide code { color: #245e43; background: #edf3ef
   html[data-theme="light"] .history-section,
   html[data-theme="light"] #usage-guide,
   html[data-theme="light"] .guide-section { padding: 18px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  html[data-theme="light"] #rain { display: none; }
 }
