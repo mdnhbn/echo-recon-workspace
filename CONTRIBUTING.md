@@ -58,7 +58,7 @@ Windows PowerShell:
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Tests should use mocked scanner responses, simulated DNS, offline demo data and local child processes. Do not make the test suite depend on a public website, real credentials or a paid service. For a visual change, open the offline demo and check both the dashboard and report. Describe any checks you could not run; do not claim an untested platform works.
+Tests should use mocked scanner responses, simulated DNS and local child processes in temporary directories. Do not make the test suite depend on a public website, real credentials or a paid service. Keep fixtures isolated from the production `data/` directory; do not add a demo generator or seed fake history. For a visual change, check the empty dashboard and tool-setup view, and render report fixtures only through a temporary test application. Describe any checks you could not run; do not claim an untested platform works.
 
 ## What makes a useful change
 
@@ -68,6 +68,7 @@ Tests should use mocked scanner responses, simulated DNS, offline demo data and 
 - Keep user input out of shell command strings. Add regression coverage for a meaningful behavior fix.
 - Use portable paths and Python APIs when possible. Linux-only commands need a documented Windows/WSL alternative or an explicit unsupported result.
 - Keep each scanner optional. Document its identity, supported platform and limitations; do not silently download or launch additional tools.
+- Keep the **Download / setup tools** view limited to reviewed official sources and manual guidance. Preserve missing/unverified distinctions and refreshable health checks; do not add a web-triggered privileged installer.
 - Use mock or synthetic evidence in examples. Redact any screenshot before sharing it.
 
 Good starting points include a documentation typo, a clearer error message, a Bengali translation, an accessible form label or a test for a previously reported bug.

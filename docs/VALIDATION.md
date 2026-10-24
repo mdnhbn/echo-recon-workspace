@@ -1,5 +1,16 @@
 # Release validation — 2026-10-24
 
+## 6.2 demo removal and original dark presentation
+
+- Windows suite: 30 tests total; 28 passed, with Linux process groups and privileged directory symlinks skipped. Kali suite: 30 tests total; 29 passed and the Windows process test skipped. Cleanup tests check that real records are byte-for-byte unchanged, redirected scratch roots are refused, and maintenance refuses an active server lock. A history regression keeps older real entries visible behind newer legacy demos.
+- Native Windows localhost HTTP checks passed for the dark dashboard, eight official source entries, empty real history, and rejection of removed demo mode and unsupported live assessments.
+- Kali Firefox graphical checks confirmed the dark dashboard, adjacent tool-check and download/setup actions, and an open setup dialog with official links. Refreshed local help/identity checks reported all eight existing tools ready; no assessment was started.
+- The preserved real report opened with the dark summary cards and collapsible phase layout. Its recorded completion/timeout states remained visible.
+- Removed nine explicitly marked legacy demo records from the collaborator's Kali installation and two from the local Windows development data. The existing real Kali history entry was preserved; test fixtures stay in temporary directories.
+- Legacy demo job/report routes return 404. Demo generation and its dashboard control are removed. JavaScript syntax and whitespace checks passed.
+
+Older entries below describe the behavior of those historical releases; their demo flows are no longer available in 6.2.
+
 ## 6.1.1 automatic browser startup
 
 - Kali desktop: starting `run.sh` opened Firefox automatically at `127.0.0.1:8001`; the dashboard title and version 6.1.1 were confirmed in a VM screenshot.

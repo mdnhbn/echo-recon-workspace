@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.2.0 — 2026-10-24
+
+- Removed production demo generation and visible demo controls; legacy demos are excluded from history/report routes.
+- Added an exclusive-lock offline cleanup command that removes only explicitly marked legacy demo jobs and preserves real history.
+- Restored the original Echo dark/Matrix dashboard and dark accordion report presentation while retaining scope, cancellation and honest result states.
+- Added adjacent tool-check and official download/setup actions, including per-tool setup links for missing/unverified tools.
+- Tool checks can refresh after manual installation. No administrator installer is triggered from the dashboard.
+
 ## 6.1.1 — 2026-10-24
 
 - Restored automatic browser opening on desktop startup, after binding and readiness checks.

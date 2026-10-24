@@ -42,15 +42,13 @@ class Manager:
         self.store.save(clean_object(job))
 
     def start(self, payload, background=True):
-        demo = payload.get("demo") is True
-        if demo:
-            domain, scope = "example.com", ["example.com"]
-        else:
-            if not self.allow_live:
-                raise ValueError("Native Windows supports demo/history/reports. Use Kali in WSL2 for live assessments; see docs/WINDOWS.md.")
-            if payload.get("authorized") is not True or payload.get("understands_limits") is not True:
-                raise ValueError("Confirm ownership/permission and third-party traffic limitations.")
-            domain, scope = validate_scope(payload.get("domain"), payload.get("scope"))
+        if payload.get("demo") is True:
+            raise ValueError("Demo mode has been removed. Supply an explicitly authorized scope.")
+        if not self.allow_live:
+            raise ValueError("Native Windows supports the dashboard and saved reports. Use Kali in WSL2 for live assessments; see docs/WINDOWS.md.")
+        if payload.get("authorized") is not True or payload.get("understands_limits") is not True:
+            raise ValueError("Confirm ownership/permission and third-party traffic limitations.")
+        domain, scope = validate_scope(payload.get("domain"), payload.get("scope"))
         selected = payload.get("tools", list(TOOLS))
         if (not isinstance(selected, list) or not selected or
                 any(not isinstance(name, str) or name not in TOOLS for name in selected)):
@@ -66,7 +64,7 @@ class Manager:
             if self.active:
                 raise RuntimeError("An assessment is already active. Stop it or wait.")
             job_id = uuid.uuid4().hex
-            job = {"id": job_id, "version": __version__, "domain": domain, "scope": scope, "demo": demo,
+            job = {"id": job_id, "version": __version__, "domain": domain, "scope": scope,
                    "status": "running", "created": now(), "updated": now(),
                    "settings": {"rate": rate, "timeout": timeout}, "log": [],
                    "phases": [{"tool": name, "label": TOOLS[name][0], "status": "pending",
@@ -80,7 +78,7 @@ class Manager:
                    ]}
             event = threading.Event()
             self.active[job_id] = event
-            self.save(job, "Local demo: no external traffic." if demo else "Assessment queued with explicit scope.")
+            self.save(job, "Assessment queued with explicit scope.")
             if background:
                 thread = threading.Thread(target=self.worker, args=(job, event), daemon=True)
                 thread.start()
@@ -106,10 +104,7 @@ class Manager:
 
     def worker(self, job, event):
         try:
-            if job["demo"]:
-                self.demo(job, event)
-            else:
-                self.pipeline(job, event)
+            self.pipeline(job, event)
             if event.is_set():
                 job["status"] = "cancelled"
             elif all(phase["status"] == "done" for phase in job["phases"]):
@@ -129,21 +124,6 @@ class Manager:
             self.save(job, f"Assessment ended: {job['status']}. Review phase evidence and limitations.")
             with self.lock:
                 self.active.pop(job["id"], None)
-
-    def demo(self, job, event):
-        for phase in job["phases"]:
-            if event.is_set():
-                break
-            phase.update(status="running")
-            self.save(job, f"Demo: {phase['label']}")
-            if event.wait(0.12):
-                break
-            phase.update(status="done", returncode=0, duration=0.12,
-                         evidence=f"SIMULATED {phase['label']} output for example.com. No process or network request was executed.")
-            if phase["tool"] == "nuclei":
-                phase.update(status="timeout", returncode=None,
-                             evidence="SIMULATED timeout. This phase is incomplete, not a clean security result.")
-            self.save(job)
 
     def pipeline(self, job, event):
         scope, rate, timeout = job["scope"], job["settings"]["rate"], job["settings"]["timeout"]

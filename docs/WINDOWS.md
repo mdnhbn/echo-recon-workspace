@@ -6,11 +6,11 @@
 |---|---|---|
 | Kali Linux / Kali VirtualBox | Dashboard and all eight adapters, with separately installed tools | `bash install.sh`, `bash run.sh` |
 | Windows + Kali WSL2 | The same Linux workflow, viewed from a Windows browser | Install inside Kali WSL2; start there or use `run-wsl.ps1` |
-| Native Windows + Python | Dashboard, simulated demo, history, HTML/JSON reports, development tests | `install.ps1`, `run.ps1` |
+| Native Windows + Python | Dashboard, saved history, HTML/JSON reports, development tests | `install.ps1`, `run.ps1` |
 
 **Native Windows live assessments are deliberately disabled.** Installing Python does not turn Linux scanner wrappers into Windows tools. Use Kali WSL2 for the full scanner workflow. The application explains this and rejects unsupported native live requests server-side.
 
-সরাসরি Windows-এ demo, history, report ও development করা যাবে। আটটি scanner-এর পুরো কাজের জন্য Windows-এর মধ্যে **Kali WSL2** ব্যবহার করুন। দুটি mode-এর project folder, `.venv` ও `data` আলাদা রাখুন।
+সরাসরি Windows-এ dashboard, সংরক্ষিত history, report ও development করা যাবে। আটটি scanner-এর পুরো কাজের জন্য Windows-এর মধ্যে **Kali WSL2** ব্যবহার করুন। দুটি mode-এর project folder, `.venv` ও `data` আলাদা রাখুন। Demo বা বানানো scan result তৈরি হয় না।
 
 ## A. Full workflow with Kali WSL2 (recommended)
 
@@ -46,7 +46,7 @@ bash run.sh
 
 Leave that terminal open. In Windows Edge/Firefox/Chrome, visit **http://127.0.0.1:8001**. Microsoft documents Windows-to-WSL localhost access in its [WSL networking guide](https://learn.microsoft.com/windows/wsl/networking). If localhost forwarding is restricted on your machine, troubleshoot WSL networking; do not change this dashboard to bind `0.0.0.0`, open a firewall port or disable its local-client checks as a shortcut.
 
-Install/check the eight tools **inside the same Kali WSL distribution** using [TOOLS.md](TOOLS.md). Tools installed in a VirtualBox VM or native Windows are not automatically installed in WSL. Keep the repository in Linux HOME, not `/mnt/c`, for this workflow. Do not reuse the Windows virtual environment or database.
+Use **Check installed tools** and **Download / setup tools** in the dashboard, then follow [TOOLS.md](TOOLS.md) for official sources and manual setup. Install/check the eight tools **inside the same Kali WSL distribution**. Tools installed in a VirtualBox VM or native Windows are not automatically installed in WSL. After setup, recheck tools; restart the server if PATH changed. Keep the repository in Linux HOME, not `/mnt/c`, for this workflow. Do not reuse the Windows virtual environment or database.
 
 পরেরবার Kali terminal-এ project folder থেকে `bash run.sh` দিলেই হবে। Windows-এ repo-এর আরেকটি কপি থাকলে তার PowerShell থেকে `run-wsl.ps1` দিয়েও WSL-এর নির্দিষ্ট Linux folder-এর project চালানো যায়:
 
@@ -75,7 +75,7 @@ If multiple Python installations exist, choose one explicitly:
 .\install.ps1 -PythonExe 'C:\Path\To\python.exe'
 ```
 
-The default browser opens **http://127.0.0.1:8001** after the local server is ready. If it does not open, enter that address yourself, then click **Open demo**. You can inspect/download reports and test contributions. Stop the server with Ctrl+C. The application uses a Windows file lock so another instance cannot alter recovery state for the same data directory. Use `.\run.ps1 -NoBrowser` to disable browser opening; for a WSL launch use `.\run-wsl.ps1 -NoBrowser`. Headless WSL normally needs you to open the address in Windows yourself.
+The default browser opens **http://127.0.0.1:8001** after the local server is ready. If it does not open, enter that address yourself. You can inspect the dashboard, saved history and report exports, and test contributions. A new installation has no sample scan history. **Download / setup tools** shows official sources and a guide; it does not install scanners or enable native Windows assessments. Stop the server with Ctrl+C. The application uses a Windows file lock so another instance cannot alter recovery state for the same data directory. Use `.\run.ps1 -NoBrowser` to disable browser opening; for a WSL launch use `.\run-wsl.ps1 -NoBrowser`. Headless WSL normally needs you to open the address in Windows yourself.
 
 ### If PowerShell blocks a script
 
@@ -95,11 +95,11 @@ If `py` is unavailable, use the full path to your installed Python. Do not use `
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-CI checks both Linux and Windows. OS-specific process tests are skipped on the other operating system. Tests use fixtures and local child processes, not public targets. Full WSL provisioning/adapter network operation is a separate integration check; Windows CI does not install Kali WSL or certify scanner behavior there.
+CI checks both Linux and Windows. OS-specific process tests are skipped on the other operating system. Tests use fixtures and local child processes in temporary directories; they do not seed production history or contact public targets. Full WSL provisioning/adapter network operation is a separate integration check; Windows CI does not install Kali WSL or certify scanner behavior there.
 
 ## Storage, permissions and updates
 
-On Linux, private directory/file modes are applied. On Windows, `chmod` does **not** create equivalent private NTFS permissions. Use your private Windows user profile, retain suitable inherited NTFS permissions, and avoid shared/synced folders for `data/`. Reports may contain sensitive evidence. The demo contains only synthetic examples.
+On Linux, private directory/file modes are applied. On Windows, `chmod` does **not** create equivalent private NTFS permissions. Use your private Windows user profile, retain suitable inherited NTFS permissions, and avoid shared/synced folders for `data/`. Reports may contain sensitive evidence.
 
 Windows-এ user-এর private folder ব্যবহার করুন। Linux-এর permission ও Windows-এর ACL এক নয়। `data/`, report, secret বা `.venv` GitHub-এ দেবেন না।
 
@@ -113,3 +113,21 @@ git pull --ff-only
 ```
 
 Inside a WSL copy, use `bash install.sh` and `bash run.sh` instead. Both modes use port 8001, so do not run both at the same time on Windows if localhost ports conflict. Keep environments and histories separate.
+
+### Remove legacy demo history / পুরোনো demo history সরানো
+
+Version 6.2 no longer generates demos. To remove saved demos from an earlier native Windows installation, stop its dashboard with **Ctrl+C**, open PowerShell in that same repository and run:
+
+```powershell
+.\.venv\Scripts\python.exe maintenance.py remove-demo
+```
+
+For a Kali WSL copy, stop that copy and use its Linux environment instead:
+
+```bash
+.venv/bin/python maintenance.py remove-demo
+```
+
+The offline command removes only records explicitly marked as legacy demos; real assessment history is retained. It does not scan targets or remove scanner installations. Do not delete the whole `data/` directory, run cleanup against an active server, or copy one environment's database into another.
+
+আগে যে mode-এর demo মুছবেন, সেই dashboard বন্ধ করুন। একই repository-র সঠিক Python environment দিয়ে command দিন। শুধু demo হিসেবে চিহ্নিত record সরবে; বাস্তব history রাখা হবে।

@@ -58,7 +58,7 @@ Windows PowerShell:
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Test-এ mock scanner output, নকল DNS result, offline demo ও local process ব্যবহার করুন। Public website, আসল password বা paid service-এর ওপর test নির্ভর করবে না। UI বদলালে offline demo এবং report দেখুন। কোনো operating system-এ পরীক্ষা না করলে সেটি স্পষ্ট লিখুন।
+Test-এ temporary directory-র মধ্যে mock scanner output, নকল DNS result ও local process ব্যবহার করুন। Public website, আসল password বা paid service-এর ওপর test নির্ভর করবে না। Production-এর `data/`-তে test result লিখবেন না, demo generator বা বানানো history যোগ করবেন না। UI বদলালে খালি dashboard ও tool-setup view দেখুন; report fixture শুধু temporary test application-এ render করুন। কোনো operating system-এ পরীক্ষা না করলে সেটি স্পষ্ট লিখুন।
 
 ## কাজ করার সময় খেয়াল রাখুন
 
@@ -68,6 +68,7 @@ Test-এ mock scanner output, নকল DNS result, offline demo ও local proce
 - User input দিয়ে shell command string বানাবেন না। গুরুত্বপূর্ণ bug fix-এর জন্য regression test দিন।
 - Portable path ও Python API ব্যবহার করুন। Linux-only সুবিধার Windows/WSL বিকল্প বা সীমাবদ্ধতা লিখুন।
 - Scanner optional রাখুন। অনুমতি ছাড়া অতিরিক্ত tool download বা চালু করবেন না।
+- **Download / setup tools**-এ যাচাই করা official source ও হাতে setup করার নির্দেশনা রাখুন। Missing/unverified আলাদা দেখান এবং health আবার check করার ব্যবস্থা রাখুন। Browser থেকে privileged installer চালাবেন না।
 - Screenshot ও উদাহরণে নকল তথ্য ব্যবহার করুন। Secret ও ব্যক্তিগত তথ্য প্রকাশ করবেন না।
 
 সহজ শুরুর কাজ: বানান সংশোধন, পরিষ্কার error message, বাংলা অনুবাদ, form-এর label অথবা জানা bug-এর test।

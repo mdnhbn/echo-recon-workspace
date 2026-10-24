@@ -16,6 +16,24 @@ TOOLS = {
     "nuclei": ("Template checks", ["-h"], "nuclei"),
 }
 
+SOURCES = {
+    "dnsrecon": "https://github.com/darkoperator/dnsrecon",
+    "subfinder": "https://github.com/projectdiscovery/subfinder/releases",
+    "httpx": "https://github.com/projectdiscovery/httpx/releases",
+    "nmap": "https://nmap.org/download.html",
+    "theHarvester": "https://github.com/laramies/theHarvester",
+    "photon": "https://github.com/s0md3v/Photon",
+    "arjun": "https://github.com/s0md3v/Arjun",
+    "nuclei": "https://github.com/projectdiscovery/nuclei/releases",
+}
+
+
+def tool_sources():
+    guide = "https://github.com/mdnhbn/echo-recon-workspace/blob/main/docs/TOOLS.md"
+    return {name: {"label": TOOLS[name][0], "url": url, "setup_url": guide,
+                   "note": "Use the official source and follow the setup guide. Install inside Kali/WSL for live checks."}
+            for name, url in SOURCES.items()}
+
 
 def diagnostics(cancel=None):
     result = {}

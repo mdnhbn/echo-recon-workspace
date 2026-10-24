@@ -18,6 +18,7 @@ from echo_recon.service import Manager
 from echo_recon.storage import Store
 from echo_recon.tools import TOOLS, diagnostics, parse_findings
 from echo_recon.web import create_app
+from maintenance import remove_demos
 
 
 def ready(**kwargs):
@@ -173,12 +174,46 @@ class PipelineTests(unittest.TestCase):
         Manager(self.store, self.tmp.name)
         self.assertEqual(self.store.get("a"*32)["status"], "interrupted")
 
-    def test_demo_has_no_tools_or_dns(self):
-        fail = lambda *a, **kw: self.fail("Demo must not execute tools or resolve DNS")
+    def test_removed_demo_cannot_execute_or_create_history(self):
+        fail = lambda *a, **kw: self.fail("Removed demo must not execute anything")
         manager = Manager(self.store, self.tmp.name, execute=fail, resolver=fail, check_tools=fail)
-        job = self.store.get(manager.start({"demo": True}, background=False))
-        self.assertEqual(job["status"], "partial")
-        self.assertEqual(job["phases"][-1]["status"], "timeout")
+        with self.assertRaisesRegex(ValueError, "removed"):
+            manager.start({"demo": True}, background=False)
+        self.assertEqual(self.store.recent(), [])
+
+
+class MaintenanceTests(unittest.TestCase):
+    def test_cleanup_removes_only_strict_demo_records_and_artifacts(self):
+        with tempfile.TemporaryDirectory() as folder:
+            data = Path(folder)
+            store = Store(data / "history.sqlite3")
+            demo_id, real_id = "a" * 32, "b" * 32
+            real = {"id": real_id, "updated": "2026", "domain": "example.com", "demo": False, "status": "partial", "evidence": "keep this exact record"}
+            store.save({"id": demo_id, "updated": "2026", "demo": True})
+            store.save(real)
+            for key in [demo_id, real_id]:
+                path = data / "scratch" / key
+                path.mkdir(parents=True)
+                (path / "evidence.txt").write_text(key)
+            self.assertEqual(remove_demos(data), 1)
+            self.assertIsNone(store.get(demo_id))
+            self.assertEqual(store.get(real_id), real)
+            self.assertFalse((data / "scratch" / demo_id).exists())
+            self.assertTrue((data / "scratch" / real_id / "evidence.txt").exists())
+            self.assertEqual(remove_demos(data), 0)
+
+    def test_cleanup_refuses_while_server_lock_is_held(self):
+        with tempfile.TemporaryDirectory() as folder:
+            data = Path(folder)
+            store = Store(data / "history.sqlite3")
+            store.save({"id": "a" * 32, "updated": "2026", "demo": True})
+            lock = InstanceLock(data / "server.lock").acquire()
+            try:
+                with self.assertRaises(RuntimeError):
+                    remove_demos(data)
+            finally:
+                lock.release()
+            self.assertIsNotNone(store.get("a" * 32))
 
 
 class LockTests(unittest.TestCase):
@@ -218,7 +253,11 @@ class BrowserTests(unittest.TestCase):
 class WebTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.app = create_app(self.tmp.name, testing=True)
+        def execute(args, **kwargs):
+            cancelled = kwargs["cancel"].wait(.6)
+            return Result("cancelled" if cancelled else "done", -15 if cancelled else 0, "local fixture only")
+        self.app = create_app(self.tmp.name, testing=True, execute=execute,
+                              resolver=public_resolver, check_tools=ready, allow_live=True)
         self.client = self.app.test_client()
         page = self.client.get("/").text
         self.csrf = re.search('name="csrf-token" content="([a-f0-9]+)"', page)[1]
@@ -236,7 +275,7 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/jobs", json={"demo": True}).status_code, 403)
         self.assertEqual(self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf, "Origin": "https://evil.net"}).status_code, 403)
 
-    def test_native_windows_mode_blocks_live_but_allows_demo(self):
+    def test_native_windows_mode_blocks_live_and_removed_demo(self):
         manager = self.app.extensions["echo_manager"]
         manager.allow_live = False
         response = self.client.post("/api/jobs", json={"domain": "example.com", "scope": ["example.com"], "authorized": True, "understands_limits": True}, headers={"X-CSRF-Token": self.csrf})
@@ -244,13 +283,14 @@ class WebTests(unittest.TestCase):
         self.assertIn("WSL2", response.json["error"])
         self.assertFalse(manager.active)
         demo = self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf})
-        self.assertEqual(demo.status_code, 202)
+        self.assertEqual(demo.status_code, 400)
 
-    def test_demo_report_download_and_cancel(self):
-        response = self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf})
+    def test_mock_job_report_download_and_cancel(self):
+        payload = dict(domain="example.com", scope=["example.com"], authorized=True, understands_limits=True, tools=["dnsrecon"])
+        response = self.client.post("/api/jobs", json=payload, headers={"X-CSRF-Token": self.csrf})
         self.assertEqual(response.status_code, 202)
         job_id = response.json["id"]
-        second = self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf})
+        second = self.client.post("/api/jobs", json=payload, headers={"X-CSRF-Token": self.csrf})
         self.assertEqual(second.status_code, 409)
         stop = self.client.post(f"/api/jobs/{job_id}/cancel", json={}, headers={"X-CSRF-Token": self.csrf})
         self.assertTrue(stop.json["requested"])
@@ -264,10 +304,37 @@ class WebTests(unittest.TestCase):
         self.assertIn("attachment", self.client.get(f"/reports/{job_id}.json").headers["Content-Disposition"])
         self.assertEqual(len(self.client.get("/api/jobs").json), 1)
 
+    def test_legacy_demo_is_hidden_and_official_downloads_are_available(self):
+        store = self.app.extensions["echo_store"]
+        job_id = "a" * 32
+        store.save(dict(id=job_id, updated="2026", created="2026", domain="example.com", demo=True, status="partial"))
+        self.assertEqual(self.client.get("/api/jobs").json, [])
+        self.assertEqual(self.client.get(f"/reports/{job_id}.html").status_code, 404)
+        self.assertEqual(self.client.get(f"/api/jobs/{job_id}").status_code, 404)
+        sources = self.client.get("/api/tool-sources").json
+        self.assertEqual(set(sources), set(TOOLS))
+        self.assertTrue(all(item["url"].startswith("https://") for item in sources.values()))
+        page = self.client.get("/").text
+        self.assertIn('id="download-tools"', page)
+        self.assertNotIn('id="demo"', page)
+
+    def test_legacy_demos_do_not_consume_real_history_limit(self):
+        store = self.app.extensions["echo_store"]
+        real_id = "f" * 32
+        store.save(dict(id=real_id, updated="2025", created="2025", domain="example.com", status="partial"))
+        for index in range(50):
+            store.save(dict(id=f"{index:032x}", updated="2026", created="2026", domain="example.com", demo=True, status="partial"))
+        self.assertEqual(len(store.recent()), 50)
+        self.assertTrue(all(job.get("demo") is True for job in store.recent()))
+        self.assertEqual([job["id"] for job in store.recent(limit=1, include_demos=False)], [real_id])
+        self.assertEqual(store.recent(limit=0, include_demos=False), [])
+        self.assertEqual([job["id"] for job in self.client.get("/api/jobs").json], [real_id])
+        self.assertIsNotNone(store.get(real_id))
+
     def test_report_escapes_html_evidence(self):
         store = self.app.extensions["echo_store"]
         job_id = "f"*32
-        store.save(dict(id=job_id, updated="2026", created="2026", domain="example.com", scope=["example.com"], demo=True, status="partial", limitations=[], phases=[dict(label="Test", tool="test", status="error", evidence="<script>alert(1)</script>", stderr="", returncode=1, duration=0, findings=[])]))
+        store.save(dict(id=job_id, updated="2026", created="2026", domain="example.com", scope=["example.com"], status="partial", limitations=[], phases=[dict(label="Test", tool="test", status="error", evidence="<script>alert(1)</script>", stderr="", returncode=1, duration=0, findings=[])]))
         text = self.client.get(f"/reports/{job_id}.html").text
         self.assertNotIn("<script>", text)
         self.assertIn("&lt;script&gt;", text)

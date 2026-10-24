@@ -32,10 +32,23 @@ class Store:
             row = db.execute("SELECT body FROM jobs WHERE id=?", (job_id,)).fetchone()
         return json.loads(row[0]) if row else None
 
-    def recent(self, limit=50):
+    def recent(self, limit=50, *, include_demos=True):
         with self.connect() as db:
-            rows = db.execute("SELECT body FROM jobs ORDER BY updated DESC LIMIT ?", (limit,)).fetchall()
-        return [json.loads(row[0]) for row in rows]
+            if include_demos:
+                rows = db.execute("SELECT body FROM jobs ORDER BY updated DESC LIMIT ?", (limit,)).fetchall()
+                return [json.loads(row[0]) for row in rows]
+            # Filter before counting toward the limit so legacy demos cannot hide real history.
+            jobs = []
+            if limit == 0:
+                return jobs
+            for row in db.execute("SELECT body FROM jobs ORDER BY updated DESC"):
+                job = json.loads(row[0])
+                if job.get("demo") is True:
+                    continue
+                jobs.append(job)
+                if 0 < limit <= len(jobs):
+                    break
+            return jobs
 
     def interrupt_old_jobs(self):
         with self.connect() as db:
@@ -49,3 +62,11 @@ class Store:
                     if phase["status"] in {"running", "pending"}:
                         phase["status"] = "interrupted"
                 self.save(job)
+
+    def remove_legacy_demos(self):
+        """Call only with the application's instance lock held and the server stopped."""
+        with self.connect() as db:
+            rows = db.execute("SELECT id, body FROM jobs").fetchall()
+            ids = [job_id for job_id, body in rows if json.loads(body).get("demo") is True]
+            db.executemany("DELETE FROM jobs WHERE id=?", [(job_id,) for job_id in ids])
+        return ids

@@ -8,7 +8,7 @@ from flask import Flask, abort, jsonify, render_template, request, session, Resp
 from . import __version__
 from .service import Manager
 from .storage import Store
-from .tools import diagnostics
+from .tools import diagnostics, tool_sources
 
 
 def create_app(data_dir=None, testing=False, **manager_options):
@@ -70,14 +70,18 @@ def create_app(data_dir=None, testing=False, **manager_options):
     @app.get("/api/tools")
     def tools():
         # Tool help/version checks only. Never install software from HTTP requests.
-        if cached["value"] is None:
+        if cached["value"] is None or request.args.get("refresh") == "1":
             cached["value"] = diagnostics()
         return jsonify(cached["value"])
 
+    @app.get("/api/tool-sources")
+    def sources():
+        return jsonify(tool_sources())
+
     @app.get("/api/jobs")
     def jobs():
-        return jsonify([{key: job[key] for key in ("id", "domain", "status", "created", "demo")}
-                        for job in store.recent()])
+        return jsonify([{key: job[key] for key in ("id", "domain", "status", "created")}
+                        for job in store.recent(include_demos=False)])
 
     @app.post("/api/jobs")
     def start():
@@ -96,7 +100,7 @@ def create_app(data_dir=None, testing=False, **manager_options):
         if len(job_id) != 32 or any(c not in "0123456789abcdef" for c in job_id):
             abort(404)
         job = store.get(job_id)
-        if not job:
+        if not job or job.get("demo") is True:
             abort(404)
         return job
 

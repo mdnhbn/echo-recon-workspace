@@ -1,4 +1,4 @@
-# Echo Recon 6.1
+# Echo Recon 6.2
 
 A local assessment dashboard with explicit host scope, cancellable processes, persistent history and evidence-first reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); upgraded for the mdnhbn collaboration.
 
@@ -18,13 +18,15 @@ The original eight tools remain: **DNSRecon, Subfinder, ProjectDiscovery HTTPX, 
 - SQLite history survives restarts. In-progress work becomes `interrupted`, not resumed or marked safe.
 - HTML and JSON reports include phase evidence, stderr, exit status, limitations and unverified Nuclei findings with template-provided remediation where available.
 - Loopback-only listener, local-client/Host checks, CSRF protection, HTML escaping and a private data directory. No dashboard-triggered installer, root account or sudo session.
-- Offline simulated demo. No scanner, DNS lookup or target request is made by the demo.
+- Restored the original-style dark dashboard and report presentation while retaining scope controls and honest result states.
+- No demo generator, preloaded findings or sample scan history. Tests keep mock results in temporary directories only.
+- **Download / setup tools** opens official sources and setup guidance beside the health check. Installation stays in your terminal, under your control.
 
 ## Requirements
 
 - Kali Linux or another current Linux distribution, Python **3.11+**, Git and `python3-venv`.
 - A normal user account. Do **not** run the application as root.
-- Network access for installation. Optional assessment tools are separate; the demo does not require them.
+- Network access for installation. Optional assessment tools are installed separately; opening the dashboard does not start an assessment.
 
 ### Windows support
 
@@ -32,7 +34,7 @@ The original eight tools remain: **DNSRecon, Subfinder, ProjectDiscovery HTTPX, 
 |---|---|
 | Kali Linux / Kali VirtualBox | Full Linux dashboard and eight separately installed tool adapters. |
 | Windows with Kali WSL2 | Full Linux workflow, opened in a Windows browser. |
-| Native Windows with Python 3.11+ | Dashboard, simulated demo, history, report exports and development tests. Live scanning requires Kali WSL2. |
+| Native Windows with Python 3.11+ | Dashboard, saved history, report exports and development tests. Live scanning requires Kali WSL2. |
 
 Follow the **[English/Bengali Windows guide](docs/WINDOWS.md)**. Native Windows includes `install.ps1` and `run.ps1`; `run-wsl.ps1` starts an already installed Linux copy. Environments/data remain separate. No WSL installation, reboot, admin change or execution-policy weakening happens automatically.
 
@@ -54,7 +56,7 @@ Only the first two commands need administrator permission. `install.sh` creates 
 
 Alternative: use **Code → Download ZIP** on GitHub, extract it into a new folder, open a terminal there and run `bash install.sh`. Do not extract over an existing installation.
 
-## Run and learn with the demo
+## Run and check your tools
 
 ```bash
 cd ~/Tools/02-Custom/echo-recon-workspace
@@ -65,11 +67,11 @@ Leave the terminal open. On a desktop session, the launcher opens **http://127.0
 
 For a headless session or automated development test, use `bash run.sh --no-browser` (Windows: `.\run.ps1 -NoBrowser`). Headless WSL prints the address for your Windows browser rather than opening a terminal text browser.
 
-1. Click **Open demo / ডেমো দেখুন**.
-2. Watch the phase states. The demo deliberately simulates a Nuclei timeout.
-3. The final state is **partial**. This is intentional: incomplete work must not appear safe.
-4. Open **View report**, or download HTML/JSON. Demo output is labelled **SIMULATED**.
-5. Select the run in **Saved history** to reopen it later.
+1. Click **Check installed tools** to inspect local executable identity and help output.
+2. If a tool is missing or unverified, use its setup link or **Download / setup tools** beside the check button.
+3. Review the official source and [tool setup guide](docs/TOOLS.md). Install only what is needed from your terminal. The dashboard does not run a privileged installer or request your sudo password.
+4. Click **Check installed tools** again after setup to refresh results. Restart the dashboard if you changed the shell's PATH or other inherited environment variables.
+5. The dashboard and history remain empty until an assessment is created. No example findings are generated.
 
 Press **Ctrl+C** in the terminal to stop the dashboard. The Stop button cancels an assessment, not the dashboard itself.
 
@@ -81,7 +83,7 @@ First use [the tool setup guide](docs/TOOLS.md). Check **Tool health** or run:
 .venv/bin/python doctor.py
 ```
 
-This runs local help/identity checks; it does not scan a target. Help verification is not a guarantee of compatibility with every tool version. Refresh results by restarting the dashboard after installing tools.
+This runs local help/identity checks; it does not scan a target. Help verification is not a guarantee of compatibility with every tool version. `missing` means the executable is not on PATH; `unverified` means an executable was found but failed identification or required-help checks. Review the path/version before reinstalling anything.
 
 1. Enter the primary hostname without `https://`, a path, a port or a wildcard.
 2. List exact authorized hostnames, one per line, including the primary domain. Maximum five; additional hosts must be subdomains of that primary domain.
@@ -89,6 +91,7 @@ This runs local help/identity checks; it does not scan a target. Help verificati
 4. Choose a rate ceiling and per-tool/per-host time limit. These are **not** a single global request budget.
 5. Confirm permission and the network limitations. Start, monitor, and Stop if needed.
 6. Read each phase's status and evidence. A green completed command does not certify website security. Nuclei findings remain **unverified** until reviewed.
+7. Open **View report** after the run, or export HTML/JSON. Use **Saved history** to reopen a real saved assessment.
 
 There is no automatic HTTPS fallback for Photon/Arjun when probing fails. Discovery checks use the primary domain; active host checks use the explicit scope. Nmap examines the top 100 ports using TCP connect/service detection, rather than the old top-1000 scan.
 
@@ -110,6 +113,16 @@ bash run.sh
 
 Use `git status` before pulling if you edited source files. Avoid force-resetting local work. The new edition does not import old Echo reports automatically.
 
+### Remove saved demos from an earlier edition
+
+The production demo button and generation API are removed in 6.2. To remove old demo history, stop the dashboard with **Ctrl+C**, then run from the repository folder:
+
+```bash
+.venv/bin/python maintenance.py remove-demo
+```
+
+This offline maintenance command removes only legacy jobs explicitly marked as demos; real assessment history is preserved. It does not scan targets or uninstall tools. Do not delete the entire `data/` folder to clear demos, and do not run cleanup while the server is active. Keep any private backup outside Git.
+
 To uninstall, stop the dashboard and use the file manager to move **only this repository folder** to Trash. Its `.venv` is local. This does not uninstall the eight external tools. Keep a private backup of `data/` first if needed.
 
 ## Troubleshooting
@@ -120,7 +133,7 @@ To uninstall, stop the dashboard and use the file manager to move **only this re
 | `venv` creation fails | Install the distribution's `python3-venv` package. |
 | Port 8001 already in use | Stop your earlier copy; do not launch multiple instances sharing `data/`. |
 | HTTPX `unverified` | Check `command -v httpx`; Python HTTPX is different from ProjectDiscovery HTTPX. See tool guide. |
-| Tool is missing/unverified | Install the correct tool or deselect that check; restart after changing PATH. |
+| Tool is missing/unverified | Open **Download / setup tools**, review its path/version and official guide, then recheck. Restart after changing PATH. |
 | CSRF/reload error | Reload the page after restarting the server. |
 | Timeout or partial report | Read stderr and evidence; it is incomplete coverage, not a clean security result. |
 | No live hosts | Review HTTPX diagnostics; Photon/Arjun intentionally skip rather than guess a target. |
@@ -133,7 +146,7 @@ To uninstall, stop the dashboard and use the file manager to move **only this re
 bash -n install.sh run.sh
 ```
 
-Tests use mocked scanner responses, simulated DNS and local child processes. They cover command failures, cancellation, output bounds, DNS/scope validation, persistent state, CSRF/Host controls and report escaping. They do not scan public targets. Live adapter compatibility depends on installed tool versions; this release is not a certification that every external scanner works on every environment.
+Tests use mocked scanner responses, simulated DNS and local child processes in temporary directories. They do not create fake rows in the production history. They cover command failures, cancellation, output bounds, DNS/scope validation, persistent state, CSRF/Host controls and report escaping. They do not scan public targets. Live adapter compatibility depends on installed tool versions; this release is not a certification that every external scanner works on every environment.
 
 On native Windows use `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`. CI covers Ubuntu and Windows on Python 3.11 and 3.13. Full Kali WSL provisioning/network integration is not claimed as covered by that matrix.
 

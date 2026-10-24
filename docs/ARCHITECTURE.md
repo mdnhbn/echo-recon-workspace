@@ -23,21 +23,28 @@ Flask API ── input/scope validation ── one assessment manager
 | `echo_recon/service.py` | Sequential state machine, cancellation, partial vs complete classification. |
 | `echo_recon/tools.py` | Fixed adapters, local executable diagnostics, Nuclei JSONL parsing. |
 | `echo_recon/runner.py` | No-shell subprocesses, bounded output, timeout and Linux group termination. |
-| `static/`, `templates/` | Bilingual dashboard and report presentation. |
+| `maintenance.py` | Offline cleanup of explicitly marked legacy demo jobs while the server is stopped. |
+| `static/`, `templates/` | Original-style dark bilingual dashboard, tool-setup guidance and evidence report presentation. |
 
 ## API
 
 - `GET /`: dashboard and a CSRF session.
-- `GET /api/tools`: cached local tool identity/help diagnostics.
+- `GET /api/tools`: cached local tool identity/help diagnostics. `?refresh=1` reruns the local checks after manual tool setup.
 - `GET /api/jobs`: latest 50 persisted runs.
-- `POST /api/jobs`: local demo or an explicitly scoped assessment. JSON only, CSRF required.
+- `POST /api/jobs`: an explicitly scoped assessment. JSON only, CSRF required. Demo-generation requests are not supported.
 - `GET /api/jobs/<id>`: state, evidence and progress.
 - `POST /api/jobs/<id>/cancel`: set cancellation signal; CSRF required.
 - `GET /reports/<id>.html` and `.json`: evidence exports. HTML is self-contained.
 
-There is no arbitrary command API, web installer, root/sudo request, remote-agent interface, automatic target expansion or AI integration.
+The **Download / setup tools** control beside diagnostics exposes official sources and setup guidance for all eight adapters. Missing and unverified tool rows link to setup help too. It does not download or execute installers. There is no arbitrary command API, web installer, root/sudo request, remote-agent interface, automatic target expansion or AI integration.
 
-Native Windows mode supports dashboard/demo/history/report development and rejects live assessments server-side. Full Linux tool execution on Windows uses Kali WSL2 and a separate Linux environment. See `docs/WINDOWS.md`.
+Native Windows mode supports dashboard/history/report development and rejects live assessments server-side. Full Linux tool execution on Windows uses Kali WSL2 and a separate Linux environment. See `docs/WINDOWS.md`.
+
+## Production data and legacy cleanup
+
+The application does not generate demo jobs or preload sample history. Mock scanner and report fixtures are confined to temporary test directories. Existing real jobs remain in SQLite and keep their evidence exports.
+
+With the server stopped, `.venv/bin/python maintenance.py remove-demo` removes only legacy records whose saved demo flag is explicitly true. A domain name, incomplete status or simulated-looking evidence is not a deletion criterion. Never delete the whole database or run a second manager to clean an active server: an active worker may save its snapshot again. Keep private backups out of Git.
 
 ## State semantics
 

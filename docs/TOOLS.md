@@ -8,6 +8,8 @@ Dashboard-এর installer শুধু dashboard ইনস্টল করে�
 
 From the repository folder, as your normal user:
 
+The dashboard's **Download / Setup tools** button lists all eight official sources and this guide. It stays available even when a tool is missing. The **Check installed tools** button refreshes local diagnostics after manual setup; `unverified` means check the version/PATH rather than blindly reinstalling.
+
 ```bash
 export PATH="$HOME/.local/bin:$HOME/go/bin:/usr/local/go/bin:$PATH"
 .venv/bin/python doctor.py
@@ -49,7 +51,7 @@ Kali-এর package version সময়ের সঙ্গে বদলায়। �
 | Arjun | [s0md3v/Arjun](https://github.com/s0md3v/Arjun) | Rate limit and `--disable-redirects` support. |
 | Nuclei | [ProjectDiscovery installation](https://docs.projectdiscovery.io/tools/nuclei/install) | JSONL, redirect-disable, rate/concurrency and excluded-tag flags. |
 
-After any separate installation, restart the dashboard and run `doctor.py` again. The application checks required help flags before using an adapter; unsupported versions are not treated as working. Tests here use controlled responses rather than public scans. Unsupported tool versions may need a reviewed adapter change.
+After a separate installation, click **Check installed tools** again or run `doctor.py`. Restart the dashboard if its inherited PATH changed. The application checks required help flags before using an adapter; unsupported versions are not treated as working. Tests here use controlled responses rather than public scans. Unsupported tool versions may need a reviewed adapter change.
 
 ### HTTPX naming collision
 

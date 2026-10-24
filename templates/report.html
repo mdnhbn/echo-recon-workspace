@@ -1,11 +1,121 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Echo report — {{ job.domain }}</title>
-<style>body{font:16px system-ui,sans-serif;max-width:1000px;margin:40px auto;padding:0 24px;color:#162d35;background:#f4f8f8}header,section{background:white;border:1px solid #cedcdd;border-radius:12px;padding:22px;margin:18px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;background:#edf3f4;padding:14px}small{color:#42616a}h1{margin-bottom:8px}.warning{border-left:5px solid #ce732e}li{margin:10px 0}a{color:#006e70}</style></head>
-<body><header><small>ECHO RECON {{ job.version|default('6.0.0') }} · EVIDENCE REPORT</small><h1>{{ job.domain }}</h1><p>Status: <strong>{{ job.status }}</strong>{% if job.demo %} · <strong>SIMULATED DEMO — no external assessment</strong>{% endif %}</p><p>Created (UTC): {{ job.created }}</p><p>Explicit scope: {{ job.scope|join(', ') }}</p></header>
-<section class="warning"><h2>Coverage and limits / সীমাবদ্ধতা</h2><p>Completed means a command exited successfully. It does not mean the system is secure. Unverified findings are not confirmed vulnerabilities.</p><p>কোনো finding না পাওয়া মানেই সাইট নিরাপদ নয়। অসম্পূর্ণ পরীক্ষা ও যাচাই না করা ফল আলাদা করে দেখুন।</p><ul>{% for note in job.limitations %}<li>{{ note }}</li>{% endfor %}</ul></section>
-{% for phase in job.phases %}<section><h2>{{ phase.label }} — {{ phase.status }}</h2><small>Tool: {{ phase.tool }} · Exit code: {{ phase.returncode }} · {{ phase.duration }} seconds</small>
-{% if phase.attempts %}<ul>{% for attempt in phase.attempts %}<li>{{ attempt.host }}: {{ attempt.status }} · exit {{ attempt.returncode }} · {{ attempt.duration }}s</li>{% endfor %}</ul>{% endif %}
-{% if phase.evidence_truncated %}<p>Evidence storage limit reached. Output is incomplete.</p>{% endif %}
-{% if phase.findings %}{% for finding in phase.findings %}<h3>{{ finding.name }} ({{ finding.severity }})</h3><p>{{ finding.verification }}</p><p>Evidence location: {{ finding.matched }}</p><p>Template: {{ finding.template }}</p><p>Remediation: {{ finding.remediation }}</p>{% endfor %}{% endif %}
-<details open><summary>Evidence / প্রমাণ</summary><pre>{{ phase.evidence or 'No output captured.' }}</pre></details>{% if phase.stderr %}<details open><summary>Diagnostics</summary><pre>{{ phase.stderr }}</pre></details>{% endif %}</section>{% endfor %}
-<footer>Original project: Ahammed / ahammed18122002-art/auto-rec. Upgrade edition: mdnhbn collaboration. Review and redact before sharing.</footer></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recon Report — {{ job.domain }}</title>
+  <style>
+    :root{color-scheme:dark;--bg:#1a1a1a;--panel:#232323;--border:#3a3a3a;--text:#ececec;--muted:#aaa9a4;--accent:#d9805f;--green:#35c97c;--red:#f0786f;--blue:#76aff2;--yellow:#e0b84f}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI","Noto Sans Bengali","Hind Siliguri",system-ui,sans-serif;padding:28px 16px 60px;line-height:1.55}
+    .wrap{max-width:1000px;margin:0 auto}
+    header{margin-bottom:22px}.eyebrow{font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--accent);margin:0 0 8px}
+    h1{font-size:24px;line-height:1.35;margin:0 0 9px;overflow-wrap:anywhere}h2,h3{line-height:1.4}h3{font-size:15px;margin:0 0 9px}
+    .meta{color:var(--muted);font-size:13px;margin:6px 0;overflow-wrap:anywhere}.meta strong{font-weight:500;color:var(--text)}
+    .scope{margin-top:10px}.scope span{display:inline-block;border:1px solid var(--border);border-radius:6px;padding:2px 7px;margin:3px 4px 0 0;color:var(--text);font-family:Consolas,monospace;font-size:12px}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:22px 0 14px}
+    .stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:15px 10px;text-align:center}.stat-num{font-size:28px;line-height:1.2;font-weight:700;color:var(--accent)}.stat-lbl{font-size:12px;color:var(--muted);margin-top:5px}
+    .count-note{font-size:12px;color:var(--muted);margin:0 0 22px}.section-heading{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 10px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
+    .card-head{display:flex;align-items:center;gap:10px;padding:14px;cursor:pointer;list-style:none}.card-head::-webkit-details-marker{display:none}.card-head:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+    .card-title{flex:1;min-width:0;font-weight:600;font-size:14px;overflow-wrap:anywhere}.step{font-size:11px;color:var(--muted);min-width:22px}.tool-tag{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:2px 8px;overflow-wrap:anywhere}
+    .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--muted)}.dot.ok{background:var(--green)}.dot.err{background:var(--red)}.dot.warn{background:var(--yellow)}.dot.active{background:var(--blue)}
+    .status-pill{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap;color:var(--muted);background:#343433}.status-pill.ok{color:var(--green);background:rgba(53,201,124,.12)}.status-pill.err{color:var(--red);background:rgba(226,87,76,.12)}.status-pill.warn{color:var(--yellow);background:rgba(224,184,79,.12)}.status-pill.active{color:var(--blue);background:rgba(79,155,242,.12)}
+    .chev{color:var(--muted);font-size:20px;line-height:1;transition:transform .15s ease}.card[open]>.card-head>.chev{transform:rotate(90deg)}
+    .card-body{border-top:1px solid var(--border);padding:16px}.phase-meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0 0 15px;color:var(--muted);font-size:12px}.phase-meta strong{color:var(--text);font-weight:500}
+    pre{margin:8px 0 0;padding:14px;background:#1c1c1c;border:1px solid #333332;border-radius:7px;color:#d8d8d4;font-family:"Cascadia Code",Consolas,monospace;font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;max-height:480px;overflow-y:auto;tab-size:4}
+    .evidence-block{margin:17px 0 0}.evidence-block summary{cursor:pointer;font-size:13px;color:var(--text)}.evidence-block summary:focus-visible{outline:2px solid var(--accent)}
+    .notice{padding:9px 12px;margin:0 0 14px;border-left:3px solid var(--yellow);background:rgba(224,184,79,.07);font-size:13px;color:#ded3af}.findings{margin:18px 0}.finding{padding:13px;border:1px solid var(--border);border-radius:8px;margin-top:10px}.finding p{font-size:13px;margin:6px 0;overflow-wrap:anywhere}.finding-label{color:var(--muted)}.finding .verification{color:var(--yellow);font-size:12px}.severity{font-size:11px;font-weight:500;color:var(--accent)}
+    .attempts{overflow-x:auto;margin-top:16px}table{border-collapse:collapse;width:100%;font-size:12px;text-align:left}caption{text-align:left;color:var(--muted);font-size:12px;margin-bottom:6px}th,td{padding:8px 10px;border-bottom:1px solid var(--border);overflow-wrap:anywhere}th{color:var(--muted);font-weight:500}td:first-child{max-width:300px}
+    .limits{margin-top:24px}.limits>.card-head{color:var(--muted)}.limits .card-body{font-size:13px;color:var(--muted)}.limits p{margin:0 0 10px}.limits ul{padding-left:20px;margin:10px 0}.limits li{margin:8px 0}
+    footer{text-align:center;color:var(--muted);font-size:11px;line-height:1.8;margin-top:28px}footer p{margin:4px 0}a{color:var(--accent)}
+    @media(max-width:600px){body{padding:20px 12px 40px}h1{font-size:20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.card-head{gap:8px;flex-wrap:wrap}.card-title{flex-basis:65%}.tool-tag{margin-left:39px}.card-body{padding:12px}.stat-num{font-size:24px}}
+    @media print{:root{color-scheme:light;--bg:#fff;--panel:#fff;--border:#bbb;--text:#111;--muted:#555;--accent:#78402a;--green:#166b39;--red:#a52b24;--yellow:#795d00;--blue:#285e96}body{padding:0;font-size:12px}.wrap{max-width:none}.card{break-inside:avoid}.card> .card-body,.evidence-block>pre{display:block!important}.chev{display:none}pre{max-height:none;overflow:visible;background:#f5f5f5;color:#111;border-color:#ddd}.status-pill{background:#eee!important}.notice{color:#554617}.finding .verification{color:#795d00}footer{margin-top:15px}}
+  </style>
+</head>
+<body>
+{% set status_classes = {'done':'ok', 'complete':'ok', 'error':'err', 'missing':'err', 'timeout':'warn', 'partial':'warn', 'unverified':'warn', 'output_limit':'warn', 'interrupted':'warn', 'running':'active'} %}
+{% set totals = namespace(done=0, findings=0, duration=0) %}
+{% for phase in job.phases %}
+  {% if phase.status == 'done' %}{% set totals.done = totals.done + 1 %}{% endif %}
+  {% set totals.findings = totals.findings + (phase.findings|length) %}
+  {% set totals.duration = totals.duration + (phase.duration|default(0, true)) %}
+{% endfor %}
+<main class="wrap">
+  <header>
+    <p class="eyebrow">ECHO / RECON {{ job.version|default('6.0.0') }} · EVIDENCE REPORT</p>
+    <h1>Recon Report &middot; {{ job.domain }}</h1>
+    <p class="meta">Created (UTC): <strong>{{ job.created }}</strong> &nbsp;&middot;&nbsp; Tool execution time: <strong>{{ totals.duration|round(2) }}s</strong></p>
+    <p class="meta">Assessment status: <span class="status-pill {{ status_classes.get(job.status, '') }}">{{ job.status }}</span></p>
+    <div class="meta scope">Explicit scope: {% for host in job.scope %}<span>{{ host }}</span>{% endfor %}</div>
+  </header>
+
+  <section class="stats" aria-label="Recorded assessment totals">
+    <div class="stat"><div class="stat-num">{{ job.phases|length }}</div><div class="stat-lbl">Selected Tools</div></div>
+    <div class="stat"><div class="stat-num">{{ totals.done }}</div><div class="stat-lbl">Completed Phases</div></div>
+    <div class="stat"><div class="stat-num">{{ (job.phases|length) - totals.done }}</div><div class="stat-lbl">Incomplete Phases</div></div>
+    <div class="stat"><div class="stat-num">{{ totals.findings }}</div><div class="stat-lbl">Automated Findings</div></div>
+  </section>
+  <p class="count-note">Recorded findings require verification. A completed command or zero findings does not establish that a site is secure.</p>
+
+  <h2 class="section-heading">Assessment phases / পরীক্ষার ধাপ — open a phase to review its evidence</h2>
+  {% for phase in job.phases %}
+  <details class="card">
+    <summary class="card-head">
+      <span class="step">{{ '%02d'|format(loop.index) }}</span>
+      <span class="dot {{ status_classes.get(phase.status, '') }}" aria-hidden="true"></span>
+      <span class="card-title">{{ phase.label }}</span>
+      <span class="tool-tag">{{ phase.tool }}</span>
+      <span class="status-pill {{ status_classes.get(phase.status, '') }}">{{ phase.status }}</span>
+      <span class="chev" aria-hidden="true">&#8250;</span>
+    </summary>
+    <div class="card-body">
+      <p class="phase-meta"><span>Exit code: <strong>{{ phase.returncode if phase.returncode is not none else 'not available' }}</strong></span><span>Execution time: <strong>{{ phase.duration }}s</strong></span></p>
+      {% if phase.evidence_truncated %}<p class="notice">Evidence storage limit reached. Captured output is incomplete; review this phase's status and diagnostics.</p>{% endif %}
+
+      {% if phase.findings %}
+      <section class="findings" aria-label="Automated findings">
+        <h3>Automated findings / স্বয়ংক্রিয় ফলাফল</h3>
+        {% for finding in phase.findings %}
+        <article class="finding">
+          <h3>{{ finding.name }} <span class="severity">· {{ finding.severity }}</span></h3>
+          <p class="verification">{{ finding.verification }}</p>
+          <p><span class="finding-label">Evidence location:</span> {{ finding.matched }}</p>
+          <p><span class="finding-label">Template:</span> {{ finding.template }}</p>
+          <p><span class="finding-label">Remediation:</span> {{ finding.remediation }}</p>
+        </article>
+        {% endfor %}
+      </section>
+      {% endif %}
+
+      <details class="evidence-block" open><summary>Evidence / প্রমাণ</summary><pre>{{ phase.evidence or 'No output captured.' }}</pre></details>
+      {% if phase.stderr %}<details class="evidence-block" open><summary>Diagnostics / ত্রুটির বিবরণ</summary><pre>{{ phase.stderr }}</pre></details>{% endif %}
+
+      {% if phase.attempts %}
+      <div class="attempts">
+        <table>
+          <caption>Per-host execution records</caption>
+          <thead><tr><th scope="col">Host</th><th scope="col">Status</th><th scope="col">Exit</th><th scope="col">Time</th></tr></thead>
+          <tbody>{% for attempt in phase.attempts %}<tr><td>{{ attempt.host }}</td><td>{{ attempt.status }}</td><td>{{ attempt.returncode if attempt.returncode is not none else '—' }}</td><td>{{ attempt.duration }}s</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+  </details>
+  {% endfor %}
+
+  <details class="card limits">
+    <summary class="card-head"><span class="card-title">Coverage and limits / সীমাবদ্ধতা</span><span class="chev" aria-hidden="true">&#8250;</span></summary>
+    <div class="card-body">
+      <p>Completed means a command exited successfully. It does not mean the system is secure. Unverified findings are not confirmed vulnerabilities.</p>
+      <p lang="bn">কোনো finding না পাওয়া মানেই সাইট নিরাপদ নয়। অসম্পূর্ণ পরীক্ষা ও যাচাই না করা ফল আলাদা করে দেখুন।</p>
+      <ul>{% for note in job.limitations %}<li>{{ note }}</li>{% endfor %}</ul>
+    </div>
+  </details>
+  <footer>
+    <p>Original project: Ahammed / ahammed18122002-art/auto-rec. Upgrade edition: mdnhbn collaboration.</p>
+    <p>Use only on systems you own or have permission to assess. Review and redact before sharing.</p>
+  </footer>
+</main>
+</body>
+</html>

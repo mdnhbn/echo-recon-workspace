@@ -1,6 +1,8 @@
-# Echo Recon 6.1 — বাংলা নির্দেশনা
+# Echo Recon 6.2 — বাংলা নির্দেশনা
 
 এটি Kali Linux-এ নিজের কম্পিউটারে চালানোর একটি dashboard। আগের আটটি টুল—**DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun ও Nuclei**—রয়েছে। নতুন সংস্করণে ভুল ফল শনাক্ত করা, পরীক্ষা বন্ধ করা, ইতিহাস রাখা ও প্রমাণসহ রিপোর্ট দেখানো উন্নত হয়েছে।
+
+6.2 সংস্করণে আগের Echo-এর মতো dark dashboard ও report-এর উপস্থাপন ফিরেছে। Demo তৈরি করা বা আগে থেকে বানানো scan result দেখানো হয় না। **Download / setup tools** থেকে আটটি tool-এর official source ও ইনস্টলের নির্দেশনা দেখা যায়।
 
 [English README](README.md) · [Windows/WSL নির্দেশনা](docs/WINDOWS.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [আটটি টুলের সেটআপ](docs/TOOLS.md) · [সীমাবদ্ধতা](SECURITY.md)
 
@@ -11,14 +13,14 @@
 ## Windows-এ ব্যবহার
 
 - **Windows + Kali WSL2:** আটটি টুলসহ Linux workflow; Windows browser-এ dashboard খুলবেন।
-- **সরাসরি Windows + Python:** dashboard, demo, history, report ও development test। Live assessment-এর জন্য Kali WSL2 লাগবে।
+- **সরাসরি Windows + Python:** dashboard, সংরক্ষিত history, report ও development test। Live assessment-এর জন্য Kali WSL2 লাগবে।
 - `install.ps1`, `run.ps1` এবং আগে ইনস্টল করা WSL copy চালানোর `run-wsl.ps1` আছে। বিস্তারিত [Windows নির্দেশনা](docs/WINDOWS.md)। Windows ও Linux-এর `.venv`/`data` আলাদা রাখবেন।
 
 ## ১. আগে যা লাগবে
 
 - Kali Linux এবং Python 3.11 বা নতুন সংস্করণ।
 - সাধারণ user account। **Root হিসেবে চালাবেন না।**
-- ইনস্টলের সময় ইন্টারনেট। Demo চালাতে বাইরের scanner বা কোনো সাইটে পরীক্ষা দরকার নেই।
+- ইনস্টলের সময় ইন্টারনেট। বাইরের scanner আলাদাভাবে ইনস্টল করতে হয়; dashboard খুললেই কোনো পরীক্ষা শুরু হয় না।
 
 VirtualBox-এর ভেতরে Kali-র Terminal খুলুন। প্রতিটি block আলাদা করে লিখে Enter চাপুন। `sudo` পাসওয়ার্ড লেখার সময় অক্ষর দেখা যায় না—এটি স্বাভাবিক।
 
@@ -65,14 +67,13 @@ Terminal খোলা রাখুন। Desktop session-এ server প্রস
 
 Browser নিজে থেকে খুলতে না চাইলে `bash run.sh --no-browser` দিন। সরাসরি Windows-এ একই option: `.\run.ps1 -NoBrowser`। Desktop ছাড়া WSL session-এ Windows browser-এ ঠিকানাটি নিজে খুলুন।
 
-## ৪. প্রথমে Demo দেখুন
+## ৪. আগে টুলের অবস্থা ও সেটআপ দেখুন
 
-1. **Open demo / ডেমো দেখুন** চাপুন।
-2. ধাপগুলোর অগ্রগতি দেখুন। এখানে ফলগুলো বানানো উদাহরণ—বাস্তবে কোনো scanner বা DNS lookup চলে না।
-3. শেষ ধাপে ইচ্ছা করে একটি **timeout** দেখানো হয়।
-4. পুরো কাজ **partial** দেখাবে। এটি ত্রুটি নয়: অসম্পূর্ণ পরীক্ষাকে নিরাপদ বলা ঠিক নয়।
-5. **View report** চাপুন। চাইলে **HTML** বা **JSON** ডাউনলোড করুন।
-6. **Saved history** থেকে আগের রিপোর্ট আবার খুলুন।
+1. **Check installed tools** চাপুন। এটি কম্পিউটারে tool-এর পরিচয় ও help output যাচাই করে।
+2. কোনো tool missing বা unverified হলে তার setup link অথবা পাশের **Download / setup tools** চাপুন।
+3. Official source ও [টুল সেটআপ গাইড](docs/TOOLS.md) পড়ুন। যে tool প্রয়োজন, Terminal থেকে সেটি নিজে ইনস্টল করুন। Dashboard নিজে privileged installer চালায় না বা sudo password চায় না।
+4. ইনস্টল শেষে **Check installed tools** আবার চাপুন। নতুন করে যাচাই হবে। Shell-এর PATH বা environment বদলালে dashboard বন্ধ করে আবার চালান।
+5. Assessment তৈরি না করা পর্যন্ত dashboard-এ বানানো ফল বা sample history থাকবে না।
 
 পরীক্ষা চলাকালে **Stop / বন্ধ করুন** দিলে বর্তমান process ও Linux-এর তার process group বন্ধের অনুরোধ যায়। Dashboard বন্ধ করতে Terminal-এ **Ctrl+C** দিন। বিদ্যুৎ চলে যাওয়া বা process জোর করে kill করা graceful shutdown নয়; orphan process রয়ে গেছে কি না প্রয়োজনে পরীক্ষা করতে হবে।
 
@@ -84,7 +85,7 @@ Browser নিজে থেকে খুলতে না চাইলে `bash r
 .venv/bin/python doctor.py
 ```
 
-এটি টুলের local help/পরিচয় দেখে; কোনো target scan করে না। পুরো version compatibility-এর নিশ্চয়তা নয়। নতুন tool ইনস্টল বা PATH বদলানোর পর dashboard বন্ধ করে আবার চালান।
+এটি টুলের local help/পরিচয় দেখে; কোনো target scan করে না। পুরো version compatibility-এর নিশ্চয়তা নয়। `missing` মানে PATH-এ executable পাওয়া যায়নি। `unverified` মানে program পাওয়া গেছে, কিন্তু পরিচয় বা প্রয়োজনীয় help flag যাচাই পাস করেনি। তাই আগে path/version দেখুন; না বুঝে আবার ইনস্টল বা মুছে ফেলবেন না।
 
 ## ৬. Form পূরণ করার নিয়ম
 
@@ -95,6 +96,7 @@ Browser নিজে থেকে খুলতে না চাইলে `bash r
 5. Rate ও প্রতি tool/host-এর সময়সীমা ঠিক করুন। Rate সব টুল মিলিয়ে মোট request budget নয়।
 6. মালিকানা/অনুমতি ও network সীমাবদ্ধতা বোঝার checkbox দিন। তারপর **Start assessment**।
 7. ফলের প্রতিটি ধাপ, প্রমাণ ও diagnostic পড়ুন। শুধু সবুজ রং দেখে সিদ্ধান্ত নেবেন না।
+8. কাজ শেষে **View report** চাপুন। চাইলে **HTML** বা **JSON** ডাউনলোড করুন। **Saved history** থেকে সংরক্ষিত বাস্তব assessment আবার খুলুন।
 
 Subfinder কোনো নতুন subdomain পেলেই সেটিতে active scan হয় না। শুধু আপনার explicit scope তালিকার host-গুলো active ধাপে দেওয়া হয়। তবে এটি network firewall নয়: DNS বদলাতে পারে এবং বাইরের crawler/template অন্য destination-এ অনুরোধ পাঠাতে পারে। কঠোর isolation লাগলে আলাদা lab ও firewall দরকার।
 
@@ -132,6 +134,16 @@ bash run.sh
 
 নিজে কোড বদলালে আগে সেটি সংরক্ষণ করুন। পুরোনো Echo-এর report স্বয়ংক্রিয়ভাবে import করা হয় না। একসঙ্গে একই data directory দিয়ে একাধিক server চালাবেন না।
 
+### আগের সংস্করণের saved demo মুছতে
+
+6.2 সংস্করণে demo button ও demo তৈরির API নেই। আগের saved demo সরাতে আগে **Ctrl+C** দিয়ে dashboard বন্ধ করুন। তারপর repository folder থেকে চালান:
+
+```bash
+.venv/bin/python maintenance.py remove-demo
+```
+
+এই offline command শুধু স্পষ্টভাবে demo হিসেবে চিহ্নিত পুরোনো job সরায়। বাস্তব assessment-এর history রেখে দেয়। কোনো target scan করে না বা tool uninstall করে না। Demo সরাতে পুরো `data/` মুছবেন না। Server চলতে থাকা অবস্থায় cleanup চালাবেন না। Private backup Git-এ দেবেন না।
+
 Uninstall করতে dashboard বন্ধ করে file manager দিয়ে শুধু **এই project folder** Trash-এ সরান। দরকার হলে আগে `data/` backup নিন। বাইরের scanner-গুলো মুছে যাবে না।
 
 ## ১০. সাধারণ সমস্যার সমাধান
@@ -142,7 +154,7 @@ Uninstall করতে dashboard বন্ধ করে file manager দিয়�
 - **Reload/CSRF error:** server restart-এর পরে browser page reload করুন।
 - **8001 port ব্যস্ত:** আগে চালানো এই dashboard বন্ধ করুন।
 - **Timeout/partial:** রিপোর্টের diagnostics পড়ুন; এটি অসম্পূর্ণ পরীক্ষা।
-- **Tool install করার পরেও পুরোনো health:** dashboard restart করুন।
+- **Tool install করার পরেও পুরোনো health:** **Check installed tools** আবার চাপুন। PATH বদলালে dashboard restart করুন।
 
 ## ১১. Developer পরীক্ষা
 
@@ -151,6 +163,6 @@ Uninstall করতে dashboard বন্ধ করে file manager দিয়�
 bash -n install.sh run.sh
 ```
 
-এগুলো mock ফল ও local process দিয়ে চলে; কোনো public target scan করে না।
+এগুলো temporary directory-তে mock ফল ও local process দিয়ে চলে; production history-তে বানানো result যোগ করে না এবং কোনো public target scan করে না।
 
 মূল project: **Ahammed**, [auto-rec](https://github.com/ahammed18122002-art/auto-rec)। Upgrade collaboration: **mdnhbn**। Maintainer-এর নির্দেশনায় **[MIT license](LICENSE)** যোগ করা হয়েছে। বাইরের tool-গুলোর নিজস্ব license বহাল। বিস্তারিত [NOTICE.md](NOTICE.md)।
