@@ -10,12 +10,19 @@ from echo_recon import __version__
 from echo_recon.browser import URL, has_desktop, open_when_ready
 from echo_recon.web import create_app
 from echo_recon.locking import InstanceLock
+from echo_recon.bootstrap import StartupToolSetup
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Echo Recon local dashboard")
+    parser.add_argument("--no-browser", action="store_true", help="Start the server without opening a browser")
+    parser.add_argument("--no-tool-setup", action="store_true",
+                        help="Skip automatic backend setup at startup; manual setup remains available")
+    return parser.parse_args(argv)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Echo Recon local dashboard")
-    parser.add_argument("--no-browser", action="store_true", help="Start the server without opening a browser")
-    args = parser.parse_args()
+    args = parse_args()
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         raise SystemExit("Run as your normal user, not root.")
     os.umask(0o077)
@@ -28,9 +35,12 @@ if __name__ == "__main__":
         raise SystemExit(str(exc))
     app = create_app()
     browser_stop = threading.Event()
+    startup_setup = None
 
     def stop(signum, frame):
         browser_stop.set()
+        if startup_setup:
+            startup_setup.close()
         app.extensions["echo_manager"].close()
         raise SystemExit(0)
 
@@ -41,6 +51,10 @@ if __name__ == "__main__":
     try:
         # Bind first: never open another app's page if this port is already occupied.
         server = make_server("127.0.0.1", 8001, app, threaded=True)
+        if not args.no_tool_setup:
+            startup_setup = StartupToolSetup(app.extensions["echo_setup"],
+                                             app.extensions["echo_manager"], version=__version__)
+            startup_setup.start()
         if not args.no_browser and has_desktop():
             threading.Thread(target=open_when_ready, args=(browser_stop,), daemon=True).start()
         elif not args.no_browser:
@@ -49,6 +63,8 @@ if __name__ == "__main__":
         server.serve_forever()
     finally:
         browser_stop.set()
+        if startup_setup:
+            startup_setup.close()
         if server:
             server.server_close()
         app.extensions["echo_manager"].close()

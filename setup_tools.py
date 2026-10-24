@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-"""Interactive, fixed-source backend setup for a normal Kali user.
+"""Interactive, fixed-source backend setup for a normal Linux user.
 
 Default/--plan only reads local paths: no commands, network requests or writes.
 --install executes a conditional plan, then verifies all eight tool adapters.
 No scan target is accepted and no assessment is started by this program.
 """
 import argparse
+import importlib.util
+import platform
+import urllib.request
+import urllib.error
 import os
 from pathlib import Path
 import re
 import shlex
+import ssl
 import shutil
 import subprocess
 import sys
@@ -33,6 +38,19 @@ APT_TOOLS = {"dnsrecon": "dnsrecon", "nmap": "nmap", "theHarvester": "theharvest
 PHOTON_URL = "https://github.com/s0md3v/Photon.git"
 PHOTON_COMMIT = "c8d2566841d69a268b244609921143d84b72b0c6"
 ARJUN_VERSION = "2.2.7"
+PORTABLE_SOURCE_VERSIONS = {"dnsrecon": "1.6.3", "theHarvester": "4.11.1"}
+# Package names are fixed, never supplied by browser input. No third-party
+# distro repository, profile edits, remote shell pipe, or whole-system upgrade.
+LINUX_FAMILIES = {
+    "apt": {"ids": {"debian", "ubuntu", "linuxmint", "pop", "raspbian"}, "manager": "/usr/bin/apt-get",
+            "base": ("python3-venv", "ca-certificates")},
+    "dnf": {"ids": {"fedora", "rhel", "centos", "rocky", "almalinux", "ol"}, "manager": "/usr/bin/dnf",
+            "base": ("python3-pip", "ca-certificates")},
+    "pacman": {"ids": {"arch", "manjaro", "endeavouros"}, "manager": "/usr/bin/pacman",
+               "base": ("python-pip", "ca-certificates")},
+    "zypper": {"ids": {"opensuse", "opensuse-leap", "opensuse-tumbleweed", "sles", "sled"}, "manager": "/usr/bin/zypper",
+               "base": ("python3-pip", "ca-certificates")},
+}
 # Exact runtime pins from the packages' official PyPI metadata. Build helpers
 # are pinned too, and source distributions build only inside the tool venv.
 BUILD_PINS = ("setuptools==80.9.0", "wheel==0.45.1", "packaging==25.0")
@@ -66,6 +84,8 @@ def go_target(home, name):
 def tool_target(home, name):
     if name in GO_MODULES:
         return go_target(home, name), ()
+    if name in PORTABLE_SOURCE_VERSIONS:
+        return managed_root(home) / f"{name}-{PORTABLE_SOURCE_VERSIONS[name]}" / f"venv/bin/{name}", ()
     if name == "arjun":
         return managed_root(home) / f"arjun-{ARJUN_VERSION}" / "venv/bin/arjun", ()
     if name == "photon":
@@ -95,15 +115,15 @@ def check_wrapper(home, name):
 def show_plan(home=None, output=print):
     """No subprocesses, diagnostic probes, mkdir or network activity here."""
     home = Path(home or Path.home())
-    output("Echo Recon backend setup — READ-ONLY PLAN (Kali Linux / Kali WSL2)")
+    output("Echo Recon backend setup — READ-ONLY PLAN (Linux native / WSL / VirtualBox)")
     output("No command, download, installation or scan is run in this mode.")
     output("With --install: check local help/version identity first; skip every ready tool.")
-    output("Existing system tools stay in place. Sudo is requested only in the interactive terminal for apt.")
+    output("Existing ready tools stay in place. Any sudo prompt stays in the visible terminal for fixed OS packages.")
     for name in TOOLS:
         path = shutil.which(name, path=local_path(home))
         output(f"  {name}: {path or 'not on PATH'} (not probed in plan mode)")
-    output("Conditional official apt packages: dnsrecon, nmap, theharvester; missing prerequisites only:")
-    output("  python3-venv, git, ca-certificates, golang-go. Go >=1.26 is required; no Go bootstrap scripts.")
+    output("Kali branch only — conditional apt packages: dnsrecon, nmap, theharvester; missing prerequisites:")
+    output("  Kali: python3-venv, git, ca-certificates, golang-go. Go >=1.26 is required; no Go bootstrap scripts.")
     output("  sudo /usr/bin/apt-get update")
     output("  sudo /usr/bin/apt-get install --yes --no-install-recommends <needed fixed packages above>")
     output(f"User-local environments: {managed_root(home)}")
@@ -117,24 +137,42 @@ def show_plan(home=None, output=print):
     output("Existing ready Nuclei/templates are untouched unless --update-templates is explicitly added.")
     output("Template refresh downloads current official templates (not a pinned template snapshot); no target is scanned.")
     output("Launchers are added in ~/.local/bin only when absent or exactly managed by this installer.")
+    output("Other supported distro families: Debian/Ubuntu (apt), Fedora/RHEL (dnf), Arch (pacman), openSUSE (zypper).")
+    output("Portable branch: fixed distro packages for Nmap/prerequisites, pinned official Linux amd64/arm64 binaries (no Go SDK) and isolated Python >=3.12 source environments.")
+    output("Alpine/musl and other architectures are not automatic-install targets; working tools are still usable manually.")
+    output("Portable Python dependencies resolve from official PyPI using the pinned upstream project's requirements; no cross-platform lock is claimed.")
     output("Run: python3 setup_tools.py --install   (terminal; may take several minutes and require free disk/RAM)")
+
+
+def linux_family(values=None):
+    """Read only os-release. Unknown/musl distributions never get guessed commands."""
+    if values is None:
+        try:
+            values = {}
+            for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
+                key, sep, value = line.partition("=")
+                if sep:
+                    values[key] = value.strip().strip('"')
+        except OSError as exc:
+            raise SetupError("Cannot identify Linux distribution. Install backends manually from their official sources.") from exc
+    distro = values.get("ID", "").lower()
+    if distro == "kali":
+        return "kali"
+    if distro == "alpine":
+        raise SetupError("Alpine/musl is not an automatic-install target: upstream browser/Python wheels require glibc. Use a supported glibc distro or install compatible tools manually.")
+    identities = {distro, *values.get("ID_LIKE", "").lower().split()}
+    for family, settings in LINUX_FAMILIES.items():
+        if identities & settings["ids"]:
+            return family
+    raise SetupError("Automatic Linux setup supports Kali, Debian/Ubuntu, Fedora/RHEL, Arch and openSUSE families. This distribution needs manual official tool installation.")
 
 
 def validate_platform():
     if sys.platform != "linux":
-        raise SetupError("Backend installation requires Kali Linux. On Windows, open Kali WSL2; see docs/WINDOWS.md.")
+        raise SetupError("Use native Windows setup_tools_windows.py on Windows, or this script inside Linux/WSL2.")
     if os.geteuid() == 0:
-        raise SetupError("Run as your normal Kali user, not root or sudo python. Apt will ask for sudo separately.")
-    try:
-        values = {}
-        for line in Path("/etc/os-release").read_text(encoding="utf-8").splitlines():
-            key, sep, value = line.partition("=")
-            if sep:
-                values[key] = value.strip().strip('"')
-    except OSError as exc:
-        raise SetupError("Cannot identify this Linux distribution; automatic setup supports Kali only.") from exc
-    if values.get("ID") != "kali":
-        raise SetupError("Automatic backend setup supports Kali only. See docs/TOOLS.md for official manual sources.")
+        raise SetupError("Run as your normal Linux user, not root or sudo python. OS packages request sudo separately.")
+    return linux_family()
 
 
 class Installer:
@@ -426,11 +464,217 @@ class Installer:
         return 0
 
 
+def _portable_assets():
+    # Shared immutable hashes/source snapshots, not the Windows validator or
+    # Windows execution code. These helpers are platform-neutral and read-only.
+    import setup_tools_windows as assets
+    return assets
+
+
+def portable_download(url, limit=200 * 1024 * 1024):
+    assets = _portable_assets()
+    allowed = {item["url"] for item in assets.SOURCE_ARCHIVES.values()}
+    for name, item in assets.WINDOWS_RELEASES.items():
+        allowed.add(item["checksums_url"])
+        prefix = item["url"].rsplit("/", 1)[0]
+        for arch in ("amd64", "arm64"):
+            allowed.add(f"{prefix}/{name}_{item['version']}_linux_{arch}.zip")
+    if url not in allowed:
+        raise SetupError("Download URL is outside the pinned official Linux sources.")
+    assets._check_https_host(url)
+    opener = urllib.request.build_opener(assets.FixedSourceRedirect())
+    request = urllib.request.Request(url, headers={"User-Agent": "Echo-Recon-linux-setup/1"})
+    try:
+        with opener.open(request, timeout=60) as response:
+            assets._check_https_host(response.geturl())
+            chunks, total = [], 0
+            while True:
+                chunk = response.read(min(1024 * 1024, limit + 1 - total))
+                if not chunk:
+                    return b"".join(chunks)
+                total += len(chunk)
+                if total > limit:
+                    raise SetupError("Official Linux asset exceeds the reviewed size limit.")
+                chunks.append(chunk)
+    except (OSError, urllib.error.URLError) as exc:
+        raise SetupError(f"Official Linux download failed: {exc}") from exc
+
+
+class PortableInstaller(Installer):
+    """Common glibc distro setup without adding Kali repositories or a Go SDK.
+
+    Nmap and missing Python/CA prerequisites use the distro's own package
+    manager. Other backends live in isolated, versioned normal-user folders.
+    Upstream Python dependencies resolve for this interpreter/platform from
+    PyPI, using the pinned project's declared requirements (not a lockfile).
+    """
+    def __init__(self, family, home=None, run=None, check_tools=None, output=print, fetch=None):
+        if family not in LINUX_FAMILIES:
+            raise SetupError("Unsupported Linux package manager family.")
+        super().__init__(home=home, run=run, check_tools=check_tools, output=output)
+        self.family = family
+        self.fetch = fetch or portable_download
+
+    def architecture(self):
+        arch = {"x86_64": "amd64", "amd64": "amd64", "aarch64": "arm64", "arm64": "arm64"}.get(platform.machine().lower())
+        if arch is None:
+            raise SetupError("Automatic portable Linux assets support x86_64/AMD64 and aarch64/ARM64. Install other architecture backends manually.")
+        return arch
+
+    def prerequisites(self, needed):
+        python_needed = any(name not in GO_MODULES and name != "nmap" for name in needed)
+        if any(name in PORTABLE_SOURCE_VERSIONS for name in needed) and tuple(sys.version_info[:2]) < (3, 12):
+            raise SetupError("Pinned DNSRecon/theHarvester require Python >=3.12. Install a supported distro Python 3.12+ and recreate the dashboard venv with it before retrying.")
+        settings = LINUX_FAMILIES[self.family]
+        packages = ["nmap"] if "nmap" in needed else []
+        if python_needed and any(importlib.util.find_spec(name) is None for name in ("venv", "ensurepip")):
+            packages.extend(settings["base"])
+        trust = ssl.get_default_verify_paths()
+        if needed and not (trust.cafile or trust.capath):
+            packages.append("ca-certificates")
+        if not packages:
+            return
+        manager = settings["manager"]
+        if not Path(manager).is_file():
+            raise SetupError(f"Expected official package manager is missing: {manager}. Configure this distro's supported manager manually.")
+        if not sys.stdin.isatty():
+            raise SetupError("OS package installation needs an interactive terminal for sudo. Run python3 setup_tools.py --install in your Linux terminal.")
+        if not Path("/usr/bin/sudo").is_file():
+            raise SetupError("This normal-user installation needs sudo for fixed distro packages. Ask your administrator to install the displayed prerequisites; do not run the dashboard as root.")
+        packages = list(dict.fromkeys(packages))
+        self.output(f"Only these fixed {self.family} packages are requested: " + ", ".join(packages))
+        prefix = ["/usr/bin/sudo", manager]
+        if self.family == "apt":
+            self.command([*prefix, "update"])
+            self.command([*prefix, "install", "--yes", "--no-install-recommends", *packages])
+        elif self.family == "dnf":
+            self.command([*prefix, "install", "--assumeyes", *packages])
+        elif self.family == "pacman":
+            self.command([*prefix, "-S", "--needed", "--noconfirm", *packages])
+        else:
+            self.command([*prefix, "--non-interactive", "install", "--no-recommends", *packages])
+
+    def version_folder(self, name):
+        target, _ = tool_target(self.home, name)
+        return target.parent.parent.parent if name not in GO_MODULES else target.parent.parent
+
+    def preflight(self, needed, initial):
+        self.architecture()
+        for name in needed:
+            if name != "nmap":
+                check_wrapper(self.home, name)
+                folder = self.version_folder(name)
+                self.safe_managed_path(folder)
+                if os.path.lexists(folder):
+                    raise SetupError(f"Existing incomplete/unverified tool folder preserved: {folder}. Inspect/relocate it manually before retrying.")
+            else:
+                path = initial.get(name, {}).get("path")
+                if path and Path(path).resolve() != Path("/usr/bin/nmap").resolve():
+                    raise SetupError(f"Unverified nmap shadows the official distro command: {path}. Inspect PATH before retrying.")
+        if any(name != "nmap" for name in needed):
+            self.check_storage()
+
+    def install_release(self, name):
+        assets = _portable_assets()
+        item = assets.WINDOWS_RELEASES[name]
+        if GO_MODULES[name].rsplit("@v", 1)[1] != item["version"]:
+            raise SetupError("Shared release metadata differs from the reviewed Linux version; update both pins before setup.")
+        arch = self.architecture()
+        filename = f"{name}_{item['version']}_linux_{arch}.zip"
+        manifest = self.fetch(item["checksums_url"], limit=100_000)
+        assets.verify_sha256(manifest, item["checksums_sha256"])
+        expected = assets.checksum_for(manifest, filename)
+        payload = self.fetch(item["url"].rsplit("/", 1)[0] + "/" + filename)
+        assets.verify_sha256(payload, expected)
+        target, _ = tool_target(self.home, name)
+        self.safe_managed_path(target)
+        assets.extract_zip(payload, target.parent, binary=name)
+        os.chmod(target, 0o755)
+        self.write_wrapper(name)
+
+    def install_source(self, name):
+        assets = _portable_assets()
+        folder = self.version_folder(name)
+        self.safe_managed_path(folder)
+        if os.path.lexists(folder):
+            raise SetupError(f"Existing environment was preserved: {folder}.")
+        if name in assets.SOURCE_ARCHIVES:
+            item = assets.SOURCE_ARCHIVES[name]
+            payload = self.fetch(item["url"])
+            assets.verify_sha256(payload, item["sha256"])
+            assets.extract_zip(payload, folder / "source", prefix=item["prefix"])
+        else:
+            folder.mkdir(parents=True, exist_ok=False)
+        venv = folder / "venv"
+        python = venv / "bin/python"
+        self.command([sys.executable, "-I", "-m", "venv", "--copies", str(venv)])
+        self.check_managed_tree(venv)
+        pip = [str(python), "-I", "-m", "pip", "--isolated", "install", "--disable-pip-version-check",
+               "--no-input", "--index-url", "https://pypi.org/simple"]
+        self.command([*pip, "--only-binary=:all:", "--no-deps", *assets.BUILD_PINS])
+        if name in {"dnsrecon", "theHarvester"}:
+            # Fixed source; upstream requirements include correct OS markers.
+            self.command([*pip, "--no-build-isolation", str(folder / "source")])
+        elif name == "arjun":
+            self.command([*pip, "--no-deps", "--no-build-isolation", *ARJUN_PINS[1:]])
+            self.command([*pip, "--no-deps", "--no-build-isolation", assets.ARJUN_SOURCE])
+        else:
+            self.command([*pip, "--no-deps", "--no-build-isolation", *PHOTON_PINS])
+        self.command([str(python), "-I", "-m", "pip", "--isolated", "check"])
+        self.write_wrapper(name)
+
+    def install(self, update_templates=False):
+        initial = self.health()
+        needed = [name for name in TOOLS if initial.get(name, {}).get("status") != "ready"]
+        for name in TOOLS:
+            self.output(f"{name}: " + ("needs setup" if name in needed else "SKIP — existing tool passed local checks"))
+        if not needed and not update_templates:
+            self.output("All 8 tools passed local checks. No install or scan was needed.")
+            return 0
+        self.preflight(needed, initial)
+        self.prerequisites(needed)
+        if any(name != "nmap" for name in needed):
+            self.prepare()
+        failures, new_nuclei = [], False
+        assets = _portable_assets()
+        for name in needed:
+            if name == "nmap":
+                continue
+            try:
+                if name in GO_MODULES:
+                    self.install_release(name)
+                    new_nuclei |= name == "nuclei"
+                else:
+                    self.install_source(name)
+            except (SetupError, assets.SetupError, OSError) as exc:
+                failures.append(name)
+                self.output(f"SETUP ERROR — {name}: {exc}")
+        final = self.health()
+        if new_nuclei or update_templates:
+            try:
+                self.update_templates(final)
+            except SetupError as exc:
+                failures.append("nuclei templates")
+                self.output(f"TEMPLATE ERROR — {exc}")
+        self.output("\nFinal local checks (help/identity only; no target scan):")
+        not_ready = []
+        for name in TOOLS:
+            item = final.get(name, {})
+            self.output(f"  {name}: {item.get('status', 'unknown')} — {item.get('detail', '')}")
+            if item.get("status") != "ready":
+                not_ready.append(name)
+        if failures or not_ready:
+            self.output("Setup is incomplete. Existing files were preserved; inspect errors before retrying.")
+            return 1
+        self.output("All 8 tools passed local checks. Refresh Check installed tools. No scan was run.")
+        return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--plan", action="store_true", help="Show read-only plan (default); no commands, network or writes")
-    mode.add_argument("--install", action="store_true", help="Install missing backend tools interactively on Kali")
+    mode.add_argument("--install", action="store_true", help="Install missing backend tools together on supported Linux distributions")
     parser.add_argument("--update-templates", action="store_true", help="With --install, also refresh templates of an existing ready Nuclei")
     parser.add_argument("--pause", action="store_true", help="Keep the interactive terminal open until Enter")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data", help="Local dashboard data directory for the setup lock (trusted launcher configuration)")
@@ -442,7 +686,7 @@ def main(argv=None):
         if not args.install:
             show_plan()
             return 0
-        validate_platform()
+        family = validate_platform()
         print("Echo Recon backend setup. Only the fixed official sources below are used. No scan is run.", flush=True)
         show_plan()
         data = args.data_dir.expanduser().resolve()
@@ -453,7 +697,8 @@ def main(argv=None):
             lock = InstanceLock(data / "setup-tools.lock").acquire()
         except RuntimeError as exc:
             raise SetupError("Another backend setup is already running. Finish/close that terminal before retrying.") from exc
-        return Installer().install(update_templates=args.update_templates)
+        installer = Installer() if family in {None, "kali"} else PortableInstaller(family)
+        return installer.install(update_templates=args.update_templates)
     except (SetupError, OSError) as exc:
         print(f"\nSetup stopped: {exc}", file=sys.stderr, flush=True)
         return 1

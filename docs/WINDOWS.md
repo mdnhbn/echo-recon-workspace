@@ -1,37 +1,80 @@
-# Windows setup / Windows-এ চালানোর নিয়ম
+# Windows, WSL and VirtualBox setup / Windows-এ চালানো
 
-## Choose the right mode / কোন পদ্ধতি ব্যবহার করবেন
+[English README](../README.md) · [বাংলা README](../README.bn.md) · [Tool setup](TOOLS.md)
 
-| Mode | Supported features | How to run |
-|---|---|---|
-| Kali Linux / Kali VirtualBox | Dashboard and all eight adapters, with separately installed tools | `bash install.sh`, `bash run.sh` |
-| Windows + Kali WSL2 | The same Linux workflow, viewed from a Windows browser | Install inside Kali WSL2; start there or use `run-wsl.ps1` |
-| Native Windows + Python | Dashboard, saved history, HTML/JSON reports, development tests | `install.ps1`, `run.ps1` |
+## Choose the environment
 
-**Native Windows live assessments are deliberately disabled.** Installing Python does not turn Linux scanner wrappers into Windows tools. Use Kali WSL2 for the full scanner workflow. The application explains this and rejects unsupported native live requests server-side.
+| Environment | Where to install/run |
+|---|---|
+| Native Windows x64 | Windows Python **3.12 x64**, `install.ps1`, `run.ps1`; native backend executables/venvs. WSL is optional. |
+| WSL Linux | Clone into Linux HOME; run `bash install.sh` and `bash run.sh` inside that distribution. |
+| VirtualBox Kali | Clone/install/run inside Kali; use the browser inside the guest for its own loopback server. |
 
-সরাসরি Windows-এ dashboard, সংরক্ষিত history, report ও development করা যাবে। আটটি scanner-এর পুরো কাজের জন্য Windows-এর মধ্যে **Kali WSL2** ব্যবহার করুন। দুটি mode-এর project folder, `.venv` ও `data` আলাদা রাখুন। Demo বা বানানো scan result তৈরি হয় না।
+These are separate installations. Do not share a Windows venv with Linux, reuse databases across running instances, or assume a tool in VirtualBox is installed in Windows/WSL.
 
-## A. Full workflow with Kali WSL2 (recommended)
+সরাসরি Windows-এও native tool setup ও adapter আছে; WSL বাধ্যতামূলক নয়। Windows, WSL এবং VirtualBox-এর tool/environment আলাদা। যে environment-এ dashboard চালাবেন, সেখানেই backend ইনস্টল হবে।
 
-Follow [Microsoft's official WSL installation guide](https://learn.microsoft.com/windows/wsl/install). Supported commands below require a current Windows 11 or supported Windows 10 with WSL support. Enabling WSL may require administrator permission and a restart.
+## Native Windows: download → install → run
 
-Open PowerShell as administrator for the **one-time WSL installation**:
-
-```powershell
-wsl --list --online
-wsl --install -d kali-linux
-```
-
-Use the distribution name shown in your online list. Restart if requested, open Kali, and create your normal Linux username/password privately. Do not post the password in an issue.
-
-Then open a normal Windows Terminal / PowerShell:
+Use normal PowerShell in a private user-owned folder. Install [Python 3.12 x64](https://www.python.org/downloads/windows/) and [Git](https://git-scm.com/downloads/win) first.
 
 ```powershell
-wsl -d kali-linux
+git clone https://github.com/mdnhbn/echo-recon-workspace.git
+cd echo-recon-workspace
+.\install.ps1
+.\run.ps1
 ```
 
-You are now **inside Kali Linux**. The next commands are Bash commands, not PowerShell:
+The installer prefers Python 3.12. If you have several interpreters:
+
+```powershell
+.\install.ps1 -PythonExe 'C:\Path\To\Python312\python.exe'
+```
+
+A normal launch opens **http://127.0.0.1:8001**. Automatic startup help checks keep ready tools and start the fixed setup when needed. Progress appears under **Tool health** / **Download / Setup**. An identical unsuccessful automatic attempt is remembered to prevent restart loops; click **Setup all tools** after fixing its error.
+
+### Seven automatic backends; Nmap confirmation
+
+Subfinder, ProjectDiscovery HTTPX and Nuclei use verified official Windows x64 ZIPs. DNSRecon, theHarvester, Photon and Arjun have separate versioned Python environments. Storage is:
+
+```text
+C:\Users\YOUR-USER\Tools\EchoRecon\tooling
+```
+
+This location is shared by ordinary desktop launches and packaged-application launches. Older copies in virtualized AppData are not moved or deleted automatically. Windows tools are resolved using explicit managed paths without changing the global PATH.
+
+Nmap uses its [official Windows installer](https://nmap.org/download.html). Complete the license and any administrator confirmations yourself, then recheck. The application does not install Npcap drivers or accept agreements unattended. The Windows adapter uses TCP connect `-sT`, service detection and `-Pn`; this does not add UDP, OS detection or raw-packet scanning.
+
+`ready` proves a local help/identity check, not all upstream network/API behavior. Native cancellation uses a Windows Job Object to contain the tool process tree and fails rather than running a tool uncontained if assignment is unavailable. Local process fixtures exercise this behavior; no public assessment has been used as a release certification.
+
+### Dashboard-only and startup controls
+
+```powershell
+.\install.ps1 -DashboardOnly
+.\run.ps1 -NoToolSetup -NoBrowser
+```
+
+Dashboard-only accepts Python 3.11+. Full bundled Windows backend setup requires **3.12 x64**. `-NoToolSetup` skips automatic startup installation; the explicit setup button remains available. `-NoBrowser` only suppresses browser opening.
+
+### If PowerShell blocks scripts
+
+Read the scripts and respect your local policy. Do not weaken execution policy. Direct Python works without venv activation:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --require-hashes --only-binary=:all: -r requirements.txt
+.\.venv\Scripts\python.exe setup_tools_windows.py --plan
+.\.venv\Scripts\python.exe setup_tools_windows.py --install
+.\.venv\Scripts\python.exe app.py
+```
+
+The plan is read-only. The install command performs setup but accepts no target. Use a full interpreter path if `py` is unavailable. Stop the app with Ctrl+C in its original terminal.
+
+## WSL: use Linux tools inside Linux
+
+If WSL is not installed, follow [Microsoft's WSL installation guide](https://learn.microsoft.com/windows/wsl/install). WSL installation, administrator approval and any reboot are separate manual system steps; this project does not perform them.
+
+For an existing Kali WSL installation, open it, use a normal Linux account and run:
 
 ```bash
 sudo apt update
@@ -44,90 +87,43 @@ bash install.sh
 bash run.sh
 ```
 
-Leave that terminal open. In Windows Edge/Firefox/Chrome, visit **http://127.0.0.1:8001**. Microsoft documents Windows-to-WSL localhost access in its [WSL networking guide](https://learn.microsoft.com/windows/wsl/networking). If localhost forwarding is restricted on your machine, troubleshoot WSL networking; do not change this dashboard to bind `0.0.0.0`, open a firewall port or disable its local-client checks as a shortcut.
-
-Use **Check installed tools** and **Download / setup tools**, then follow [TOOLS.md](TOOLS.md). A Kali desktop session can use **Setup all tools**; headless WSL users run `.venv/bin/python setup_tools.py --plan` and then `.venv/bin/python setup_tools.py --install` in the Kali repository terminal, after finishing/stopping assessments. Install/check tools **inside the same Kali WSL distribution**. Tools installed in a VirtualBox VM or native Windows are not automatically installed in WSL. After setup, recheck tools; restart the server if PATH changed. Keep the repository in Linux HOME, not `/mnt/c`, for this workflow. Do not reuse the Windows virtual environment or database.
-
-পরেরবার Kali terminal-এ project folder থেকে `bash run.sh` দিলেই হবে। Windows-এ repo-এর আরেকটি কপি থাকলে তার PowerShell থেকে `run-wsl.ps1` দিয়েও WSL-এর নির্দিষ্ট Linux folder-এর project চালানো যায়:
-
-```powershell
-.\run-wsl.ps1
-# Only if your installed distro has another name:
-.\run-wsl.ps1 -Distro kali-linux
-```
-
-The launcher starts an already installed Linux copy at `~/Tools/02-Custom/echo-recon-workspace`. It does not install WSL, change a default distro, request administrator rights or copy environments between operating systems. Stop with Ctrl+C in its terminal. A WSL distro with a different name can be selected explicitly.
-
-## B. Native Windows dashboard and development
-
-Install a current Python **3.11+** from [python.org](https://www.python.org/downloads/windows/) and Git from [git-scm.com](https://git-scm.com/downloads/win), or download the repository ZIP and extract into a **new private user-owned folder**. Do not run as administrator. Open PowerShell in that folder.
-
-```powershell
-git clone https://github.com/mdnhbn/echo-recon-workspace.git
-cd echo-recon-workspace
-.\install.ps1
-.\run.ps1
-```
-
-If multiple Python installations exist, choose one explicitly:
-
-```powershell
-.\install.ps1 -PythonExe 'C:\Path\To\python.exe'
-```
-
-The default browser opens **http://127.0.0.1:8001** after the local server is ready. If it does not open, enter that address yourself. You can inspect the dashboard, saved history and report exports, and test contributions. A new installation has no sample scan history. **Download / setup tools** shows official sources and a guide; it does not install scanners or enable native Windows assessments. Stop the server with Ctrl+C. The application uses a Windows file lock so another instance cannot alter recovery state for the same data directory. Use `.\run.ps1 -NoBrowser` to disable browser opening; for a WSL launch use `.\run-wsl.ps1 -NoBrowser`. Headless WSL normally needs you to open the address in Windows yourself.
-
-### If PowerShell blocks a script
-
-Read the script first and follow your organization's policy. You do not need to weaken the machine's execution policy: use Python directly instead:
-
-```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --require-hashes --only-binary=:all: -r requirements.txt
-.\.venv\Scripts\python.exe app.py
-```
-
-If `py` is unavailable, use the full path to your installed Python. Do not use `sudo`, Linux `.venv/bin/python` or Git Bash to activate a Windows environment. No activation is needed when using the full `.venv\Scripts\python.exe` path.
-
-### Tests on Windows
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
-```
-
-CI checks both Linux and Windows. OS-specific process tests are skipped on the other operating system. Tests use fixtures and local child processes in temporary directories; they do not seed production history or contact public targets. Full WSL provisioning/adapter network operation is a separate integration check; Windows CI does not install Kali WSL or certify scanner behavior there.
-
-## Storage, permissions and updates
-
-On Linux, private directory/file modes are applied. On Windows, `chmod` does **not** create equivalent private NTFS permissions. Use your private Windows user profile, retain suitable inherited NTFS permissions, and avoid shared/synced folders for `data/`. Reports may contain sensitive evidence.
-
-Windows-এ user-এর private folder ব্যবহার করুন। Linux-এর permission ও Windows-এর ACL এক নয়। `data/`, report, secret বা `.venv` GitHub-এ দেবেন না।
-
-Stop before updating. In a Windows copy:
-
-```powershell
-git status
-git pull --ff-only
-.\install.ps1
-.\run.ps1
-```
-
-Inside a WSL copy, use `bash install.sh` and `bash run.sh` instead. Both modes use port 8001, so do not run both at the same time on Windows if localhost ports conflict. Keep environments and histories separate.
-
-### Remove legacy demo history / পুরোনো demo history সরানো
-
-Version 6.2 no longer generates demos. To remove saved demos from an earlier native Windows installation, stop its dashboard with **Ctrl+C**, open PowerShell in that same repository and run:
-
-```powershell
-.\.venv\Scripts\python.exe maintenance.py remove-demo
-```
-
-For a Kali WSL copy, stop that copy and use its Linux environment instead:
+Headless `run.sh` runs setup in the same terminal so sudo prompts remain visible; it then starts the app without launching another setup window. If setup needs attention, read its output and use the explicit CLI retry below:
 
 ```bash
-.venv/bin/python maintenance.py remove-demo
+.venv/bin/python setup_tools.py --plan
+.venv/bin/python setup_tools.py --install
 ```
 
-The offline command removes only records explicitly marked as legacy demos; real assessment history is retained. It does not scan targets or remove scanner installations. Do not delete the whole `data/` directory, run cleanup against an active server, or copy one environment's database into another.
+In Windows, open **http://127.0.0.1:8001** when WSL localhost forwarding is available; see [Microsoft's WSL networking guide](https://learn.microsoft.com/windows/wsl/networking). Do not expose the dashboard on `0.0.0.0` or disable its local checks to work around networking.
 
-আগে যে mode-এর demo মুছবেন, সেই dashboard বন্ধ করুন। একই repository-র সঠিক Python environment দিয়ে command দিন। শুধু demo হিসেবে চিহ্নিত record সরবে; বাস্তব history রাখা হবে।
+The Windows-side launcher for an already installed Linux copy is:
+
+```powershell
+.\run-wsl.ps1 -Distro kali-linux
+.\run-wsl.ps1 -Distro kali-linux -NoToolSetup -NoBrowser
+```
+
+Its default Linux project is `~/Tools/02-Custom/echo-recon-workspace`. It does not install WSL or copy Windows environments into Linux. Other supported Linux families use their own package-manager/Python requirements from [TOOLS.md](TOOLS.md).
+
+## VirtualBox Kali
+
+Run the Linux commands **inside Kali**, as the normal user. A Windows-host copy is separate from the guest. Inside the Kali browser, `127.0.0.1:8001` reaches the Kali app. Opening the same address in Windows reaches a Windows listener, not the guest automatically.
+
+VirtualBox-এর Kali-তে সাধারণ user দিয়ে installer/app চালান। Linux package-এর sudo password শুধু Kali Terminal-এ দিন। নতুন চালু app-এ **Check installed tools** ও **Setup all tools** দেখে আটটি tool-এর অবস্থা যাচাই করুন।
+
+## Updates, private data and troubleshooting
+
+Stop the app first, back up private `data/` if needed, then `git status` and `git pull --ff-only`. Rerun the correct environment's installer and launcher. Both host and WSL may need port 8001; avoid conflicting listeners.
+
+Windows inherits NTFS permissions; Unix `chmod` is not a Windows ACL setup. Keep data private. Do not commit history, raw evidence, tokens, logs or venvs. Reports need review before sharing.
+
+| Symptom | Check |
+|---|---|
+| Only Nmap appears after a packaged-app installation | Update to 6.5.0 and run **Setup all tools**; it rebuilds missing managed tools in `~/Tools/EchoRecon/tooling` rather than moving old venvs. |
+| Python version/setup error | Use Python 3.12 x64 for Windows bundled backends. An existing broken/unknown/different-Python venv is preserved: back up private data and use a fresh project folder or deliberately recreate the environment after inspection. Dashboard-only is separate. |
+| HTTPX unverified | ProjectDiscovery HTTPX and Python HTTPX are different programs; inspect the resolved path. |
+| Setup failed or partial | Read progress/stderr. Existing unrelated/partial folders are preserved, not silently replaced. Retry deliberately after fixing the issue. |
+| CSRF error after restart | Reload the dashboard to get the new session. |
+| Port in use | Stop the other app instance; do not share a running data directory. |
+
+Tests: `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`. Tests use mocked downloads/tool responses and local process fixtures. Full fresh provisioning on every Windows/WSL configuration or external API compatibility is not guaranteed.

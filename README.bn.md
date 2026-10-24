@@ -1,131 +1,130 @@
-# Echo Recon 6.3 — বাংলা নির্দেশনা
+# Echo Recon 6.5.0 — বাংলা নির্দেশনা
 
-এটি Kali Linux-এ নিজের কম্পিউটারে চালানোর একটি dashboard। আগের আটটি টুল—**DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun ও Nuclei**—রয়েছে। নতুন সংস্করণে ভুল ফল শনাক্ত করা, পরীক্ষা বন্ধ করা, ইতিহাস রাখা ও প্রমাণসহ রিপোর্ট দেখানো উন্নত হয়েছে।
+এটি নিজের কম্পিউটারে চালানোর dashboard। আটটি আলাদা tool-এর কাজ নির্দিষ্ট ক্রমে চালায়, প্রমাণ রাখে এবং HTML/JSON report তৈরি করে। মূল project [Ahammed-এর Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); mdnhbn সহযোগিতায় এই সংস্করণ উন্নত হয়েছে।
 
-6.2 সংস্করণে আগের Echo-এর মতো dark dashboard ও report-এর উপস্থাপন ফিরেছে। Demo তৈরি করা বা আগে থেকে বানানো scan result দেখানো হয় না। **Download / setup tools** থেকে আটটি tool-এর official source ও ইনস্টলের নির্দেশনা দেখা যায়।
+[English README](README.md) · [Windows / WSL](docs/WINDOWS.md) · [টুল সেটআপ](docs/TOOLS.md) · [পূর্ণ ব্যবহারবিধি](docs/USAGE.bn.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [সীমাবদ্ধতা](SECURITY.md)
 
-[English README](README.md) · [Windows/WSL নির্দেশনা](docs/WINDOWS.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [আটটি টুলের সেটআপ](docs/TOOLS.md) · [সীমাবদ্ধতা](SECURITY.md)
+## কী উন্নতি হয়েছে
 
-**কোন ঘরে কী লিখবেন?** Dashboard-এর **How to use / ব্যবহারবিধি** খুলুন অথবা [সম্পূর্ণ বাংলা গাইড](docs/USAGE.bn.md) / [English guide](docs/USAGE.md) পড়ুন। গতিসীমা, ১২০ সেকেন্ডের সময়সীমা, আটটি check ও report-এর অর্থ বিস্তারিত আছে। উপরের **Light layout / Dark layout** বাটনে এক ক্লিকে দুই interface বদলায়; form-এর লেখা থাকে। দুটিতেই Matrix animation আছে; reduced-motion চালু থাকলে animation বন্ধ থাকে।
+- Dashboard ও প্রয়োজনীয় backend tool একসঙ্গে সেটআপ হয়। আগে থেকে ঠিক থাকা tool আবার নামায় না।
+- স্বাভাবিকভাবে চালু করলে missing tool আছে কি না দেখে প্রয়োজন হলে installer শুরু করে।
+- Windows-এর tool এখন `C:\Users\আপনার-নাম\Tools\EchoRecon\tooling`-এ থাকে। ফলে desktop shortcut দিয়ে চালালেও একই tool পাওয়া যায়।
+- সরাসরি Windows, Kali VirtualBox, WSL এবং সমর্থিত Linux family-এর আলাদা সেটআপ আছে। Windows-এর native adapter চালাতে WSL বাধ্যতামূলক নয়।
+- Dark/Light layout এক ক্লিকে বদলায়; form-এর লেখা থাকে। দুই layout-এই Matrix animation আছে; reduced-motion পছন্দ মেনে চলে।
+- আগে থেকে বানানো scan result বা demo data নেই। ব্যর্থতা, সময় শেষ হওয়া ও অসম্পূর্ণ ফল report-এ দেখা যায়।
 
-## শিক্ষার্থী ও সহপাঠীদের অবদান
-
-যে কেউ এই public repository **Fork → নতুন branch → পরিবর্তন → Pull Request** পদ্ধতিতে অবদান রাখতে পারবেন। Maintainer review করে মূল project-এ যোগ করবেন। সরাসরি মূল repo-তে সবার write access লাগবে না। Bug/feature form ও PR template দেওয়া আছে। [বাংলা contributor guide](CONTRIBUTING.bn.md) এবং [আচরণবিধি](CODE_OF_CONDUCT.md) দেখুন। Project-এ মূল লেখকের credit-সহ **[MIT license](LICENSE)** আছে।
-
-## Windows-এ ব্যবহার
-
-- **Windows + Kali WSL2:** আটটি টুলসহ Linux workflow; Windows browser-এ dashboard খুলবেন।
-- **সরাসরি Windows + Python:** dashboard, সংরক্ষিত history, report ও development test। Live assessment-এর জন্য Kali WSL2 লাগবে।
-- `install.ps1`, `run.ps1` এবং আগে ইনস্টল করা WSL copy চালানোর `run-wsl.ps1` আছে। বিস্তারিত [Windows নির্দেশনা](docs/WINDOWS.md)। Windows ও Linux-এর `.venv`/`data` আলাদা রাখবেন।
+আটটি tool হলো **DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun ও Nuclei**। এগুলো ইনস্টল হলেই scan শুরু হয় না, কোনো API account/key তৈরি হয় না।
 
 ## ১. আগে যা লাগবে
 
-- Kali Linux এবং Python 3.11 বা নতুন সংস্করণ।
-- সাধারণ user account। **Root হিসেবে চালাবেন না।**
-- ইনস্টলের সময় ইন্টারনেট। বাইরের scanner আলাদাভাবে ইনস্টল করতে হয়; dashboard খুললেই কোনো পরীক্ষা শুরু হয় না।
+| কোথায় চালাবেন | প্রয়োজন ও সীমা |
+|---|---|
+| সরাসরি Windows x64 | Backend setup-এর জন্য **Python 3.12 x64**, Git, সাধারণ user। সাতটি tool স্বয়ংক্রিয়; Nmap-এর official installer-এ নিজে confirmation দিতে হবে। |
+| Kali Linux / VirtualBox / Kali WSL | Distro Python, venv, দরকারি OS package-এর জন্য terminal-এ sudo। Missing Go tool build করতে Go 1.26+ লাগতে পারে। |
+| অন্যান্য সমর্থিত glibc Linux | Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE family; x86_64/aarch64 portable asset। DNSRecon/theHarvester source ইনস্টল করতে Python 3.12+ লাগে। |
+| অন্য distro/architecture | Dashboard Python 3.11+; compatible backend নিজে official source থেকে সেটআপ করতে হতে পারে। Alpine/musl automatic target নয়। |
 
-VirtualBox-এর ভেতরে Kali-র Terminal খুলুন। প্রতিটি block আলাদা করে লিখে Enter চাপুন। `sudo` পাসওয়ার্ড লেখার সময় অক্ষর দেখা যায় না—এটি স্বাভাবিক।
+Windows ও Kali-তে স্থানীয় tool/help এবং regression পরীক্ষা করা হয়েছে। অন্য distro-গুলোর installer logic mock দিয়ে পরীক্ষা করা হয়েছে; প্রতিটি distro-তে fresh install বা বাইরের website-এ পূর্ণ scan হয়েছে—এমন দাবি করা হচ্ছে না।
 
-## ২. ডাউনলোড এবং ইনস্টল
+Linux-এ **root দিয়ে app চালাবেন না**। Windows-এ administrator terminal লাগে না; Nmap installer দরকার হলে নিজে admin confirmation চাইবে। Password chat/dashboard-এ লিখবেন না।
 
-প্রথমে প্রয়োজনীয় সাধারণ সফটওয়্যার:
+## ২. Kali/Linux-এ download ও install
+
+Kali-তে প্রথমে প্রয়োজন হলে:
 
 ```bash
 sudo apt update
 sudo apt install -y git python3 python3-venv
 ```
 
-এরপর project রাখার ফোল্ডার তৈরি করে ডাউনলোড করুন:
+এরপর সাধারণ user-এর Terminal-এ:
 
 ```bash
 mkdir -p ~/Tools/02-Custom
 cd ~/Tools/02-Custom
 git clone https://github.com/mdnhbn/echo-recon-workspace.git
 cd echo-recon-workspace
-```
-
-`mkdir` ফোল্ডার বানায়, `cd` ফোল্ডারে ঢোকে, `git clone` GitHub থেকে project-এর কপি নামায়। ডাউনলোড করলেই ইনস্টল হয় না। এখন চালান:
-
-```bash
 bash install.sh
-```
-
-এটি project-এর ভেতর `.venv` নামে আলাদা Python পরিবেশ তৈরি করে। নির্দিষ্ট version ও SHA-256 hash মিলিয়ে dashboard-এর প্রয়োজনীয় package ইনস্টল করে। বাইরের আটটি scanner ইনস্টল করে না। আগের টুলের ফোল্ডার বা Java/Go বদলায় না।
-
-Git ব্যবহার করতে না চাইলে GitHub-এ **Code → Download ZIP**, তারপর নতুন ফোল্ডারে Extract করে সেই ফোল্ডারে Terminal খুলে `bash install.sh` দিন। পুরোনো ইনস্টলেশনের ওপর Extract করবেন না।
-
-## ৩. চালাবেন যেভাবে
-
-```bash
-cd ~/Tools/02-Custom/echo-recon-workspace
 bash run.sh
 ```
 
-Terminal খোলা রাখুন। Desktop session-এ server প্রস্তুত হলে default browser নিজে থেকে dashboard খুলবে। না খুললে Kali-র Firefox-এ লিখুন:
+- `mkdir` folder বানায়।
+- `cd` folder-এ ঢোকে।
+- `git clone` GitHub-এর project নামায়।
+- `install.sh` dashboard-এর আলাদা `.venv` বানায়, package-এর hash যাচাই করে এবং missing backend একসঙ্গে ইনস্টল করে।
+- `run.sh` dashboard চালায়।
 
-**http://127.0.0.1:8001**
+অন্য Linux family-তে আগে তার package manager দিয়ে Git, উপযুক্ত Python ও venv support ইনস্টল করে একই clone/install/run command দিন। নির্দিষ্ট OS package-এর জন্য Terminal-এ sudo চাইতে পারে। পুরো installer/app `sudo` দিয়ে চালাবেন না।
 
-`127.0.0.1` মানে আপনার নিজের Kali। পুরোনো Echo-এর 8000 port-এর সঙ্গে মিশে না যাওয়ার জন্য নতুন সংস্করণ 8001 ব্যবহার করে।
+## ৩. সরাসরি Windows-এ install
 
-Browser নিজে থেকে খুলতে না চাইলে `bash run.sh --no-browser` দিন। সরাসরি Windows-এ একই option: `.\run.ps1 -NoBrowser`। Desktop ছাড়া WSL session-এ Windows browser-এ ঠিকানাটি নিজে খুলুন।
+[Python 3.12 x64](https://www.python.org/downloads/windows/) ও [Git](https://git-scm.com/downloads/win) ইনস্টল করে সাধারণ PowerShell-এ দিন:
 
-## ৪. আগে টুলের অবস্থা ও সেটআপ দেখুন
-
-1. **Check installed tools** চাপুন। এটি কম্পিউটারে tool-এর পরিচয় ও help output যাচাই করে।
-2. কোনো tool missing বা unverified হলে তার setup link অথবা পাশের **Download / setup tools** চাপুন।
-3. Kali desktop-এ **Setup all tools** চাপলে আলাদা দৃশ্যমান terminal-এ নির্দিষ্ট installer খুলবে। ঠিক থাকা tool রেখে missing tool সেটআপ করবে। প্রয়োজন হলে শুধু ওই terminal-এ sudo password দিন। কাজ শেষ হলে terminal বন্ধ করে আবার tool check করুন। আলাদা করে ইনস্টল করতে চাইলে official link ও [টুল সেটআপ গাইড](docs/TOOLS.md) আছে।
-4. ইনস্টল শেষে **Check installed tools** আবার চাপুন। নতুন করে যাচাই হবে। Shell-এর PATH বা environment বদলালে dashboard বন্ধ করে আবার চালান।
-5. Assessment তৈরি না করা পর্যন্ত dashboard-এ বানানো ফল বা sample history থাকবে না।
-
-পরীক্ষা চলাকালে **Stop / বন্ধ করুন** দিলে বর্তমান process ও Linux-এর তার process group বন্ধের অনুরোধ যায়। Dashboard বন্ধ করতে Terminal-এ **Ctrl+C** দিন। বিদ্যুৎ চলে যাওয়া বা process জোর করে kill করা graceful shutdown নয়; orphan process রয়ে গেছে কি না প্রয়োজনে পরীক্ষা করতে হবে।
-
-## ৫. বাস্তব পরীক্ষা করার আগে
-
-শুধু নিজের বা স্পষ্ট অনুমতি থাকা host ব্যবহার করুন। [টুল সেটআপ গাইড](docs/TOOLS.md) দেখুন। টুল আছে কি না জানতে dashboard-এর **Check installed tools** অথবা:
-
-```bash
-.venv/bin/python doctor.py
+```powershell
+git clone https://github.com/mdnhbn/echo-recon-workspace.git
+cd echo-recon-workspace
+.\install.ps1
+.\run.ps1
 ```
 
-এটি টুলের local help/পরিচয় দেখে; কোনো target scan করে না। পুরো version compatibility-এর নিশ্চয়তা নয়। `missing` মানে PATH-এ executable পাওয়া যায়নি। `unverified` মানে program পাওয়া গেছে, কিন্তু পরিচয় বা প্রয়োজনীয় help flag যাচাই পাস করেনি। তাই আগে path/version দেখুন; না বুঝে আবার ইনস্টল বা মুছে ফেলবেন না।
+একাধিক Python থাকলে নিজের Python-এর সঠিক path বেছে নিতে পারবেন:
 
-## ৬. Form পূরণ করার নিয়ম
+```powershell
+.\install.ps1 -PythonExe 'C:\Path\To\Python312\python.exe'
+```
 
-1. **Primary domain**: মূল hostname লিখুন; `https://`, path, port বা `*` দেবেন না।
-2. **Exact authorized hosts**: অনুমোদিত hostname প্রতি লাইনে একটি লিখুন। মূল hostname-টিও রাখুন। সর্বোচ্চ পাঁচটি। অতিরিক্তগুলো মূল domain-এর subdomain হতে হবে।
-3. প্রয়োজনীয় check বেছে নিন। DNS, subdomain ও HTTPX আগে থেকে selected থাকে। বাকিগুলো আলাদা করে বেছে নিতে হয়।
-4. Photon বা Arjun চাইলে একই run-এ HTTPX-ও বেছে নিন। সচল in-scope host না পাওয়া গেলে এই দুটি ধাপ **skipped** হবে। আন্দাজ করে target বেছে নেয় না।
-5. Rate ও প্রতি tool/host-এর সময়সীমা ঠিক করুন। Rate সব টুল মিলিয়ে মোট request budget নয়।
-6. মালিকানা/অনুমতি ও network সীমাবদ্ধতা বোঝার checkbox দিন। তারপর **Start assessment**।
-7. ফলের প্রতিটি ধাপ, প্রমাণ ও diagnostic পড়ুন। শুধু সবুজ রং দেখে সিদ্ধান্ত নেবেন না।
-8. কাজ শেষে **View report** চাপুন। চাইলে **HTML** বা **JSON** ডাউনলোড করুন। **Saved history** থেকে সংরক্ষিত বাস্তব assessment আবার খুলুন।
+**Nmap আলাদা ধাপ:** [official Windows installer](https://nmap.org/download.html) খুলে license/administrator confirmation নিজে শেষ করুন। তারপর **Check installed tools** বা **Setup all tools** আবার চাপুন। App নিজে থেকে license মেনে নেয় না বা driver ইনস্টল করে না।
 
-Subfinder কোনো নতুন subdomain পেলেই সেটিতে active scan হয় না। শুধু আপনার explicit scope তালিকার host-গুলো active ধাপে দেওয়া হয়। তবে এটি network firewall নয়: DNS বদলাতে পারে এবং বাইরের crawler/template অন্য destination-এ অনুরোধ পাঠাতে পারে। কঠোর isolation লাগলে আলাদা lab ও firewall দরকার।
+PowerShell script বন্ধ করলে policy কমাবেন না; [Windows guide-এর সরাসরি Python পদ্ধতি](docs/WINDOWS.md) ব্যবহার করুন। Git না চাইলে GitHub-এর **Code → Download ZIP**, নতুন folder-এ Extract করে সেই folder-এ installer চালাতে পারেন। পুরোনো copy-এর ওপর Extract করবেন না।
 
-## ৭. ফলের শব্দগুলোর অর্থ
+## ৪. চালু হয়েছে কি না দেখুন
 
-| অবস্থা | অর্থ |
-|---|---|
-| `done` | Command সফল exit করেছে; সাইট নিরাপদ হওয়ার সনদ নয়। |
-| `missing` | প্রয়োজনীয় tool পাওয়া যায়নি। |
-| `unverified` | Executable পাওয়া গেছে, কিন্তু পরিচয়/help যাচাই পাস করেনি। |
-| `error` | Tool বা result parsing ব্যর্থ হয়েছে। |
-| `timeout` | নির্ধারিত সময়ে শেষ হয়নি। |
-| `output_limit` | অতিরিক্ত output হওয়ায় বন্ধ হয়েছে। |
-| `skipped` | পূর্বশর্ত পূরণ না হওয়ায় ধাপ চালানো হয়নি। |
-| `cancelled` | আপনি কাজ থামিয়েছেন। |
-| `interrupted` | চলার সময় server restart হয়েছে; পরীক্ষা অসম্পূর্ণ। |
-| `partial` | কিছু ধাপ অসম্পূর্ণ; পরিষ্কার নিরাপত্তা সিদ্ধান্ত দেওয়া যাবে না। |
+Desktop-এ browser নিজে থেকে **http://127.0.0.1:8001** খোলে। না খুললে নিজে লিখুন। Terminal খোলা রাখুন; app বন্ধ করতে ওই Terminal-এ Ctrl+C দিন। Browser tab বন্ধ করলেই server বন্ধ হয় না।
 
-Nuclei finding মানে যাচাই করার মতো সম্ভাব্য বিষয়। রিপোর্টে **unverified automated finding** বলা থাকে। হাতে যাচাই ছাড়া নিশ্চিত দুর্বলতা বলবেন না। কোনো finding না পাওয়া মানেও সাইট নিরাপদ নয়।
+`127.0.0.1` মানে যে environment-এ server চলছে সেটি। VirtualBox-এর Kali ও Windows host-এর loopback আলাদা। WSL-এর project Linux HOME-এ রাখুন; Windows/Kali/WSL-এর `.venv` ও `data` মেশাবেন না।
 
-## ৮. তথ্য কোথায় থাকে
+### Automatic setup ও retry
 
-এই repository-র `data/` ফোল্ডারে SQLite history ও Photon-এর raw crawl file থাকতে পারে। এগুলোতে সংবেদনশীল তথ্য থাকতে পারে। Git-এ `data/` বাদ দেওয়া আছে। সাধারণ secret pattern আড়াল করা হয়, তবে সব secret ধরা সম্ভব নয়—রিপোর্ট শেয়ার করার আগে নিজে দেখুন। কোনো AI provider-এ রিপোর্ট পাঠানো হয় না; এই সংস্করণে AI integration নেই।
+1. চালুর সময় স্থানীয় help/পরিচয় দেখে tool প্রস্তুত কি না যাচাই হয়।
+2. Missing থাকলে একসঙ্গে সেটআপ হয়। Windows-এর progress dashboard-এ; Linux desktop-এ আলাদা Terminal-এ দেখা যায়।
+3. Headless Linux/WSL-এ `run.sh` একই Terminal-এ setup চালায়, যাতে sudo prompt দেখা যায়।
+4. একই ব্যর্থ desktop automatic চেষ্টা `data/auto-setup.json`-এ মনে রাখে। শুধু restart দিলে বারবার একই download চালায় না। Error পড়ে **Setup all tools** দিয়ে retry করুন।
+5. **Check installed tools** আবার চাপুন। `ready` শুধু help/পরিচয় যাচাই পাস; API, template, provider বা scan-এর ফলের নিশ্চয়তা নয়। `unverified` হলে আগে version/path দেখুন।
+6. অন্য project-এর wrapper, অচেনা folder বা অসম্পূর্ণ environment নিজে থেকে overwrite করে না।
 
-## ৯. Update, backup এবং uninstall
+শুধু dashboard ইনস্টল করতে `bash install.sh --dashboard-only` বা `.\install.ps1 -DashboardOnly` দিন। পরে automatic backend setup-ও বন্ধ রাখতে চালান:
 
-আগে Ctrl+C দিয়ে dashboard বন্ধ করুন। প্রয়োজন হলে `data/`-এর private backup রাখুন। তারপর:
+```bash
+bash run.sh --no-tool-setup
+```
+
+Windows-এ:
+
+```powershell
+.\run.ps1 -NoToolSetup
+```
+
+Browser নিজে থেকে খুলতে না চাইলে সঙ্গে `--no-browser` / `-NoBrowser` দিন। Direct entry point-এ `python app.py --no-tool-setup`-ও আছে।
+
+## ৫. Form পূরণ করার সহজ নিয়ম
+
+বিস্তারিত [বাংলা ব্যবহারবিধি](docs/USAGE.bn.md)-তে আছে। সংক্ষেপে:
+
+1. নিজের বা স্পষ্ট অনুমতি থাকা hostname **Primary domain**-এ দিন। `https://`, path, port বা wildcard নয়।
+2. **Exact authorized hosts**-এ primary-সহ সর্বোচ্চ পাঁচটি নাম এক লাইনে একটি দিন। অন্য নামগুলো primary-এর subdomain হতে হবে।
+3. প্রয়োজনীয় check বাছুন। Photon/Arjun-এর জন্য একই run-এ HTTPX দিয়ে live scoped host পাওয়া লাগবে।
+4. **গতিসীমা** tool যেটুকু সমর্থন করে ততটুকু নিয়ন্ত্রণ করে; সব tool মিলিয়ে একটি মোট request meter নয়।
+5. **১২০ সেকেন্ড** প্রতিটি tool/host চেষ্টার সময়; পুরো run-এর সময় নয়।
+6. অনুমতি ও network সীমা পড়ে সত্য হলে confirmation দিয়ে Start চাপুন। ইনস্টল চললে assessment শুরু হয় না।
+7. **Stop** দিলে Linux process group বা Windows-এর contained process tree বন্ধ হয়। শেষে evidence ও report পড়ুন।
+
+Nmap top-100 port-এ TCP connect/service check করে। Windows-এ `-Pn` ব্যবহার করে raw-packet discovery এড়ায়। Nuclei finding হাতে যাচাই না করা পর্যন্ত **unverified**। Tool সফল বা finding শূন্য মানেই website নিরাপদ নয়।
+
+এটি network sandbox নয়। Third-party tool আবার DNS resolve করতে পারে, অন্য data service বা secondary destination-এ request পাঠাতে পারে। [Security সীমাবদ্ধতা](SECURITY.md) পড়ুন।
+
+## ৬. Update, backup এবং uninstall
+
+Server বন্ধ করে `data/`-এর private backup রাখুন। নিজের source edit থাকলে আগে `git status` দেখুন:
 
 ```bash
 git status
@@ -134,37 +133,25 @@ bash install.sh
 bash run.sh
 ```
 
-নিজে কোড বদলালে আগে সেটি সংরক্ষণ করুন। পুরোনো Echo-এর report স্বয়ংক্রিয়ভাবে import করা হয় না। একসঙ্গে একই data directory দিয়ে একাধিক server চালাবেন না।
+Windows-এ pull-এর পরে `.\install.ps1`, `.\run.ps1` ব্যবহার করুন। Force reset দেবেন না। পুরোনো venv অচেনা/নষ্ট বা অন্য Python major/minor দিয়ে তৈরি হলে installer সেটি রেখে থামে। Private data backup রেখে নতুন project folder ব্যবহার করুন, অথবা নিজের venv পরীক্ষা করে সচেতনভাবে rebuild করুন। Report/history/setup log/raw evidence-এ sensitive তথ্য থাকতে পারে; এগুলো GitHub-এ দেবেন না। কিছু secret ঢাকলেও সব চেনা সম্ভব নয়; report AI service-এ পাঠানো হয় না।
 
 ### আগের সংস্করণের saved demo মুছতে
 
-6.2 সংস্করণে demo button ও demo তৈরির API নেই। আগের saved demo সরাতে আগে **Ctrl+C** দিয়ে dashboard বন্ধ করুন। তারপর repository folder থেকে চালান:
+Production demo তৈরি হয় না। পুরোনো demo সরাতে server বন্ধ করে Linux-এ `.venv/bin/python maintenance.py remove-demo`, Windows-এ `.\.venv\Scripts\python.exe maintenance.py remove-demo` দিন। শুধু demo হিসেবে চিহ্নিত পুরোনো record সরবে; বাস্তব history থাকবে। পুরো `data/` মুছবেন না।
 
-```bash
-.venv/bin/python maintenance.py remove-demo
-```
+Repo folder Trash-এ নিলে বাইরে ইনস্টল করা tool নিজে থেকে uninstall হয় না। নিজের দরকারি history backup রেখে এবং installer-owned tool folder দেখে তারপর removal করুন।
 
-এই offline command শুধু স্পষ্টভাবে demo হিসেবে চিহ্নিত পুরোনো job সরায়। বাস্তব assessment-এর history রেখে দেয়। কোনো target scan করে না বা tool uninstall করে না। Demo সরাতে পুরো `data/` মুছবেন না। Server চলতে থাকা অবস্থায় cleanup চালাবেন না। Private backup Git-এ দেবেন না।
+## ৭. শিক্ষার্থী ও সহপাঠীদের অবদান
 
-Uninstall করতে dashboard বন্ধ করে file manager দিয়ে শুধু **এই project folder** Trash-এ সরান। দরকার হলে আগে `data/` backup নিন। বাইরের scanner-গুলো মুছে যাবে না।
+যে কেউ **Fork → branch → code/test/doc পরিবর্তন → Pull Request** দিতে পারেন। Maintainer review করে merge করবেন। [বাংলা contribution guide](CONTRIBUTING.bn.md), [English guide](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md) দেখুন।
 
-## ১০. সাধারণ সমস্যার সমাধান
-
-- **Root হিসেবে চলছে না:** সাধারণ Kali user-এর Terminal ব্যবহার করুন।
-- **venv error:** `python3-venv` ইনস্টল আছে কি না দেখুন।
-- **HTTPX unverified:** Python HTTPX ও ProjectDiscovery HTTPX আলাদা। `command -v httpx` এবং টুল গাইড দেখুন।
-- **Reload/CSRF error:** server restart-এর পরে browser page reload করুন।
-- **8001 port ব্যস্ত:** আগে চালানো এই dashboard বন্ধ করুন।
-- **Timeout/partial:** রিপোর্টের diagnostics পড়ুন; এটি অসম্পূর্ণ পরীক্ষা।
-- **Tool install করার পরেও পুরোনো health:** **Check installed tools** আবার চাপুন। PATH বদলালে dashboard restart করুন।
-
-## ১১. Developer পরীক্ষা
+Developer test:
 
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
 bash -n install.sh run.sh
 ```
 
-এগুলো temporary directory-তে mock ফল ও local process দিয়ে চলে; production history-তে বানানো result যোগ করে না এবং কোনো public target scan করে না।
+Windows-এ `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`। Test mock/স্থানীয় child process ব্যবহার করে; public target scan বা production history-তে fake result তৈরি করে না।
 
-মূল project: **Ahammed**, [auto-rec](https://github.com/ahammed18122002-art/auto-rec)। Upgrade collaboration: **mdnhbn**। Maintainer-এর নির্দেশনায় **[MIT license](LICENSE)** যোগ করা হয়েছে। বাইরের tool-গুলোর নিজস্ব license বহাল। বিস্তারিত [NOTICE.md](NOTICE.md)।
+মূল লেখক **Ahammed**; মূল source snapshot `f3fbf45`। mdnhbn জানিয়েছেন তিনি সহযোগী সহপাঠী এবং project সরবরাহ করেছেন। Credit রাখা হয়েছে। Project-এর **[MIT license](LICENSE)** ও [NOTICE.md](NOTICE.md) দেখুন; third-party tool-এর নিজের license বহাল থাকে।

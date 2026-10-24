@@ -1,5 +1,6 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
+const canAssess = document.body.dataset.assessmentEnabled !== "false";
 const csrf = document.querySelector('meta[name="csrf-token"]').content;
 let activeId = null;
 let polling = null;
@@ -26,7 +27,7 @@ function render(job) {
   $("job-state").className = `pill ${job.status}`;
   const done = terminal.has(job.status);
   $("cancel").hidden = done;
-  $("start").disabled = !done;
+  $("start").disabled = !done || !canAssess;
   $("phases").replaceChildren(...job.phases.map((phase) => {
     const row = element("div", undefined, `phase ${phase.status}`);
     const text = element("div");
@@ -55,10 +56,11 @@ async function watch(id) {
   }
 }
 async function start(payload) {
+  if (!canAssess) { message("Assessment execution is disabled for this dashboard. Tool setup and saved reports remain available."); return; }
   message("");
   $("start").disabled = true;
   try { const job = await api("/api/jobs", {method: "POST", body: JSON.stringify(payload)}); await watch(job.id); }
-  catch (error) { message(error.message); $("start").disabled = false; }
+  catch (error) { message(error.message); $("start").disabled = !canAssess; }
 }
 $("scan-form").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -92,6 +94,11 @@ $("check-tools").addEventListener("click", async () => {
   try {
     const tools = await api("/api/tools?refresh=1");
     latestTools = tools;
+    document.querySelectorAll("#download-list [data-tool-status]").forEach(pill => {
+      const state = latestTools[pill.dataset.toolStatus]?.status || "not checked";
+      pill.textContent = state;
+      pill.className = `pill ${state}`;
+    });
     $("tool-list").replaceChildren(...Object.entries(tools).map(([name, tool]) => {
       const item = element("div", undefined, "tool-item");
       item.append(element("strong", name), element("span", tool.status, `pill ${tool.status}`), element("small", tool.detail));
@@ -103,7 +110,11 @@ $("check-tools").addEventListener("click", async () => {
       return item;
     }));
   } catch (error) { $("tool-list").textContent = error.message; }
-  finally { $("check-tools").disabled = false; $("check-tools-top").disabled = false; }
+  finally {
+    $("check-tools").disabled = false;
+    $("check-tools-top").disabled = false;
+    document.dispatchEvent(new CustomEvent("echo:tools-checked"));
+  }
 });
 $("check-tools-top").addEventListener("click", () => {
   $("tools").scrollIntoView({block: "start"});
@@ -129,7 +140,9 @@ async function showDownloads(focusTool = null) {
       const row = element("section", undefined, "download-item");
       const heading = element("h3", `${name} — ${source.label}`);
       const state = latestTools[name]?.status || "not checked";
-      row.append(heading, element("span", state, `pill ${state}`));
+      const status = element("span", state, `pill ${state}`);
+      status.dataset.toolStatus = name;
+      row.append(heading, status);
       row.append(element("p", source.note));
       if (state === "unverified") row.append(element("p", "Check version/PATH first; reinstalling may not be necessary. / আগে সঠিক version ও PATH দেখুন।", "download-note"));
       const actions = element("div", undefined, "download-actions");
@@ -173,3 +186,5 @@ history().then(jobs => {
   const selected = jobs?.find(job => job.id === requested) || jobs?.find(job => !terminal.has(job.status));
   if (selected) watch(selected.id);
 }).catch(error => message(error.message));
+
+$("start").disabled = !canAssess;

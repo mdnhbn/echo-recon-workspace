@@ -83,15 +83,14 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("not a pinned template snapshot", text)
         self.assertEqual(list(self.home.iterdir()), [])
 
-    def test_install_rejects_root_and_non_kali(self):
+    def test_install_rejects_root_and_selects_supported_linux(self):
         with patch.object(setup.sys, "platform", "linux"), patch.object(setup.os, "geteuid", return_value=0, create=True):
-            with self.assertRaisesRegex(setup.SetupError, "normal Kali user"):
+            with self.assertRaisesRegex(setup.SetupError, "normal Linux user"):
                 setup.validate_platform()
         with patch.object(setup.sys, "platform", "linux"), patch.object(setup.os, "geteuid", return_value=1000, create=True), patch.object(Path, "read_text", return_value='ID=ubuntu\nID_LIKE=debian\n'):
-            with self.assertRaisesRegex(setup.SetupError, "Kali only"):
-                setup.validate_platform()
+            self.assertEqual(setup.validate_platform(), "apt")
         with patch.object(setup.sys, "platform", "win32"):
-            with self.assertRaisesRegex(setup.SetupError, "WSL2"):
+            with self.assertRaisesRegex(setup.SetupError, "Windows"):
                 setup.validate_platform()
 
     def test_all_ready_skips_every_install_and_keeps_path_and_files(self):
@@ -275,7 +274,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_trusted_data_directory_places_lock_in_configured_folder(self):
         data = self.home / "custom-data"
-        with patch.object(setup, "ROOT", self.home), patch.object(setup, "validate_platform"), patch.object(setup, "Installer") as installer, redirect_stdout(io.StringIO()):
+        with patch.object(setup, "ROOT", self.home), patch.object(setup, "validate_platform", return_value="kali"), patch.object(setup, "Installer") as installer, redirect_stdout(io.StringIO()):
             installer.return_value.install.return_value = 0
             self.assertEqual(setup.main(["--install", "--data-dir", str(data)]), 0)
         self.assertTrue((data / "setup-tools.lock").is_file())
@@ -286,7 +285,7 @@ class InstallerTests(unittest.TestCase):
         data.mkdir()
         lock = InstanceLock(data / "setup-tools.lock").acquire()
         try:
-            with patch.object(setup, "ROOT", self.home), patch.object(setup, "validate_platform"), patch.object(setup, "Installer") as installer, redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()) as errors:
+            with patch.object(setup, "ROOT", self.home), patch.object(setup, "validate_platform", return_value="kali"), patch.object(setup, "Installer") as installer, redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()) as errors:
                 self.assertEqual(setup.main(["--install"]), 1)
                 installer.assert_not_called()
                 self.assertIn("already running", errors.getvalue())

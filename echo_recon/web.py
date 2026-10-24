@@ -1,4 +1,4 @@
-"""Loopback-only dashboard with a fixed local-terminal setup launcher."""
+"""Loopback-only dashboard with a fixed platform setup launcher."""
 import atexit
 import os
 from pathlib import Path
@@ -25,7 +25,7 @@ def create_app(data_dir=None, testing=False, **manager_options):
     store = Store(folder / "history.sqlite3")
     if not testing:
         store.path.chmod(0o600)
-    manager_options.setdefault("allow_live", os.name != "nt")
+    manager_options.setdefault("allow_live", True)
     manager = Manager(store, folder, **manager_options)
     setup = SetupLauncher(root, folder)
     app.extensions.update(echo_store=store, echo_manager=manager, echo_setup=setup)
@@ -67,7 +67,7 @@ def create_app(data_dir=None, testing=False, **manager_options):
     def index():
         session.setdefault("csrf", secrets.token_hex(32))
         return render_template("index.html", csrf=session["csrf"], version=__version__,
-                               native_windows=os.name == "nt")
+                               native_windows=os.name == "nt", assessment_enabled=manager.allow_live)
 
     @app.get("/api/tools")
     def tools():
@@ -94,8 +94,12 @@ def create_app(data_dir=None, testing=False, **manager_options):
             except RuntimeError as exc:
                 abort(409, str(exc))
             except OSError:
-                abort(400, "The desktop terminal could not start. Use the setup guide from your Kali terminal.")
+                abort(400, "Tool setup could not start. Check the setup guide for your platform and retry.")
         return jsonify(result), 202
+
+    @app.get("/api/setup-status")
+    def setup_status():
+        return jsonify(setup.status())
 
     @app.get("/api/jobs")
     def jobs():
@@ -110,7 +114,7 @@ def create_app(data_dir=None, testing=False, **manager_options):
         try:
             with setup.guard:
                 if setup.busy():
-                    raise RuntimeError("Tool setup is still open. Finish and close its terminal before starting an assessment.")
+                    raise RuntimeError("Tool setup is still running or its terminal is open. Finish setup before starting an assessment.")
                 job_id = manager.start(payload)
         except ValueError as exc:
             abort(400, str(exc))

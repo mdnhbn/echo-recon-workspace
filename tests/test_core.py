@@ -21,6 +21,20 @@ from echo_recon.web import create_app
 from maintenance import remove_demos
 
 
+# Existing orchestration fixtures must not depend on a developer's native tools.
+_native_tool_patch = None
+
+
+def setUpModule():
+    global _native_tool_patch
+    _native_tool_patch = patch("echo_recon.tools.native_tool_command", return_value=None)
+    _native_tool_patch.start()
+
+
+def tearDownModule():
+    _native_tool_patch.stop()
+
+
 def ready(**kwargs):
     return {name: {"status": "ready", "detail": "test fixture"} for name in TOOLS}
 
@@ -275,12 +289,12 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/jobs", json={"demo": True}).status_code, 403)
         self.assertEqual(self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf, "Origin": "https://evil.net"}).status_code, 403)
 
-    def test_native_windows_mode_blocks_live_and_removed_demo(self):
+    def test_explicit_disabled_mode_blocks_live_and_removed_demo(self):
         manager = self.app.extensions["echo_manager"]
         manager.allow_live = False
         response = self.client.post("/api/jobs", json={"domain": "example.com", "scope": ["example.com"], "authorized": True, "understands_limits": True}, headers={"X-CSRF-Token": self.csrf})
         self.assertEqual(response.status_code, 400)
-        self.assertIn("WSL2", response.json["error"])
+        self.assertIn("disabled for this dashboard", response.json["error"])
         self.assertFalse(manager.active)
         demo = self.client.post("/api/jobs", json={"demo": True}, headers={"X-CSRF-Token": self.csrf})
         self.assertEqual(demo.status_code, 400)

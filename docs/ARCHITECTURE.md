@@ -1,63 +1,78 @@
 # Architecture
 
 ```text
-Browser (127.0.0.1:8001)
-  │ same-origin session + CSRF
+Normal-user CLI / launcher
+  ├─ dashboard dependency setup
+  └─ startup local tool checks → fixed platform setup when missing
+                                   │
+Browser (127.0.0.1:8001)             ├─ Windows user-local worker + bounded log
+  │ same-origin session + CSRF      └─ Linux terminal / fixed OS packages
   ▼
-Flask API ── input/scope validation ── one assessment manager
-                                      │
+Flask API → input/scope validation → one assessment manager
                                       ├─ fixed tool adapters (no shell)
-                                      ├─ bounded process runner + cancel event
-                                      └─ SQLite state + redacted evidence
-                                               │
-                                               └─ HTML / JSON report
+                                      ├─ bounded runner + cancellation
+                                      └─ SQLite snapshots + redacted evidence
+                                                     └─ HTML / JSON report
 ```
+
+## Components
 
 | File | Responsibility |
 |---|---|
-| `app.py` | Normal-user entry point; loopback listener; graceful signal handling. |
-| `echo_recon/locking.py` | Cross-process Linux/Windows instance lock, acquired before history recovery. |
-| `echo_recon/web.py` | API, session/CSRF, request boundaries, escaped reports. |
-| `echo_recon/security.py` | Exact-host scope, DNS preflight, output URL filtering, best-effort secret masking. |
-| `echo_recon/storage.py` | Short-lived SQLite connections and persistent job snapshots. |
-| `echo_recon/service.py` | Sequential state machine, cancellation, partial vs complete classification. |
-| `echo_recon/tools.py` | Fixed adapters, local executable diagnostics, Nuclei JSONL parsing. |
-| `echo_recon/runner.py` | No-shell subprocesses, bounded output, timeout and Linux group termination. |
-| `maintenance.py` | Offline cleanup of explicitly marked legacy demo jobs while the server is stopped. |
-| `setup_tools.py` | Fixed normal-user Kali installer; isolated third-party tools; interactive terminal sudo. |
-| `echo_recon/setup_launcher.py` | No-argument local terminal launcher and setup/assessment scheduling guard. |
-| `static/`, `templates/` | Original-style dark bilingual dashboard, tool-setup guidance and evidence report presentation. |
+| `app.py` | Normal-user entry point; bind loopback before browser/setup startup; signals; `--no-tool-setup`. |
+| `echo_recon/bootstrap.py` | Asynchronous help checks, skip-ready behavior and owned automatic-attempt fingerprints. Cancels checking on shutdown without terminating installation. |
+| `echo_recon/locking.py` | Linux/Windows instance lock acquired before history recovery; shared setup lock. |
+| `echo_recon/web.py` | Local/Host boundaries, session/CSRF, fixed setup routes and escaped reports. |
+| `echo_recon/setup_launcher.py` | Startup-check state, fixed platform launch, setup/assessment mutual exclusion and bounded setup log/status. |
+| `setup_tools_windows.py` | Normal-user x64 Windows setup; fixed verified assets, separate Python environments and explicit managed command resolution. |
+| `setup_tools.py` | Kali package/Go setup plus supported portable Linux/package-manager families; fixed terminal sudo calls. |
+| `echo_recon/security.py` | Exact-host scope, public DNS preflight, returned URL filtering and best-effort redaction. |
+| `echo_recon/tools.py` | Fixed argv adapters, identity/help diagnostics and scoped Nuclei JSONL parsing. |
+| `echo_recon/runner.py` | No-shell processes, combined output/time limits, Linux process groups and suspended Windows Job Object containment. |
+| `echo_recon/service.py` | Sequential state machine, cancellation and complete/partial classification. |
+| `echo_recon/storage.py` | Short-lived SQLite connections and persistent snapshots. |
+| `maintenance.py` | Stopped-server cleanup of explicitly marked legacy demo jobs. |
+| `static/`, `templates/` | Shared bilingual dashboard/report DOM, setup progress, guidance and dark/light Matrix layouts. |
+
+## Setup lifecycle
+
+Installation scripts create the local dashboard venv and request backend setup unless dashboard-only is selected. Startup also checks tools asynchronously after the loopback socket binds. Ready backends are retained. If an owned automatic-attempt fingerprint already covers the same application/platform/Python/missing-tool set, the app explains how to retry explicitly instead of reopening the same failed desktop setup on every restart.
+
+Startup and manual setup share the launcher's guard; assessments cannot race into a pending tool check or running setup. The automatic record is private `data/auto-setup.json`, with a bounded strict schema and atomic writes. Unrecognized/redirected state is left untouched. A deliberate setup button/CLI retry is independent of this record.
+
+Windows starts a fixed hidden worker and exposes its bounded log in the dashboard. Managed backends live in `~/Tools/EchoRecon/tooling`, outside AppData virtualization. Each tool has fixed metadata/source pins; metadata cannot supply arbitrary executable paths. Nmap remains the official interactive installer exception.
+
+Linux desktop setup opens a fixed terminal command. Headless `run.sh` runs setup directly in the existing terminal for sudo visibility and starts the app with duplicate startup setup suppressed. Supported package-manager families have fixed OS-package allowlists; incompatible distributions/architectures receive an explicit manual action. No password passes through HTTP, no arbitrary installer API exists, and setup accepts no scan target.
 
 ## API
 
-- `GET /`: dashboard and a CSRF session.
-- `GET /api/tools`: cached local tool identity/help diagnostics. `?refresh=1` reruns the local checks after manual tool setup.
+- `GET /`: dashboard and CSRF session.
+- `GET /api/tools`: cached local identity/help diagnostics; `?refresh=1` refreshes.
 - `GET /api/tool-sources`: fixed official download/setup metadata.
-- `POST /api/setup-tools`: empty JSON only, CSRF required; opens the fixed installer in a local Kali desktop terminal. Passwords are entered there, never sent to HTTP.
-- `GET /api/jobs`: latest 50 persisted runs.
-- `POST /api/jobs`: an explicitly scoped assessment. JSON only, CSRF required. Demo-generation requests are not supported.
-- `GET /api/jobs/<id>`: state, evidence and progress.
-- `POST /api/jobs/<id>/cancel`: set cancellation signal; CSRF required.
-- `GET /reports/<id>.html` and `.json`: evidence exports. HTML is self-contained.
+- `POST /api/setup-tools`: empty JSON only, CSRF required; fixed installer.
+- `GET /api/setup-status`: read-only startup/setup state, exit code and bounded plain-text log.
+- `GET /api/jobs`: recent real saved runs; legacy demos are hidden.
+- `POST /api/jobs`: explicit scoped assessment; CSRF/JSON required.
+- `GET /api/jobs/<id>`: progress/evidence.
+- `POST /api/jobs/<id>/cancel`: cancellation signal; CSRF required.
+- `GET /reports/<id>.html` and `.json`: saved evidence exports.
 
-The **Download / setup tools** control exposes official sources and guidance. **Setup all tools** opens only the bundled installer with fixed arguments in a local Kali terminal. The installer skips ready tools, uses isolated user environments for custom tools, and can request sudo interactively for apt packages. There is no arbitrary command API, browser password prompt, stored sudo session, remote-agent interface, automatic target expansion or AI integration. A desktop terminal, Kali Linux and the same normal-user session are required; headless users run the fixed CLI themselves.
+These routes retain local access checks. No remote-agent interface, arbitrary flags, credential endpoint, automatic target expansion or external AI integration is provided.
 
-`static/theme.js` switches the shared dashboard DOM between dark and first-v6-style light layouts; browser-local storage remembers the choice without creating jobs or resetting the form. Both use the same reduced-motion-aware Matrix canvas. `templates/usage.html` and the bilingual usage documents explain form and result semantics.
+## Process and state semantics
 
-Native Windows mode supports dashboard/history/report development and rejects live assessments server-side. Full Linux tool execution on Windows uses Kali WSL2 and a separate Linux environment. See `docs/WINDOWS.md`.
+Phases are sequential. A nonzero exit is an error even with empty stdout. Timeout, output truncation and cancellation remain explicit. An assessment is complete only when all selected phases are done; interrupted/partial reports still expose available evidence and never imply full coverage.
 
-## Production data and legacy cleanup
+Windows tools start suspended, join a kill-on-close Job Object before tool code runs, and resume only after assignment succeeds. Linux uses a process group. Bounded output/pipes and cancellation apply across native adapter prefixes. If containment setup fails, the tool does not run uncontained.
 
-The application does not generate demo jobs or preload sample history. Mock scanner and report fixtures are confined to temporary test directories. Existing real jobs remain in SQLite and keep their evidence exports.
+HTTPX filters origins against exact scope; discovery is evidence only. Photon/Arjun require a live scoped host from the same run. Nmap uses limited top-100 TCP connect/service detection, with Windows `-Pn`. Nuclei JSONL is filtered to scope and labelled unverified. A stdout line count is not a vulnerability count.
 
-With the server stopped, `.venv/bin/python maintenance.py remove-demo` removes only legacy records whose saved demo flag is explicitly true. A domain name, incomplete status or simulated-looking evidence is not a deletion criterion. Never delete the whole database or run a second manager to clean an active server: an active worker may save its snapshot again. Keep private backups out of Git.
+Tool readiness is a local help/identity result, not an external network/API or provider compatibility certification. Other Linux installer branches use mocked package-manager/download tests; actual fresh installation on every distro is not claimed.
 
-## State semantics
+## Presentation, data and extension
 
-Every phase starts pending, becomes running and finishes with an explicit result. A nonzero tool exit is `error`, even if stdout is empty. Truncated output is not treated as a complete result. The whole assessment is `complete` only when every selected phase is `done`; otherwise it is `partial`, `cancelled`, `error` or `interrupted`. Reports exist for unfinished/partial work too, but never imply complete coverage.
+`static/theme.js` switches the shared DOM without resetting form values/jobs; local browser storage remembers the choice. Both layouts use the reduced-motion-aware Matrix canvas. The bilingual [usage guides](USAGE.md) explain field/rate/time/report semantics.
 
-Phases remain sequential. HTTPX filters returned origins against exact scope. Newly discovered subdomains are evidence only. Photon and Arjun require a confirmed live result. Nuclei returns JSONL which is checked against scope and labelled unverified. No stdout line-count guess is used as a vulnerability count.
+Production does not create demo jobs or preload findings. Mock fixtures stay in temporary directories. Offline legacy cleanup only removes explicitly flagged demos while the server is stopped; it cannot relaunch a manager or infer deletion from a domain/status.
 
-## Extending an adapter
-
-Change only a fixed adapter, add identity/help requirements, and add tests using controlled `Result` fixtures. Avoid `shell=True`, arbitrary user flags, unbounded output or an external scan in CI. New tools should not silently become default checks. An optional future AI explanation layer must use reviewed/redacted evidence, preserve evidence references and clearly label uncertainty; this version deliberately makes no external AI call.
+To extend a tool, change a fixed adapter and identity requirements, then add controlled fixtures and suitable local process tests. Avoid arbitrary user flags, `shell=True`, unbounded output or public scans in CI. New checks must not silently become defaults. Preserve MIT/original attribution and follow [CONTRIBUTING.md](../CONTRIBUTING.md).

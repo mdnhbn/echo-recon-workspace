@@ -1,5 +1,7 @@
 """Fixed tool adapters. User input never becomes executable code or flags."""
 import json
+import os
+from pathlib import Path
 import shutil
 import threading
 from urllib.parse import urlsplit
@@ -28,10 +30,48 @@ SOURCES = {
 }
 
 
+def is_windows():
+    return os.name == "nt"
+
+
+def managed_windows_command(name):
+    """Read only complete installer-owned environments; never change PATH."""
+    try:
+        from setup_tools_windows import tool_command
+        return tool_command(name)
+    except (ImportError, OSError, ValueError, TypeError, KeyError):
+        return None
+
+
+def native_tool_command(name):
+    if not is_windows():
+        return None
+    managed = managed_windows_command(name)
+    if managed:
+        return tuple(managed)
+    if name == "nmap":
+        for variable in ("ProgramFiles", "ProgramFiles(x86)"):
+            folder = os.environ.get(variable)
+            if folder:
+                candidate = Path(folder) / "Nmap" / "nmap.exe"
+                if candidate.is_file():
+                    return (str(candidate),)
+    return None
+
+
+def resolve_tool(name):
+    prefix = native_tool_command(name)
+    if prefix:
+        return prefix
+    path = shutil.which(name)
+    return (path,) if path else None
+
+
 def tool_sources():
     guide = "https://github.com/mdnhbn/echo-recon-workspace/blob/main/docs/TOOLS.md"
     return {name: {"label": TOOLS[name][0], "url": url, "setup_url": guide,
-                   "note": "Use the official source and follow the setup guide. Install inside Kali/WSL for live checks."}
+                   "note": ("Native Windows setup uses isolated compatible tools; Nmap uses its official installer and TCP connect scans without raw packet privileges."
+                            if is_windows() else "Use the official source and follow the Kali setup guide.")}
             for name, url in SOURCES.items()}
 
 
@@ -42,10 +82,11 @@ def diagnostics(cancel=None):
                 "arjun": ("--rate-limit", "--disable-redirects"),
                 "nuclei": ("-jsonl", "-disable-redirects", "-exclude-tags")}
     for name, (label, flags, identity) in TOOLS.items():
-        path = shutil.which(name)
-        item = {"label": label, "path": path, "status": "missing", "detail": "Not installed"}
-        if path:
-            check = run([path, *flags], cancel=cancel, timeout=8, max_bytes=80_000)
+        prefix = resolve_tool(name)
+        item = {"label": label, "path": prefix[0] if prefix else None,
+                "command": list(prefix) if prefix else [], "status": "missing", "detail": "Not installed"}
+        if prefix:
+            check = run([*prefix, *flags], cancel=cancel, timeout=8, max_bytes=80_000)
             banner = (check.stdout + "\n" + check.stderr).lower()
             valid = check.returncode == 0 and identity in banner
             # ProjectDiscovery's help identifies itself; Python HTTPX has different flags.
@@ -59,7 +100,7 @@ def diagnostics(cancel=None):
 
 def command(name, host, rate, output_dir):
     url = f"https://{host}"
-    return {
+    args = {
         "dnsrecon": ["dnsrecon", "-d", host, "-t", "std"],
         "subfinder": ["subfinder", "-d", host, "-silent"],
         "httpx": ["httpx", "-silent", "-rl", str(rate), "-threads", "1", "-timeout", "8", "-retries", "0"],
@@ -69,6 +110,11 @@ def command(name, host, rate, output_dir):
         "arjun": ["arjun", "-u", url, "-t", "1", "-T", "8", "--rate-limit", str(rate), "--disable-redirects"],
         "nuclei": ["nuclei", "-silent", "-jsonl", "-duc", "-ni", "-dr", "-rl", str(rate), "-c", "1", "-bs", "1", "-timeout", "8", "-retries", "0", "-severity", "low,medium,high,critical", "-etags", "dos,fuzz,bruteforce,headless,code"],
     }[name]
+    if name == "nmap" and is_windows():
+        # Official Nmap guidance for Windows without Npcap: use sockets only.
+        args.insert(2, "-Pn")
+    prefix = native_tool_command(name)
+    return [*prefix, *args[1:]] if prefix else args
 
 
 def parse_findings(text, scope):

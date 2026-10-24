@@ -11,7 +11,7 @@
   <script src="/static/app.js" defer></script>
   <script src="/static/help.js" defer></script>
 </head>
-<body>
+<body data-native-windows="{{ 'true' if native_windows else 'false' }}" data-assessment-enabled="{{ 'true' if assessment_enabled else 'false' }}">
 <canvas id="rain" aria-hidden="true"></canvas>
 <div class="shell">
   <aside class="sidebar">
@@ -37,7 +37,7 @@
     <header><span class="local"><span class="pulse"></span> 127.0.0.1 · LOCAL</span><div class="header-actions"><button id="theme-toggle" type="button" class="button" aria-pressed="false">Light layout / হালকা</button><button id="open-guide-top" type="button" class="button" aria-haspopup="dialog">How to use / ব্যবহারবিধি</button><button id="check-tools-top" class="button">Check installed tools</button><button id="download-tools-top" class="button download-button" aria-haspopup="dialog">Download / Setup ↗</button></div></header>
     <div class="center">
       <div class="greeting"><span class="gear" aria-hidden="true">⚙</span><div><h1>রিকন <span>Echo Recon</span></h1><p>Scope first. Evidence always. / প্রমাণসহ পরীক্ষা।</p></div></div>
-      {% if native_windows %}<div class="windows-note"><strong>Windows native: dashboard, history & reports.</strong><p>Run the full eight-tool workflow inside Kali WSL2. See docs/WINDOWS.md.<br>আটটি tool-এর পুরো workflow Windows-এর Kali WSL2-তে চালান।</p></div>{% endif %}
+      {% if native_windows %}<div class="windows-note"><strong>Windows native: automatic backend setup and scoped assessments.</strong><p>First startup prepares missing tools together. Nmap uses its official Windows installer and TCP connect scans (-sT -Pn). Setup progress and local checks appear below.<br>প্রথমবার চালালে প্রয়োজনীয় tool-গুলো একসঙ্গে সেটআপ হবে। Nmap-এর official installer-এ প্রয়োজনীয় confirmation দিন। এরপর অনুমোদিত host পরীক্ষা করতে পারবেন।</p></div>{% endif %}
       <section id="assessment" class="composer setup" aria-labelledby="setup-title">
         <div class="section-title"><span class="section-mark">01</span><h2 id="setup-title">Assessment / পরীক্ষার সেটআপ</h2></div>
         <form id="scan-form">
@@ -80,8 +80,9 @@
       <section id="tools" class="tools-section" aria-labelledby="tools-title">
         <div class="section-title"><span class="section-mark">03</span><h2 id="tools-title">Tool health / টুলের অবস্থা</h2></div>
         <div class="tool-actions"><button id="check-tools" class="button">Check installed tools</button><button id="download-tools" class="button download-button" aria-haspopup="dialog">Download / Setup tools ↗</button><button class="button primary" type="button" data-setup-tools>Setup all tools / সব টুল সেটআপ</button></div>
-        <p class="hint">Check verifies local help output. Download opens official resources. Setup all opens a Kali terminal to install missing tools; existing verified tools are kept.<br>সব টুল সেটআপ চাপলে আলাদা Kali terminal খুলবে; সেখানে অগ্রগতি ও প্রয়োজনীয় sudo prompt দেখা যাবে।</p>
+        <p class="hint">Check verifies local help output. Setup all keeps verified working tools and installs missing ones.<br>{% if native_windows %}Windows-এর setup progress এই পেজে দেখা যাবে। Nmap-এর official installer আলাদা ধাপ।{% else %}Linux-এ আলাদা terminal খুলবে; প্রয়োজন হলে শুধু সেখানে sudo password দিন।{% endif %}</p>
         <p id="setup-message" class="setup-status" role="status"></p>
+        <pre class="setup-log" data-setup-log hidden aria-live="polite"></pre>
         <div id="tool-list" class="tool-grid"></div>
       </section>
       <section id="history" class="history-section" aria-labelledby="history-title"><div class="section-title"><span class="section-mark">04</span><h2 id="history-title">Saved history / সংরক্ষিত ইতিহাস</h2></div><div id="history-list" class="history-list"><p class="hint">No saved assessments. / কোনো সংরক্ষিত পরীক্ষা নেই।</p></div></section>
@@ -91,9 +92,10 @@
 </div>
 <dialog id="tool-downloads" aria-labelledby="downloads-title">
   <div class="modal-head"><h2 id="downloads-title">Tool downloads & setup / টুল সেটআপ</h2><button id="close-downloads" class="modal-close" aria-label="Close / বন্ধ করুন">×</button></div>
-  <p class="download-note">Set up missing tools together, or use the individual official sources below. Installation opens in a visible Kali terminal; enter a sudo password only there if asked.<br>একসঙ্গে সেটআপ করুন, অথবা নিচের official link ব্যবহার করুন। Password শুধু Kali terminal-এ প্রয়োজন হতে পারে।</p>
+  <p class="download-note">Set up missing tools together, or use the individual official sources below.<br>{% if native_windows %}Windows setup progress নিচে দেখা যাবে। সাতটি compatible tool স্বয়ংক্রিয়ভাবে ইনস্টল হবে; Nmap-এর <a href="https://nmap.org/download.html" target="_blank" rel="noopener noreferrer">official Windows installer</a>-এ প্রয়োজনীয় confirmation নিজে সম্পন্ন করুন।{% else %}Linux-এ ইনস্টল আলাদা terminal-এ চলবে; প্রয়োজন হলে শুধু ওই terminal-এ sudo password দিন।{% endif %}</p>
   <div class="tool-actions"><button class="button primary" type="button" data-setup-tools>Setup all tools / সব টুল সেটআপ</button><button class="button" type="button" data-guide-target="guide-setup">Setup help / সেটআপ নিয়ম</button></div>
   <p class="setup-status" data-setup-message role="status"></p>
+  <pre class="setup-log" data-setup-log hidden aria-live="polite"></pre>
   <div id="download-list" class="download-list"></div>
 </dialog>
 <dialog id="usage-guide" aria-labelledby="guide-title">

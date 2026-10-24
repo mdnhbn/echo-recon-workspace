@@ -8,7 +8,7 @@ import time
 import uuid
 from .runner import run
 from .security import hostname, redact, resolve_public, scoped_urls, validate_scope
-from .tools import TOOLS, command, diagnostics, parse_findings
+from .tools import TOOLS, command, diagnostics, is_windows, parse_findings
 from . import __version__
 
 
@@ -45,7 +45,7 @@ class Manager:
         if payload.get("demo") is True:
             raise ValueError("Demo mode has been removed. Supply an explicitly authorized scope.")
         if not self.allow_live:
-            raise ValueError("Native Windows supports the dashboard and saved reports. Use Kali in WSL2 for live assessments; see docs/WINDOWS.md.")
+            raise ValueError("Assessment execution is disabled for this dashboard. Tool setup and saved reports remain available.")
         if payload.get("authorized") is not True or payload.get("understands_limits") is not True:
             raise ValueError("Confirm ownership/permission and third-party traffic limitations.")
         domain, scope = validate_scope(payload.get("domain"), payload.get("scope"))
@@ -76,6 +76,9 @@ class Manager:
                        "Rate is a per-tool ceiling where supported, not a global packet/request budget. DNS/OSINT tools have separate behavior.",
                        "Evidence is truncated and common secrets are redacted best-effort; review reports before sharing.",
                    ]}
+            if is_windows():
+                job["limitations"].append(
+                    "Windows Nmap uses TCP connect scanning without ping discovery (-sT -Pn); raw packet, UDP and operating-system detection are not enabled.")
             event = threading.Event()
             self.active[job_id] = event
             self.save(job, "Assessment queued with explicit scope.")

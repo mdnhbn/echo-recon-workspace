@@ -15,7 +15,7 @@ bash run.sh
 
 Terminal খোলা রাখুন। Firefox-এ **http://127.0.0.1:8001** খোলার কথা। না খুললে নিজে ঠিকানাটি লিখুন। এটি আপনার নিজের Kali-র dashboard-এর ঠিকানা; assessment form-এ যে domain লিখবেন, এটি সেই domain নয়।
 
-সাধারণ user দিয়ে চালান; dashboard চালাতে root লাগে না। সরাসরি Windows-এ dashboard, সংরক্ষিত history ও report দেখা যায়। আটটি টুলের পুরো workflow চালাতে **Kali WSL2** ব্যবহার করুন। বিস্তারিত [WINDOWS.md](WINDOWS.md)।
+সাধারণ user দিয়ে চালান; Linux-এ root দিয়ে app চলে না। সরাসরি Windows-এর নিজস্ব managed tool ও adapter আছে; WSL আলাদা ঐচ্ছিক Linux environment। Windows-এ `install.ps1` / `run.ps1` ব্যবহার করুন। অন্য সমর্থিত Linux family-তে সঠিক Python/package-manager নিয়ে Linux script চালান। বিস্তারিত [WINDOWS.md](WINDOWS.md), [TOOLS.md](TOOLS.md)।
 
 ### দুই ধরনের layout বদলাবেন যেভাবে
 
@@ -25,47 +25,49 @@ Layout বদলালে form-এ লেখা নাম, চলমান job �
 
 দুই layout-এই background-এর matrix animation আছে; reduced-motion preference থাকলে animation বন্ধ থাকে। এই বোতাম dashboard-এর চেহারা বদলায়, scan setting নয়। App-এর ভেতরে নির্দেশনা দেখতে header-এর **How to use / ব্যবহারবিধি** অথবা sidebar-এর **Full usage guide / বিস্তারিত নিয়ম** চাপুন।
 
-## ২. টুল আছে কি না দেখুন এবং সেটআপ করুন
+## ২. Automatic setup ও টুল যাচাই
 
-1. **Check installed tools** চাপুন। পরিচয়/help যাচাই শেষ হওয়া পর্যন্ত অপেক্ষা করুন।
-2. প্রতিটি টুলের অবস্থা পড়ুন:
+Default installer dashboard ও missing backend একসঙ্গে সেটআপ করে। স্বাভাবিক desktop startup-এও আগে স্থানীয় tool দেখে প্রয়োজন হলে fixed installer শুরু হয়। Headless Linux/WSL-এ একই Terminal ব্যবহার হয়, যাতে sudo prompt দেখা যায়। Tool ইনস্টল হলেই scan শুরু হয় না।
 
-   | অবস্থা | অর্থ | কী করবেন |
-   |---|---|---|
-   | `ready` | উপযুক্ত executable-এর পরিচয়/help যাচাই পাস করেছে। | প্রয়োজন হলে check বেছে নিতে পারেন; এটি সম্পূর্ণ compatibility test নয়। |
-   | `missing` | Server-এর PATH-এ executable পাওয়া যায়নি। | Dashboard যে Kali-তে চলছে, সেই Kali-তেই tool সেটআপ করুন। |
-   | `unverified` | Program আছে, কিন্তু পরিচয় বা প্রয়োজনীয় help flag মেলেনি। | আগে version ও PATH দেখুন; আবার ইনস্টল করা নাও লাগতে পারে। |
+1. **Tool health** / **Download / Setup**-এর progress পড়ুন। Windows-এ সাতটি compatible backend আলাদা user folder-এ ইনস্টল হয়। Nmap-এর official Windows installer-এ license/admin confirmation নিজে দিতে হবে।
+2. Linux desktop-এ আলাদা visible Terminal খুলবে। Fixed OS package manager চাইলে password **শুধু ওই Terminal-এ** দিন; dashboard বা chat-এ নয়। কাজ শেষ হলে setup Terminal বন্ধ করুন।
+3. সফল/ব্যর্থ হওয়ার বার্তা না আসা পর্যন্ত অপেক্ষা করুন। Download বা Terminal খোলাই সফল ইনস্টল নয়। অন্যের wrapper, অচেনা folder বা অসম্পূর্ণ environment নিজে থেকে overwrite করে না।
+4. **Check installed tools** চাপুন। Main card ও খোলা setup popup-এর ফল একসঙ্গে নতুন হবে।
+5. Desktop automatic setup একই missing-tool set নিয়ে আগে ব্যর্থ হলে restart-এ বারবার একই চেষ্টা করে না। Error মিটিয়ে **Setup all tools** চাপুন। Headless CLI startup আবার check করে; প্রয়োজন হলে নিচের opt-out দিন।
 
-3. **Download / Setup tools** চাপলে আটটি টুলের official source ও setup guide পাবেন। Missing/unverified টুলের row-তেও setup shortcut আছে।
-4. সমর্থিত Kali desktop-এ **Setup all tools** চাপলে project-এর নির্দিষ্ট installer একটি স্থানীয় Terminal-এ খুলবে। কী করতে বলছে পড়ে তারপর এগোন। Administrator অনুমতি প্রয়োজন হলে sudo password **শুধু ওই Terminal-এ** লিখুন; dashboard বা chat-এ নয়। Password লেখার সময় অক্ষর দেখা না যাওয়া স্বাভাবিক।
-5. Installer সফল বা ব্যর্থ হওয়ার বার্তা না দেওয়া পর্যন্ত Terminal খোলা রাখুন। Terminal খুলেছে মানেই সব tool ইনস্টল হয়েছে নয়। Source download হওয়া আর ব্যবহারযোগ্য program ইনস্টল হওয়া আলাদা কাজ।
-6. Terminal নিজে থেকে না খুললে, অথবা desktop ছাড়া Windows/WSL ব্যবহার করলে, নিচের নির্দিষ্ট command ও [TOOLS.md](TOOLS.md) অনুসরণ করে Kali Terminal-এ কাজ করুন। Windows-এ tool ইনস্টল করলেই Linux adapter Windows-এ কাজ করবে না।
-7. শেষে **Check installed tools** আবার চাপুন। Shell-এর PATH বা environment বদলালে dashboard বন্ধ করে আবার চালিয়ে check করুন। যেটুকু পরীক্ষা প্রয়োজন, সেটুকুই বেছে নিন; tool ইনস্টল থাকলেই সবগুলো চালাতে হবে না।
+| অবস্থা | অর্থ | কী করবেন |
+|---|---|---|
+| `ready` | স্থানীয় help/পরিচয় ও adapter-এর প্রয়োজনীয় flag মিলেছে। | প্রয়োজনীয় check বেছে নিন; API/template/provider-এর নিশ্চয়তা নয়। |
+| `missing` | Managed path/PATH-এ উপযুক্ত command পাওয়া যায়নি। | এই server যে environment-এ চলে, সেখানেই install করে recheck করুন। |
+| `unverified` | Program পাওয়া গেছে, কিন্তু help/পরিচয় মেলেনি। | আগে resolved path ও version দেখুন; অন্ধভাবে reinstall নয়। |
 
-**HTTPX নিয়ে খেয়াল করুন:** এখানে **ProjectDiscovery HTTPX** লাগে। Python HTTPX আলাদা program, যদিও নাম এক। সমস্যা মেটাতে Python HTTPX মুছবেন না বা `/usr/bin/httpx` overwrite করবেন না; টুল গাইড দেখুন।
+**HTTPX:** এখানে ProjectDiscovery HTTPX লাগে। Python HTTPX আলাদা client। নাম মেলানোর জন্য অন্য program মুছবেন না বা system executable overwrite করবেন না।
 
-Nuclei-র উপযুক্ত template-ও লাগবে। কিছু বাইরের data provider বন্ধ থাকতে পারে বা আলাদা account configuration চাইতে পারে। Tool setup আপনার জন্য paid account বা API key তৈরি করে না।
+### Terminal দিয়ে plan বা retry
 
-### Desktop ছাড়া Kali / Kali WSL-এর command
+আগে assessment শেষ/বন্ধ করুন। Repository folder-এ সাধারণ user দিয়ে দিন।
 
-নিজের **Kali Terminal** খুলুন। ইনস্টল করা repository-তে গিয়ে আগে নির্দিষ্ট plan দেখুন:
+**Linux / WSL:**
 
 ```bash
-cd ~/Tools/02-Custom/echo-recon-workspace
 .venv/bin/python setup_tools.py --plan
-```
-
-`--plan` শুধু স্থানীয় path পড়ে setup-এর পরিকল্পনা দেখায়। কোনো command বা tool help চালায় না, download/install/scan করে না। শুধু path দেখালেই readiness check পাস হয়েছে বোঝায় না।
-
-পরিবর্তন করতে প্রস্তুত হলে চলমান assessment আগে শেষ বা বন্ধ করুন। তারপর দিন:
-
-```bash
 .venv/bin/python setup_tools.py --install
+.venv/bin/python doctor.py
 ```
 
-`--install` সত্যিই নির্দিষ্ট installation workflow শুরু করে; এটি শুধু plan দেখানো নয়। আগে tool যাচাই করে, check পাস করা tool বাদ রাখে এবং যেগুলোতে setup প্রয়োজন সেগুলো নিয়ে কাজ করে। নির্দিষ্ট Kali package-এর জন্য ওই interactive Terminal-এ sudo চাইতে পারে। Python command সাধারণ user দিয়ে দিন, **`sudo python` দিয়ে নয়**। একই সঙ্গে একাধিক installer চালাবেন না। Error হলে পড়ে তারপর retry করুন; অন্য project-এর existing launcher নিজে থেকে overwrite করবে না।
+**সরাসরি Windows, Python 3.12 x64:**
 
-নতুন করে Nuclei engine ইনস্টল হলে official template-ও download হয়। আগে থেকে ready Nuclei ও তার template default অবস্থায় রেখে দেয়। Setup শেষে installer Terminal বন্ধ করুন। Environment বদলালে dashboard restart করুন এবং **Check installed tools** আবার চাপুন। এই installer command-এ scan target দেওয়া যায় না; assessment চালায় না। Windows হলে command দেওয়ার আগে Kali WSL-এর মধ্যে ঢুকুন। `--install` Kali-র জন্য; সরাসরি Windows বা যেকোনো Linux distribution-এর জন্য নয়।
+```powershell
+.\.venv\Scripts\python.exe setup_tools_windows.py --plan
+.\.venv\Scripts\python.exe setup_tools_windows.py --install
+.\.venv\Scripts\python.exe doctor.py
+```
+
+Default/`--plan` শুধু পরিকল্পনা দেখায়; command/help চালায় না, download বা write করে না। `--install` সত্যিই সেটআপ করে, কোনো scan target নেয় না। পুরো Python installer sudo দিয়ে চালাবেন না; প্রয়োজনীয় fixed OS package-এর জন্য আলাদা sudo চায়। সমর্থিত distro/architecture/Python-এর সীমা [TOOLS.md](TOOLS.md)-তে আছে।
+
+নতুন Nuclei engine-এর official template download হয়; আগে থেকে ready engine/template রেখে দেয়, যদি নিজে update না চান। Setup paid account বা API key তৈরি করে না। Template/provider বন্ধ বা বদলে গেলে ready tool-ও অসম্পূর্ণ ফল দিতে পারে।
+
+শুধু dashboard ইনস্টল করতে `bash install.sh --dashboard-only` বা `.\install.ps1 -DashboardOnly` দিন। Automatic startup setup বন্ধ রাখতে `bash run.sh --no-tool-setup`, `.\run.ps1 -NoToolSetup` বা `python app.py --no-tool-setup` দিন। Browser নিজে না খুলতে আলাদা `--no-browser` / `-NoBrowser` আছে।
 
 ## ৩. Form-এর ঘরগুলো পূরণ করুন
 
@@ -163,7 +165,7 @@ Form-এ **৩০, ৬০, ১২০ বা ১৮০ সেকেন্ড** �
 3. মালিকানা/অনুমতির কথা সত্য হলেই confirmation দিন। Network-এর সীমাবদ্ধতা পড়ে acknowledgement দিন।
 4. **Start assessment** একবার চাপুন। একই সময়ে একটি job চলতে পারে।
 5. **Progress & evidence** ও **Live activity** দেখুন। শুরুতে local tool check বা DNS preflight-এর জন্য অপেক্ষা হতে পারে; সবসময় page আটকে যাওয়া নয়।
-6. থামাতে **Stop** চাপুন। Cancellation শেষ হওয়া পর্যন্ত অপেক্ষা করে তারপর নতুন কাজ দিন। Linux-এ বর্তমান process group বন্ধের অনুরোধ যায়। অস্বাভাবিকভাবে বন্ধ হলে বা child process আলাদা হয়ে গেলে পরে system দেখতে হতে পারে।
+6. থামাতে **Stop** চাপুন। Cancellation শেষ হওয়া পর্যন্ত অপেক্ষা করে তারপর নতুন কাজ দিন। Linux-এ বর্তমান process group বন্ধ হয়। Windows-এ kill-on-close Job Object-এর contained process tree বন্ধ হয়; parent আগে শেষ হলেও ভেতরের child অন্তর্ভুক্ত থাকে। Containment তৈরি না হলে tool চালায় না। অস্বাভাবিক OS shutdown বা tool-এর ত্রুটিতে পরে system দেখতে হতে পারে।
 7. Dashboard server বন্ধ করতে **যে Terminal থেকে চালু করেছেন সেখানে Ctrl+C** দিন। শুধু browser tab বন্ধ করলে server বা assessment থামে না।
 
 প্রথম অনুমোদিত run-এ scope-এ শুধু primary host রাখুন, আগে থেকে selected তিনটি check রাখুন, rate ১ ও সময় ১২০ সেকেন্ড দিন। অন্য check-এর যোগাযোগ বুঝে ও অনুমতি থাকলে পরে যোগ করুন। এটি form পূরণের উদাহরণ; এই গাইড নিজে কোনো scan করে না।

@@ -15,7 +15,7 @@ bash run.sh
 
 Keep that terminal open. Firefox should open **http://127.0.0.1:8001**. If it does not, enter that address manually. This is the dashboard's address on your own Kali machine; it is not the domain you put in the assessment form.
 
-Run as your normal user. The dashboard itself does not need root. On native Windows, the dashboard, saved history and reports work; use **Kali WSL2** for the eight-tool assessment workflow. See [WINDOWS.md](WINDOWS.md).
+Run as your normal user. The dashboard refuses root on Linux. Native Windows has its own verified managed tool prefixes and adapters; WSL remains a separate optional Linux environment. Windows uses `install.ps1` / `run.ps1`; other supported Linux families use the Linux scripts with their own prerequisites. See [WINDOWS.md](WINDOWS.md) and [TOOLS.md](TOOLS.md).
 
 ### Switch between the two layouts
 
@@ -25,47 +25,49 @@ Changing the layout keeps your form values, running job and displayed results in
 
 The background matrix animation is available in both layouts; reduced-motion preferences disable it. This switch changes dashboard presentation, not the scan settings. For the built-in instructions, click **How to use / ব্যবহারবিধি** in the header or **Full usage guide / বিস্তারিত নিয়ম** in the sidebar.
 
-## 2. Check and set up the tools
+## 2. Automatic setup and checking the tools
 
-1. Click **Check installed tools**. Wait for the identity/help checks to finish.
-2. Read each tool's state:
+The default installer sets up the dashboard and missing backends together. Normal desktop startup also checks local tools asynchronously and starts the fixed setup when needed. Headless Linux/WSL uses the launcher's existing terminal so sudo prompts stay visible. Installing tools does not start an assessment.
 
-   | State | Meaning | Next step |
-   |---|---|---|
-   | `ready` | A matching executable passed the local help/identity check. | It can be selected, but this is not a complete compatibility test. |
-   | `missing` | The executable was not found on the server's PATH. | Set up the tool in the same Kali environment as the dashboard. |
-   | `unverified` | An executable was found, but its identity or required help flags did not match. | Check the version and PATH first; reinstalling may be unnecessary. |
+1. Read **Tool health** / **Download / Setup** progress. Windows installs seven compatible backends in separate user folders; Nmap uses its official Windows installer and your license/admin confirmations. Linux desktop setup opens a supported visible terminal.
+2. Enter sudo only in the Linux terminal when the fixed package manager requests it. Never send a password to the dashboard or a chat. Close the finished setup terminal before starting an assessment.
+3. Wait for completion or a clear error. An opened terminal/downloaded source is not proof of installation. Existing unrelated/incomplete folders are preserved for inspection rather than overwritten.
+4. Click **Check installed tools**. The main cards and open setup popup refresh their states together.
+5. If desktop automatic setup previously failed for the same missing-tool set, the private attempt record prevents an identical restart loop. Read/fix the error and use **Setup all tools** for a deliberate retry. Headless CLI startup rechecks tools; use the opt-out below if you need to skip it.
 
-3. Click **Download / Setup tools** to see official sources and installation guidance for all eight tools. A missing/unverified row also has a setup shortcut.
-4. On a supported Kali desktop, **Setup all tools** opens a local terminal for the project's fixed tool installer. Review what it says before continuing. If administrator permission is needed, enter your sudo password **in that terminal**, never in the dashboard or a chat. Password characters normally stay invisible while typing.
-5. Keep the installer terminal open until it reports completion or an error. A started installer is not proof that all tools installed successfully. Downloading source and installing a working executable are different steps.
-6. If no terminal can open, or you are using Windows/WSL without a Kali desktop, use the exact terminal commands below and [TOOLS.md](TOOLS.md) inside Kali. A native Windows tool installation does not make these Linux adapters work in Windows.
-7. After setup, click **Check installed tools** again. If the shell's PATH or other environment changed, restart the dashboard and recheck. Select only checks you need; installing a tool does not require you to run it.
+| State | Meaning | Next step |
+|---|---|---|
+| `ready` | Matching identity/help and required adapter flags passed locally. | Select only needed checks; API/template/provider behavior still needs review. |
+| `missing` | No suitable command was found in managed paths/PATH. | Set up the tool in the same environment as this server, then recheck. |
+| `unverified` | A command exists but identity/help requirements failed. | Inspect its resolved path/version before reinstalling. |
 
-**HTTPX warning:** this project needs **ProjectDiscovery HTTPX**. Python HTTPX is a different program with the same executable name. Do not delete Python HTTPX or overwrite `/usr/bin/httpx` to fix the conflict; follow the tool guide.
+**HTTPX:** the adapter needs ProjectDiscovery HTTPX, not the Python HTTPX client. Do not delete another program or overwrite a system executable to fix a naming conflict.
 
-Nuclei also needs compatible templates. External data providers may be unavailable or need separate account configuration. Tool setup does not create paid accounts or API keys.
+### Preview or retry from a terminal
 
-### Headless Kali / Kali WSL terminal commands
+Finish/stop any assessment first. From the repository, as your normal user:
 
-Open your own **Kali terminal**, go to this installed repository, and preview the fixed plan first:
+**Linux / WSL:**
 
 ```bash
-cd ~/Tools/02-Custom/echo-recon-workspace
 .venv/bin/python setup_tools.py --plan
-```
-
-`--plan` reads local paths and prints the setup plan. It does not execute commands, probe tool help, download, install or scan. A printed path is not a passed readiness check.
-
-When you are ready to make the changes, finish or stop any assessment, then run:
-
-```bash
 .venv/bin/python setup_tools.py --install
+.venv/bin/python doctor.py
 ```
 
-`--install` starts the fixed installation workflow; it is not another preview. It checks the tools, skips those passing local checks, and sets up those needing attention. It may request sudo in this interactive terminal for fixed Kali packages. Run the Python command as your normal user, **not** `sudo python`. Do not start several installers at once. Review any error before retrying; an unrelated existing launcher will not be overwritten automatically.
+**Native Windows, Python 3.12 x64:**
 
-Newly installed Nuclei engines also download official templates. Existing ready Nuclei installations/templates are retained by default. After setup, close the finished installer terminal, restart the dashboard if its environment changed, and click **Check installed tools** again. These installer commands accept no scan target and do not launch an assessment. On Windows, enter Kali WSL before running them; `--install` supports Kali rather than native Windows or arbitrary Linux distributions.
+```powershell
+.\.venv\Scripts\python.exe setup_tools_windows.py --plan
+.\.venv\Scripts\python.exe setup_tools_windows.py --install
+.\.venv\Scripts\python.exe doctor.py
+```
+
+Default/`--plan` prints the fixed plan without running commands/help checks, downloading or writing. `--install` performs setup and accepts no target. Never run the full installer with sudo; only fixed OS package operations request elevation in their terminal. See [TOOLS.md](TOOLS.md) for supported package managers, architectures and Python requirements.
+
+New Nuclei engines download official templates; existing ready engines/templates are kept unless an explicit template update is requested. Setup does not create paid accounts or API keys. A changing template set or unavailable provider can affect results despite local readiness.
+
+For dashboard-only installation use `bash install.sh --dashboard-only` or `.\install.ps1 -DashboardOnly`. To skip automatic setup on launch use `bash run.sh --no-tool-setup`, `.\run.ps1 -NoToolSetup` or `python app.py --no-tool-setup`. Browser suppression is separate: `--no-browser` / `-NoBrowser`.
 
 ## 3. Fill in the form
 
@@ -163,7 +165,7 @@ If a process exceeds its allowance, it is stopped and marked **timeout**. A time
 3. Tick the ownership/permission confirmation only when true. Read and acknowledge the network limitations.
 4. Click **Start assessment** once. Only one job is allowed at a time.
 5. Watch **Progress & evidence** and **Live activity**. An initial delay can be the local tool checks or DNS preflight, not a frozen page.
-6. To stop the assessment, click **Stop** and wait for cancellation to complete before starting another job. On Linux, the application asks the current process group to stop. Abnormal shutdown or detached child processes can require separate inspection.
+6. To stop the assessment, click **Stop** and wait for cancellation to complete before starting another job. On Linux, the application stops the current process group. Native Windows tools run in a kill-on-close Job Object so the contained process tree is terminated on cancellation/time/output limits, including descendants after their parent exits. If containment setup fails, the tool is not run uncontained. Abnormal OS shutdown or tool defects can still require inspection.
 7. To close the dashboard server, press **Ctrl+C in its original terminal**. Closing the browser tab alone does not stop the server or an assessment.
 
 For a first authorized run, keep just the primary host in scope, keep the three preselected checks, and choose rate 1 and a 120-second allowance. Add additional checks only when you understand and permit their traffic. This is a form example, not a scan performed by this guide.

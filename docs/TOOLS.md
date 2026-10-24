@@ -1,122 +1,106 @@
-# Optional assessment tools / বাইরের টুলের সেটআপ
+# Backend tool setup / আটটি টুল একসঙ্গে সেটআপ
 
-The dashboard installer installs **only the dashboard**. The eight tools are independent third-party projects with their own licenses, dependencies and update policies. An existing Kali installation usually has several already. Do not move `/usr/bin` files into this project or reinstall working tools unnecessarily.
+[Install and run](../README.md) · [বাংলা নির্দেশনা](../README.bn.md) · [Windows / WSL](WINDOWS.md) · [Usage](USAGE.md)
 
-Dashboard-এর installer শুধু dashboard ইনস্টল করে। আটটি tool আলাদা project। আগে থেকে থাকলে আবার install করার প্রয়োজন নেই। System-এর executable সরাবেন না।
+These are eight independent third-party tools with their own licenses and dependencies. The repository installs missing backends together and preserves tools that already pass local help/identity checks. Downloading source, finishing installation and passing a local check are different steps. No installer accepts a target or starts an assessment.
 
-## Set up all missing tools / একসঙ্গে সেটআপ
+## Automatic installation
 
-On a Kali desktop, click **Setup all tools** beside the check/download controls. It opens this repository's fixed `setup_tools.py` in a visible terminal, runs local identity checks, skips ready tools and installs missing ones. Apt packages may ask for your sudo password in that terminal. The browser receives no password. Finish and close the terminal before starting an assessment; then click **Check installed tools** again.
+- **Install entry point:** `bash install.sh` or `.\install.ps1` creates the dashboard venv and sets up backends. Use `--dashboard-only` / `-DashboardOnly` for the dashboard alone.
+- **Normal app startup:** local checks run asynchronously. Missing backends use the fixed setup launcher. Ready tools cause no download. Desktop automatic attempts are recorded privately so identical failures do not reopen setup on every restart; **Setup all tools** is the deliberate retry.
+- **Linux desktop:** a visible local terminal opens. Fixed OS package installation may ask for sudo there.
+- **Headless Linux/WSL:** `run.sh` uses the same interactive terminal for CLI setup; it rechecks ready tools on subsequent runs. Use `--no-tool-setup` to skip that step.
+- **Windows:** seven compatible backends install as a normal user, with progress in the dashboard. Nmap requires its official Windows installer and the user's license/administrator confirmations.
+- **Check installed tools:** refreshes local health. A displayed error or incomplete setup is not success.
 
-For manual/headless Kali or Kali WSL2, first finish/stop any assessment. From the repository directory, as your normal user:
+বাংলায়: installer একসঙ্গে কাজগুলো করে, কিন্তু tool ইনস্টল হলেই scan হয় না। ঠিক থাকা tool আবার নামায় না। Windows-এর progress dashboard-এ, Linux desktop-এর progress আলাদা Terminal-এ দেখা যায়। Sudo password শুধু ওই Terminal-এ দিন। একই desktop automatic চেষ্টা ব্যর্থ হলে error পড়ে **Setup all tools** চাপুন; শুধু restart দিয়ে সমস্যাটি ঢাকবেন না।
 
-```bash
-.venv/bin/python setup_tools.py --plan
-.venv/bin/python setup_tools.py --install
+## Fixed manual commands
+
+Finish/stop any assessment before installing. Run as your normal user.
+
+**Native Windows, Python 3.12 x64:**
+
+```powershell
+.\.venv\Scripts\python.exe setup_tools_windows.py --plan
+.\.venv\Scripts\python.exe setup_tools_windows.py --install
+.\.venv\Scripts\python.exe doctor.py
 ```
 
-The first line is a read-only plan; the second performs setup. The installer uses fixed Kali apt packages, exact Go module versions, an exact Photon commit and pinned isolated Python environments. Its pins live in `setup_tools.py`; these third-party dependencies are separate from the dashboard's hash lock. Custom tools live under `~/.local/share/echo-recon/tooling`, with managed launchers in `~/.local/bin`. Existing unrelated launchers are not overwritten; inspect any conflict it reports before retrying. Working system executables are kept in place. The helper supports normal-user Kali only; native Windows displays Kali/WSL instructions.
-
-New Nuclei installations download current official templates (a changing upstream snapshot); existing ready installations/templates are left alone. To explicitly refresh an existing Nuclei's templates, use `.venv/bin/python setup_tools.py --install --update-templates` while no assessment is running. This downloads templates, not scan results. Installation does not create API accounts or keys.
-
-বাংলায়: **Setup all tools** চাপলে আলাদা Kali terminal-এ যা হচ্ছে দেখতে পাবেন। ঠিক থাকা tool রেখে দেবে। Error হলে সফল ধরে নেবেন না—terminal-এর নির্দেশনা দেখুন। নিজের তৈরি wrapper-এর সঙ্গে নাম মিলে গেলে সেটা মুছে বা overwrite করবে না। Windows-এ tool setup করতে Kali WSL2-র terminal ব্যবহার করুন।
-
-## First check / আগে যাচাই
-
-From the repository folder, as your normal user:
-
-The dashboard's **Download / Setup tools** button lists all eight official sources and this guide. It stays available even when a tool is missing. The **Check installed tools** button refreshes local diagnostics after manual setup; `unverified` means check the version/PATH rather than blindly reinstalling.
+**Linux / WSL, from the Linux repository:**
 
 ```bash
 export PATH="$HOME/.local/bin:$HOME/go/bin:/usr/local/go/bin:$PATH"
+.venv/bin/python setup_tools.py --plan
+.venv/bin/python setup_tools.py --install
 .venv/bin/python doctor.py
 ```
 
-`ready` means the executable's local help/identity check passed; it is not a full functional test or a version security audit. `missing` means not on PATH. `unverified` means identity/help failed. Check the path in the JSON output. No target is contacted by these checks, although third-party programs control their own help/version behavior.
+Default/`--plan` is read-only: it prints sources and local paths without probing help, running commands, downloading or writing. `--install` performs the actual fixed setup. The browser API accepts no custom commands, paths, versions or passwords. Never use `sudo python setup_tools.py`; the normal-user installer invokes the needed package manager separately.
 
-`ready` পুরো পরীক্ষা নয়। `missing` হলে PATH দেখুন। `unverified` হলে ভুল program বা অসমর্থিত version হতে পারে।
+To suppress automatic startup installation: `bash run.sh --no-tool-setup`, `.\run.ps1 -NoToolSetup` or `python app.py --no-tool-setup`. Explicit setup controls remain available.
 
-## Kali-managed tools
+## Platform-specific storage and prerequisites
 
-Check available candidates before installing:
+| Platform | Installation method and location |
+|---|---|
+| Windows x64 | Python **3.12 x64**; separate versioned folders under `~/Tools/EchoRecon/tooling`. Three official ProjectDiscovery Windows ZIPs have pinned archive/checksum-manifest hashes; Python tool sources and runtime pins live in `setup_tools_windows.py`. No global PATH/profile/registry change. |
+| Kali Linux | Fixed distro packages for DNSRecon, theHarvester and Nmap. Go **1.26+** for missing compiled Go tools; exact public Go module versions/checksums. Isolated Python environments for Arjun/Photon. |
+| Other supported glibc Linux | Debian/Ubuntu `apt`, Fedora/RHEL `dnf`, Arch `pacman`, openSUSE `zypper`. Nmap/necessary prerequisites use the fixed distro package manager. Official Linux x86_64/aarch64 ProjectDiscovery ZIPs use the reviewed checksum manifest. Pinned DNSRecon/theHarvester source installs require Python **3.12+**; their upstream dependencies resolve for that interpreter/platform from PyPI. |
+| Linux managed storage | `~/.local/share/echo-recon/tooling`, with exact installer-owned wrappers in `~/.local/bin`. Working system executables remain in place. |
+| Other distro/architecture | Manual compatible upstream installation. Alpine/musl is not an automatic portable-install target. |
 
-```bash
-apt-cache policy dnsrecon theharvester nmap subfinder httpx-toolkit arjun nuclei
-```
+Other-distro package-manager/download paths are covered by mocked tests; fresh end-to-end installation on every distribution is not claimed. OS repositories, PyPI, data providers and templates may change or be unavailable. Dashboard dependency hashes do not lock every external tool/transitive dependency.
 
-For missing packages, Kali's repository is the simplest managed source. For example:
+Unrelated files, unknown ownership markers, symlinks/junctions, conflicting wrappers and incomplete version folders are preserved. Read the reported path and inspect it before deciding what to move yourself. Do not move an existing Python venv to another folder: entry points can embed absolute paths. An old Windows install under virtualized AppData is left in place; setup creates the missing environments at the stable user path.
 
-```bash
-sudo apt update
-sudo apt install dnsrecon theharvester nmap
-```
+## Nmap on Windows
 
-Install only the additional packages your Kali repository actually offers and which you need. Package versions vary with Kali rolling updates; they are not pinned by this application's lock file. We do not download and execute remote installation scripts.
+Use [Nmap's official Windows installer](https://nmap.org/download.html). License/admin confirmation is an interactive user step; this helper does not launch drivers or accept agreements unattended. After installation, **Setup all tools** can skip Nmap and complete its final checks.
 
-Kali-এর package version সময়ের সঙ্গে বদলায়। এই project-এর `requirements.txt` scanner-গুলোকে pin করে না। কোন package সত্যিই missing তা দেখে install করুন।
+The native adapter runs limited TCP connect/service detection (`-sT -sV`, top 100 ports) with `-Pn`, so this path avoids raw-packet host discovery. It does not provide UDP/OS/raw-packet modes. Installing Npcap or elevating the dashboard is not part of this setup.
 
-## Tool references and compatibility
+## Interpret readiness
 
-| Tool | Official source / guidance | Adapter expects |
+| Status | Meaning | What to do |
 |---|---|---|
-| DNSRecon | [darkoperator/dnsrecon](https://github.com/darkoperator/dnsrecon) | Standard DNS enumeration (`-t std`). |
-| Subfinder | [ProjectDiscovery installation](https://docs.projectdiscovery.io/tools/subfinder/install) | Domain input and silent output. |
-| HTTPX | [ProjectDiscovery installation](https://docs.projectdiscovery.io/tools/httpx/install) | `-silent`, `-rl`, `-threads`, `-timeout`, `-retries`. |
-| Nmap | [Nmap downloads](https://nmap.org/download.html) | TCP connect/service detection, top-port and rate bounds. |
-| theHarvester | [laramies/theHarvester](https://github.com/laramies/theHarvester) | `crtsh,otx` sources; service availability can vary. |
-| Photon | [s0md3v/Photon](https://github.com/s0md3v/Photon) | `photon` launcher, level/thread/delay/output options. |
-| Arjun | [s0md3v/Arjun](https://github.com/s0md3v/Arjun) | Rate limit and `--disable-redirects` support. |
-| Nuclei | [ProjectDiscovery installation](https://docs.projectdiscovery.io/tools/nuclei/install) | JSONL, redirect-disable, rate/concurrency and excluded-tag flags. |
+| `ready` | Local identity/help checks passed, including required adapter flags. | Select only the checks needed; this is not a full network/API compatibility or security audit. |
+| `missing` | No suitable command was found in the server's managed paths/PATH. | Install in that same environment and recheck. |
+| `unverified` | A command exists but identity/help requirements failed. | Inspect its path/version before reinstalling. |
 
-After a separate installation, click **Check installed tools** again or run `doctor.py`. Restart the dashboard if its inherited PATH changed. The application checks required help flags before using an adapter; unsupported versions are not treated as working. Tests here use controlled responses rather than public scans. Unsupported tool versions may need a reviewed adapter change.
+Run `doctor.py` with the environment's venv Python to see resolved paths/commands. Help checks are local; upstream programs still control their own help/version behavior.
 
-### HTTPX naming collision
+**HTTPX:** ProjectDiscovery HTTPX is the required probing tool. Python HTTPX is a separate HTTP client with the same command name. Managed native Windows prefixes take priority without changing PATH. On Linux, inspect `command -v httpx` and the tool guide before creating any normal-user wrapper. Do not delete Python HTTPX or overwrite `/usr/bin/httpx`.
 
-Kali may have **Python HTTPX**, an HTTP client, and **ProjectDiscovery HTTPX**, a host probing utility. They are different programs. Kali's `httpx-toolkit` package may expose a differently named executable. This dashboard requires a `httpx` command that identifies as ProjectDiscovery and has the expected flags. Existing user-managed installations in `~/go/bin` can be used by `run.sh`.
+## Official tools
 
-Do not overwrite `/usr/bin/httpx` or delete another program to fix the name. If your package exposes `httpx-toolkit`, a normal-user wrapper can map it explicitly:
+| Tool | Official source | Adapter purpose |
+|---|---|---|
+| DNSRecon | [darkoperator/dnsrecon](https://github.com/darkoperator/dnsrecon) | Standard DNS records for the primary domain. |
+| Subfinder | [ProjectDiscovery/subfinder](https://github.com/projectdiscovery/subfinder) | Public-source subdomain discovery; results do not expand active scope. |
+| HTTPX | [ProjectDiscovery/httpx](https://github.com/projectdiscovery/httpx) | Live origins, bounded requests/concurrency and exact returned-host filtering. |
+| Nmap | [Nmap downloads](https://nmap.org/download.html) | Limited TCP connect/service detection. |
+| theHarvester | [laramies/theHarvester](https://github.com/laramies/theHarvester) | Configured `crtsh,otx` information sources. |
+| Photon | [s0md3v/Photon](https://github.com/s0md3v/Photon) | Shallow crawl of HTTPX-confirmed scoped hosts. |
+| Arjun | [s0md3v/Arjun](https://github.com/s0md3v/Arjun) | HTTP parameter discovery with bounded adapter settings. |
+| Nuclei | [ProjectDiscovery/nuclei](https://github.com/projectdiscovery/nuclei) | Selected-severity template checks; findings require human verification. |
 
-```bash
-mkdir -p ~/.local/bin
-command -v httpx-toolkit
-```
+Fixed releases/commits and their pins are visible in the installer source. Keep original license notices when contributing or redistributing.
 
-Only if that command prints a valid installed path, and no file already exists at `~/.local/bin/httpx`, create a wrapper using a text editor:
+## Templates, accounts and retry
 
-```sh
-#!/bin/sh
-exec /usr/bin/httpx-toolkit "$@"
-```
-
-Save as `~/.local/bin/httpx`, check that the actual executable path matches your system, then `chmod +x ~/.local/bin/httpx`. Restart and recheck. If a wrapper already exists, inspect it instead of replacing it.
-
-Python HTTPX মুছবেন না বা `/usr/bin` overwrite করবেন না। আলাদা user wrapper দিয়ে সঠিক tool নির্বাচন করা যায়।
-
-### Photon isolated environment (when Kali does not provide it)
-
-Use a separate tool directory and a separate virtual environment. Select and review an upstream commit first; do not blindly run an unknown script. The following downloads source into a new folder and installs its Python dependencies. It does not execute a scan:
+New Nuclei engines download current official templates; existing ready engines/templates are kept by default. An explicit refresh is:
 
 ```bash
-mkdir -p ~/Tools/02-Custom
-cd ~/Tools/02-Custom
-git clone https://github.com/s0md3v/Photon.git photon-source
-cd photon-source
-git rev-parse HEAD
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python setup_tools.py --install --update-templates
 ```
 
-Record the commit and review dependency changes before updating. Photon dependencies above are upstream-managed and are **not** covered by the dashboard's hash lock. If you already have a working Photon launcher, keep it. Otherwise create `~/.local/bin/photon` in your editor, without overwriting an existing file:
+Windows equivalent:
 
-```sh
-#!/bin/sh
-exec "$HOME/Tools/02-Custom/photon-source/.venv/bin/python" "$HOME/Tools/02-Custom/photon-source/photon.py" "$@"
+```powershell
+.\.venv\Scripts\python.exe setup_tools_windows.py --install --update-templates
 ```
 
-Make it executable with `chmod +x ~/.local/bin/photon`. `doctor.py` should now identify Photon. Run it as a normal user. Crawlers may follow redirects; explicit dashboard inputs are not a strict egress guarantee.
+Templates are changing upstream content, not a pinned template snapshot or saved findings. Installation does not create paid accounts/API keys or enable out-of-band interaction. Configure needed accounts privately with the upstream tool's own instructions; do not paste secrets in the dashboard or commit them.
 
-### Templates and data providers
-
-Nuclei needs templates installed separately using its official instructions. This dashboard does not auto-download updates, provision third-party API keys or enable out-of-band interaction. Do not paste API keys into the dashboard or commit them. Template coverage and source-provider availability affect results; missing templates/errors must be reviewed, not interpreted as a clean assessment.
-
-নতুন template, API account বা secret এই dashboard নিজে তৈরি করে না। কোনো key GitHub-এ upload করবেন না।
+If setup fails, read its progress, fix the stated Python/package/path/network issue, then use **Setup all tools** or the CLI `--install` command. Exit zero/final local checks is installation evidence, not proof that every provider or assessment works. Do not treat missing templates or failed providers as a clean security result.
