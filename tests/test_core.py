@@ -50,7 +50,7 @@ class SecurityTests(unittest.TestCase):
         self.assertEqual(domain, "example.com")
         self.assertEqual(scope, ["example.com", "app.example.com"])
         for value in ["example.com;id", "*.example.com", "127.0.0.1", "--help",
-                      "https://name:secret@example.com", "https://example.com:8443"]:
+                      "https://name:secret@example.com"]:
             with self.subTest(value=value), self.assertRaises(ValueError):
                 validate_scope(value, [value])
         for entries in [["example.com", "example.com.attacker.net"], ["example.com", "other.com"]]:
@@ -92,11 +92,6 @@ class RunnerTests(unittest.TestCase):
         result = run([sys.executable, "-c", "import sys;sys.stderr.write('failed');sys.exit(7)"], cancel=threading.Event())
         self.assertEqual((result.status, result.returncode), ("error", 7))
         self.assertIn("failed", result.stderr)
-
-    def test_timeout(self):
-        result = run([sys.executable, "-c", "import time;time.sleep(10)"], cancel=threading.Event(), timeout=.15)
-        self.assertEqual(result.status, "timeout")
-        self.assertLess(result.duration, 4)
 
     def test_cancel(self):
         event = threading.Event()

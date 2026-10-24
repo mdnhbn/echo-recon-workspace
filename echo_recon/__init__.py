@@ -1,3 +1,3 @@
 """Echo Recon: local, bounded assessment dashboard."""
 
-__version__ = "6.6.3"
+__version__ = "6.6.4"

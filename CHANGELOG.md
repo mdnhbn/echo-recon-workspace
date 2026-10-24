@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.6.4 — 2026-10-24
+
+- Make the primary URL a first-class form/API input while continuing to accept legacy domain fields. URL-aware tools retain the HTTP(S) page path and any valid port; the authorization scope remains the hostname.
+- Remove the subprocess wall-clock deadline from assessment and installed-tool checks. Tools continue until they exit, reach the output cap, or the user presses Stop.
+- Keep URL ports when confirming live hosts and when selecting Nikto's HTTP origin.
+
 ## 6.6.3 — 2026-10-24
 
 - Accept public HTTP(S) URLs as well as domains; pass the primary URL path to HTTPX, Nuclei, Photon and Arjun, and omit query strings/fragments. Username targets remain unsupported.

@@ -118,7 +118,7 @@ async function start(payload) {
 }
 $("scan-form").addEventListener("submit", (event) => {
   event.preventDefault();
-  start({domain: $("domain").value, scope: $("scope").value.split(/\s+/).filter(Boolean),
+  start({target_url: $("target-url").value, scope: $("scope").value.split(/\s+/).filter(Boolean),
     authorized: $("authorized").checked, understands_limits: $("limits").checked,
     tools: [...document.querySelectorAll('input[name="tool"]:checked')].map(input => input.value),
     rate: Number($("rate").value)});

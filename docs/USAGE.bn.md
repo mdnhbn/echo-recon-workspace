@@ -73,7 +73,7 @@ Default/`--plan` শুধু পরিকল্পনা দেখায়; comma
 
 ### Primary domain / মূল ডোমেইন
 
-এখানে অনুমোদিত domain অথবা public HTTP(S) page URL লিখুন। যেমন `https://example.com/help` দিলে HTTPX, Nuclei, Photon ও Arjun `/help` ব্যবহার করবে, আর domain-ভিত্তিক tool `example.com` ব্যবহার করবে। Query ও fragment বাদ যায়। Username, IP, wildcard ও custom port গ্রহণ করে না। Username এই tool-এর সমর্থিত target নয়।
+এখানে অনুমোদিত domain অথবা public HTTP(S) page URL লিখুন। যেমন `https://example.com:8443/help` দিলে URL-aware tool `/help` ও 8443 port ব্যবহার করবে, আর domain-ভিত্তিক tool `example.com` ব্যবহার করবে। Query ও fragment বাদ যায়। Username, IP ও wildcard গ্রহণ করে না। Username এই tool-এর সমর্থিত target নয়।
 
 | যা লিখলেন | গ্রহণ করবে? | কারণ |
 |---|---|---|
@@ -81,8 +81,8 @@ Default/`--plan` শুধু পরিকল্পনা দেখায়; comma
 | `app.example.com` | Hostname-এর format হিসেবে হ্যাঁ | এটি primary হলে শুধু এই নাম ও এর নিচের subdomain scope-এ রাখা যাবে। |
 | `https://example.com/help` | হ্যাঁ | HTTPX, Nuclei, Photon ও Arjun path নেয়; domain tool hostname নেয়। |
 | `http://example.com` | হ্যাঁ | সাধারণ HTTP URL-ও চলে। |
-| `https://example.com:443/help` | হ্যাঁ | Scheme-এর standard port গ্রহণ করে। |
-| `example.com:8443` | না | Custom port সমর্থিত নয়। |
+| `https://example.com:443/help` | হ্যাঁ | HTTPS-এর default port রাখা হয়। |
+| `https://example.com:8443/help` | হ্যাঁ | URL-aware tool দেওয়া port ব্যবহার করে। |
 | `https://name:secret@example.com` | না | Credential থাকা URL গ্রহণ করে না। |
 | `*.example.com` | না | Wildcard সমর্থিত নয়। |
 | `127.0.0.1`, `192.168.1.10`, `localhost` | না | IP address ও local host live target হিসেবে গ্রহণ করে না। |
@@ -91,7 +91,7 @@ Live scanner-এ hostname শুধু public IP-তে resolve করতে হ
 
 ### বাড়তি অনুমোদিত host / Additional authorized hosts
 
-Primary host target domain/URL থেকে নিজে বের হয়ে scope-এ যোগ হয়। শুধু ওই host পরীক্ষা করতে এই ঘর ফাঁকা রাখুন। অন্য অনুমোদিত host চাইলে প্রতি লাইনে hostname বা সাধারণ HTTP(S) URL দিন; শুধু hostname নেওয়া হয়। সর্বোচ্চ চারটি বাড়তি subdomain দেওয়া যায়, মোট পাঁচটি host।
+Primary host target domain/URL থেকে নিজে বের হয়ে scope-এ যোগ হয়। শুধু ওই host পরীক্ষা করতে এই ঘর ফাঁকা রাখুন। অন্য অনুমোদিত host চাইলে প্রতি লাইনে hostname বা public HTTP(S) URL দিন; শুধু hostname নেওয়া হয়। সর্বোচ্চ চারটি বাড়তি subdomain দেওয়া যায়, মোট পাঁচটি host।
 
 Form-এর গঠন বোঝার নমুনা:
 
@@ -127,7 +127,7 @@ Start দেওয়ার আগে নমুনাটি নিজের অন�
 | ৮ | Template checks — Nuclei | পাওয়া low/medium/high/critical template চালায়; নির্দিষ্ট উচ্চপ্রভাবের category বাদ থাকে এবং out-of-band interaction বন্ধ থাকে। Match হাতে যাচাই করতে হয়। | Scope-এর প্রতিটি নির্দিষ্ট host। |
 | ৯ | Web-server checks — Nikto | Tuning group 1, 2, 3 ও b পরীক্ষা করে: interesting file, ভুল/default config file, তথ্য ফাঁস ও software চেনা। এগুলো active request; ফল যাচাই করতে হবে। | Scope-এর নির্দিষ্ট host-প্রতি সর্বোচ্চ একটি HTTP origin। |
 
-Fallback চালু করতে Nuclei ও Nikto দুটোই বাছুন। Nuclei missing, unverified, timeout বা error হলে Nikto চলবে। Nuclei সফলভাবে শেষ হলেও finding না পেলে Nikto **চলবে না**। শুধু Nikto বাছলে এটি আলাদা phase হিসেবে চলে। Report-এ fallback আলাদা ধাপ হিসেবে থাকে এবং দেওয়া scope বাড়ায় না।
+Fallback চালু করতে Nuclei ও Nikto দুটোই বাছুন। Nuclei missing, unverified, error বা অসম্পূর্ণ হলে Nikto চলবে। Nuclei সফলভাবে শেষ হলেও finding না পেলে Nikto **চলবে না**। শুধু Nikto বাছলে এটি আলাদা phase হিসেবে চলে। Report-এ fallback আলাদা ধাপ হিসেবে থাকে এবং দেওয়া scope বাড়ায় না।
 
 Photon বা Arjun বেছে নিলে একই run-এ **Live hosts / HTTPX**-ও বেছে নিন। না হলে confirmed live-host list থাকবে না; ধাপগুলো skipped হবে। Primary host-এর জন্য URL দিলে Photon/Arjun-এ তার page path যায়; অতিরিক্ত scope host-এ site root ব্যবহার হয়। দেওয়া URL-এর scheme-ই ব্যবহার হয়; ব্যর্থ হলে নিজে থেকে অন্য scheme-এ আবার চেষ্টা হয় না।
 
@@ -151,11 +151,11 @@ Form-এ নিজে পূর্ণসংখ্যা লিখুন: **স�
 
 ### চলার সময় ও অগ্রগতি
 
-Dashboard থেকে **প্রতি tool বা পুরো assessment-এর সময় বেঁধে দেওয়া নেই**। Tool নিজে শেষ হবে অথবা **Stop** চাপলে থামবে। Tool/provider নিজের network error বা request timeout দিতে পারে; সেটি dashboard timer নয়। একসঙ্গে একটি assessment চলে, প্রত্যেক tool-এর output-এর সীমা আছে এবং Stop process tree বন্ধ করে।
+Echo Recon **assessment বা local tool identity check-এর সময়সীমা বেঁধে দেয় না**। Tool নিজে শেষ হবে, output cap-এ থামবে অথবা **Stop** চাপলে বন্ধ হবে। Tool নিজে error দিয়ে শেষ হতে পারে। একসঙ্গে একটি assessment চলে, প্রত্যেক tool-এর output-এর সীমা আছে এবং Stop process tree বন্ধ করে।
 
 Overall bar-এ শেষ হওয়া ও বাকি phase-এর শতাংশ দেখা যায়। প্রতিটি tool row-তে শেষ হওয়া/বাকি host attempt-এর শতাংশ ও বর্তমান attempt-এর elapsed time থাকে। Tool-এর অন্তত একটি host শেষ হলে তার গড় সময় ধরে ওই row-তে আনুমানিক বাকি সময় দেখায়। Overall estimate এই run-এর শেষ হওয়া phase দেখে হিসাব করে। দুটোই ধারণা: tool ও network-এর গতি আলাদা। অনেক command-line tool একটি host-এর ভেতরের progress percent দেয় না; UI অনুমান না করে সেটি জানায়।
 
-কোনো tool নিজে `timeout` বা network error দিলে তার evidence পড়ুন। Dashboard-এর process time limit সরানো হয়েছে। অনুমতি ও traffic বুঝে প্রয়োজন হলে তবেই আবার চালান।
+আগের saved report-এ `timeout` status দেখা যেতে পারে। এই সংস্করণ elapsed-time limit পৌঁছালে scanner process বন্ধ করে না। Error-এর evidence পড়ুন; অনুমতি ও traffic বুঝে প্রয়োজন হলে তবেই আবার চালান।
 
 ## ৫. Start ও Stop
 
@@ -180,7 +180,7 @@ Job শেষ হলে **View report**, **HTML** বা **JSON** ব্যব�
 | `missing` | প্রয়োজনীয় executable পাওয়া যায়নি। |
 | `unverified` | পরিচয়/help যাচাই পাস হয়নি; প্রস্তুত tool হিসেবে ধরা হয়নি। |
 | `error` | Command, parsing বা অন্য প্রয়োজনীয় কাজ ব্যর্থ হয়েছে; diagnostic পড়ুন। |
-| `timeout` | কোনো tool বা provider নিজের network/request সময়সীমা জানিয়েছে; dashboard elapsed time দেখে process বন্ধ করেনি। পরীক্ষা অসম্পূর্ণ। |
+| `timeout` | পুরোনো saved report বা বাইরের adapter-এর status; এই সংস্করণ timer দিয়ে scan বন্ধ করে না। পরীক্ষা অসম্পূর্ণ। |
 | `output_limit` | Output-এর সীমা হয়েছে; সংরক্ষিত প্রমাণ অসম্পূর্ণ। |
 | `skipped` | পূর্বশর্ত মেলেনি বা আগের সমস্যায় ধাপ চালানো হয়নি। |
 | `cancelled` | Stop দেওয়া হয়েছে; বাকি কাজ শেষ হয়নি। |

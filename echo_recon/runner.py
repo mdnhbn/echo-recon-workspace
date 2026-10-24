@@ -1,4 +1,4 @@
-"""Cancellable subprocesses with bounded combined output and wall time."""
+"""Cancellable subprocesses with bounded combined output and manual stopping."""
 from dataclasses import dataclass
 import os
 import signal
@@ -147,7 +147,7 @@ def terminate(proc, job=None):
             pass
 
 
-def run(args, *, cancel, timeout=None, stdin="", cwd=None, max_bytes=250_000):
+def run(args, *, cancel, stdin="", cwd=None, max_bytes=250_000):
     if cancel.is_set():
         return Result("cancelled")
     start = time.monotonic()
@@ -207,8 +207,6 @@ def run(args, *, cancel, timeout=None, stdin="", cwd=None, max_bytes=250_000):
             state = "cancelled"
         elif exceeded.is_set():
             state = "output_limit"
-        elif timeout is not None and time.monotonic() - start >= timeout:
-            state = "timeout"
         if state:
             terminate(proc, job)
             break

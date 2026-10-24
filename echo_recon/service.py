@@ -34,19 +34,32 @@ def clean_object(value):
     return redact(value) if isinstance(value, str) else value
 
 
-def nikto_targets(scope, live):
-    """Choose at most one HTTP origin per explicit host, preferring HTTPS."""
+def nikto_targets(scope, live, primary_url=None):
+    """Keep the supplied primary origin; prefer HTTPS for other explicit hosts."""
     origins = {}
+    primary_host = None
+    if primary_url:
+        try:
+            parsed = urlsplit(primary_url)
+            primary_host = parsed.hostname
+            if parsed.scheme in {"http", "https"} and primary_host in scope:
+                authority = f"{primary_host}:{parsed.port}" if parsed.port is not None else primary_host
+                origins[primary_host] = f"{parsed.scheme}://{authority}"
+        except ValueError:
+            primary_host = None
     for value in live:
         try:
             parsed = urlsplit(value)
             host = parsed.hostname
+            port = parsed.port
             if (parsed.scheme in {"http", "https"} and host in scope
-                    and not parsed.username and not parsed.password
-                    and parsed.port in {None, 80, 443}):
+                    and not parsed.username and not parsed.password):
+                if host == primary_host:
+                    continue
                 previous = origins.get(host)
                 if previous is None or (parsed.scheme == "https" and not previous.startswith("https://")):
-                    origins[host] = f"{parsed.scheme}://{host}"
+                    authority = f"{host}:{port}" if port is not None else host
+                    origins[host] = f"{parsed.scheme}://{authority}"
         except ValueError:
             continue
     return [origins.get(host, f"https://{host}") for host in scope]
@@ -78,7 +91,8 @@ class Manager:
             raise ValueError("Assessment execution is disabled for this dashboard. Tool setup and saved reports remain available.")
         if payload.get("authorized") is not True or payload.get("understands_limits") is not True:
             raise ValueError("Confirm ownership/permission and third-party traffic limitations.")
-        domain, target_url = parse_target(payload.get("domain"))
+        target_input = payload.get("target_url") or payload.get("url") or payload.get("domain")
+        domain, target_url = parse_target(target_input)
         scope_input = payload.get("scope")
         if scope_input is None:
             scope_input = []
@@ -105,7 +119,7 @@ class Manager:
                        "Automated findings require manual verification. No findings is not proof of safety.",
                        "Exact input scope is enforced by the dashboard, not a network sandbox. DNS can change; crawlers/templates may follow secondary links or contact third parties.",
                        "Rate is a per-tool ceiling where supported, not a global packet/request budget. DNS/OSINT tools have separate behavior.",
-                       "The supplied primary URL path is used by HTTPX, Nuclei, Photon and Arjun; query and fragment are omitted. Other checks use its hostname/origin. Usernames are not valid targets.",
+                       "The supplied primary URL path and port are used by HTTPX, Nuclei, Photon and Arjun; query and fragment are omitted. Other checks use its hostname/origin. Usernames are not valid targets.",
                        "Evidence is truncated and common secrets are redacted best-effort; review reports before sharing.",
                    ]}
             if "nikto" in selected:
@@ -201,7 +215,7 @@ class Manager:
             phase["resolved"] = {host: resolve_public(host, self.resolver) for host in scope}
             hosts = [job["domain"]] if name in {"dnsrecon", "subfinder", "theHarvester"} else scope
             if name == "nikto":
-                hosts = nikto_targets(scope, live)
+                hosts = nikto_targets(scope, live, job["target_url"])
                 if fallback_reason is not None:
                     nuclei_phase = next((item for item in job["phases"] if item["tool"] == "nuclei"), None)
                     attempts = nuclei_phase.get("attempts", []) if nuclei_phase else []
@@ -211,7 +225,8 @@ class Manager:
                     if not hosts:
                         hosts = nikto_targets(scope, live)
             if name in {"photon", "arjun"}:
-                hosts = [host for host in scope if any(url.endswith("//" + host) for url in live)]
+                live_hosts = {urlsplit(url).hostname for url in live}
+                hosts = [host for host in scope if host in live_hosts]
                 if not hosts:
                     phase.update(status="skipped", finished_at=now(), evidence="No confirmed in-scope live host. Enable HTTPX or review probing errors.")
                     self.save(job)

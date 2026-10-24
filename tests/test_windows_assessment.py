@@ -127,18 +127,9 @@ class WindowsProcessJobTests(unittest.TestCase):
                  "p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']); "
                  "print(p.pid,flush=True)")
         started = time.monotonic()
-        result = runner.run([sys.executable, "-c", child], cancel=threading.Event(), timeout=5)
+        result = runner.run([sys.executable, "-c", child], cancel=threading.Event())
         self.assertEqual(result.status, "done", result.stderr)
         self.assertLess(time.monotonic() - started, 4)
-        self.assertTrue(result.stdout.strip().isdigit(), result.stdout)
-        self.assert_process_gone(int(result.stdout.strip()))
-
-    def test_timeout_terminates_child_tree(self):
-        child = ("import subprocess,sys,time; "
-                 "p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']); "
-                 "print(p.pid,flush=True);time.sleep(30)")
-        result = runner.run([sys.executable, "-c", child], cancel=threading.Event(), timeout=.6)
-        self.assertEqual(result.status, "timeout")
         self.assertTrue(result.stdout.strip().isdigit(), result.stdout)
         self.assert_process_gone(int(result.stdout.strip()))
 

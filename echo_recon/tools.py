@@ -78,7 +78,7 @@ def nuclei_templates_incomplete(health):
 
 def nuclei_template_health(prefix, cancel=None):
     """Read Nuclei's local template version without auto-updating or scanning."""
-    result = run([*prefix, "-tv", "-duc"], cancel=cancel or threading.Event(), timeout=10, max_bytes=80_000)
+    result = run([*prefix, "-tv", "-duc"], cancel=cancel or threading.Event(), max_bytes=80_000)
     output = result.stdout + "\n" + result.stderr
     match = re.search(r"public nuclei-templates version:\s*([^\s(]+)", output, flags=re.IGNORECASE)
     if result.status == "done" and result.returncode == 0 and match:
@@ -113,7 +113,7 @@ def diagnostics(cancel=None):
         item = {"label": label, "path": prefix[0] if prefix else None,
                 "command": list(prefix) if prefix else [], "status": "missing", "detail": "Not installed"}
         if prefix:
-            check = run([*prefix, *flags], cancel=cancel, timeout=8, max_bytes=80_000)
+            check = run([*prefix, *flags], cancel=cancel, max_bytes=80_000)
             banner = (check.stdout + "\n" + check.stderr).lower()
             valid = check.returncode == 0 and identity in banner
             # ProjectDiscovery's help identifies itself; Python HTTPX has different flags.
@@ -155,8 +155,15 @@ def command(name, host, rate, output_dir, target_url=None):
         # tuning groups. The user-supplied rate maps to a delay between tests.
         "nikto": ["nikto", "-nointeractive", "-nocheck", "-ask", "no",
                   "-Tuning", "123b", "-Pause", f"{1 / rate:.3f}",
-                  "-host", host],
+                  "-host", urlsplit(host).hostname or host],
     }[name]
+    if name == "nikto":
+        parsed_host = urlsplit(host)
+        port = parsed_host.port or (443 if parsed_host.scheme == "https" else None)
+        if port is not None:
+            args.extend(["-port", str(port)])
+        if parsed_host.scheme == "https":
+            args.append("-ssl")
     if name == "nmap" and is_windows():
         # Official Nmap guidance for Windows without Npcap: use sockets only.
         args.insert(2, "-Pn")

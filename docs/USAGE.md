@@ -73,7 +73,7 @@ For dashboard-only installation use `bash install.sh --dashboard-only` or `.\ins
 
 ### Primary domain
 
-Enter a permitted domain or public HTTP(S) page URL. If you enter `https://example.com/help`, HTTPX, Nuclei, Photon and Arjun receive `/help`; domain-level checks use `example.com`. Query strings and fragments are dropped. Usernames, IPs, wildcards and custom ports are rejected. A username is not a supported target.
+Enter a permitted domain or public HTTP(S) page URL. If you enter `https://example.com:8443/help`, URL-aware tools receive the page path and port; domain-level checks use `example.com`. Query strings and fragments are dropped. Usernames, IPs and wildcards are rejected. A username is not a supported target.
 
 | Entry | Accepted? | Why |
 |---|---|---|
@@ -81,8 +81,8 @@ Enter a permitted domain or public HTTP(S) page URL. If you enter `https://examp
 | `app.example.com` | Yes, as a hostname format | If it is primary, only that name and its own subdomains can be in scope. |
 | `https://example.com/help` | Yes | HTTPX, Nuclei, Photon and Arjun use its path; domain-level checks use the hostname. |
 | `http://example.com` | Yes | Standard HTTP is accepted too. |
-| `https://example.com:443/help` | Yes | Only the scheme's standard port is accepted. |
-| `example.com:8443` | No | Custom ports are not supported. |
+| `https://example.com:443/help` | Yes | The default HTTPS port is kept. |
+| `https://example.com:8443/help` | Yes | URL-aware tools keep the explicitly supplied port. |
 | `https://name:secret@example.com` | No | URLs with credentials are rejected. |
 | `*.example.com` | No | Wildcards are not supported. |
 | `127.0.0.1`, `192.168.1.10`, `localhost` | No | IP addresses and local hosts are not accepted live targets. |
@@ -91,7 +91,7 @@ The live scanner requires hostnames that resolve only to public IP addresses. A 
 
 ### Additional authorized hosts
 
-The primary hostname is extracted from the target and included automatically. Leave this list blank to assess only that host. Or list up to **four additional exact subdomains** you are authorized to assess, one hostname or standard HTTP(S) URL per line; the application uses only each hostname for authorization. Five hosts total is the maximum.
+The primary hostname is extracted from the target and included automatically. Leave this list blank to assess only that host. Or list up to **four additional exact subdomains** you are authorized to assess, one hostname or public HTTP(S) URL per line; the application uses only each hostname for authorization. Five hosts total is the maximum.
 
 For example, the form structure would be:
 
@@ -127,7 +127,7 @@ The first three checks are preselected. The others are optional. The selected ch
 | 8 | Template checks — Nuclei | Runs available low/medium/high/critical templates with selected high-impact categories excluded and out-of-band interaction disabled. Matches require verification. | Each exact scoped host. |
 | 9 | Web-server checks — Nikto | Checks tuning groups 1, 2, 3 and b: interesting files, misconfiguration/default files, information disclosure and software identification. These are active requests; results need review. | At most one HTTP origin per exact scoped host. |
 
-Choose both Nuclei and Nikto to enable fallback. Nikto runs only if Nuclei is missing, unverified, times out, errors or otherwise does not complete. A Nuclei run that completes successfully but reports no matches does **not** invoke Nikto. Choose Nikto alone to run it as a standalone phase. The fallback is recorded as a separate report phase and does not expand the explicit scope.
+Choose both Nuclei and Nikto to enable fallback. Nikto runs only if Nuclei is missing, unverified, errors or otherwise does not complete. A Nuclei run that completes successfully but reports no matches does **not** invoke Nikto. Choose Nikto alone to run it as a standalone phase. The fallback is recorded as a separate report phase and does not expand the explicit scope.
 
 Select **Live hosts / HTTPX** in the same run when using Photon or Arjun. Otherwise those phases have no confirmed live-host list and are skipped. For the primary host, Photon/Arjun receive the supplied page path if you entered a URL; additional scope hosts use their site root. They use the submitted URL scheme and do not automatically retry using the other scheme if it fails.
 
@@ -151,11 +151,11 @@ These tools count different operations. Nikto's pause is between tests, not a st
 
 ### Timing and progress
 
-The dashboard applies **no per-tool or whole-assessment time limit**. A tool runs until it exits or you press **Stop**. Some tool/provider requests may still fail on their own; those are not a dashboard timer. Only one assessment can run at once, each tool's output remains capped, and the Stop button terminates its process tree.
+Echo Recon applies **no per-tool or whole-assessment time limit**, including to local tool identity checks. A tool runs until it exits, reaches the output cap, or you press **Stop**. A tool can still exit with its own error. Only one assessment can run at once, and the Stop button terminates its process tree.
 
 The overall progress bar shows the completed and remaining percentages based on resolved phases. Each tool row shows completed/remaining host-attempt percentages and elapsed time for its current attempt. Where a tool has completed hosts, its row estimates remaining time from its average completed-host duration. The overall estimate uses this run's completed phases. Both estimates are rough; tool and network speeds differ. Many command-line tools do not report their own percent within one host, so the UI labels that within-host progress unavailable instead of inventing a percentage.
 
-A tool may still report its own `timeout` or network error. That means the tool stopped a request internally; the dashboard process limit has been removed. Review the phase evidence and retry only when you have permission and understand the expected traffic.
+Older saved reports may contain a `timeout` state. This version does not stop tools because an elapsed-time deadline was reached. Review error evidence and retry only when you have permission and understand the expected traffic.
 
 ## 5. Start and stop deliberately
 
@@ -180,7 +180,7 @@ After a job ends, use **View report**, **HTML** or **JSON**. Click a phase in th
 | `missing` | The required executable could not be found. |
 | `unverified` | Identity/help checks failed; this phase was not treated as a ready tool. |
 | `error` | Execution, parsing or another required operation failed. Read diagnostics. |
-| `timeout` | A tool or provider reported its own timeout/network deadline; the dashboard did not stop it for elapsed time. Coverage is incomplete. |
+| `timeout` | A legacy saved report or external adapter status; this version does not stop scan processes on a timer. Coverage is incomplete. |
 | `output_limit` | An output limit was reached; the captured evidence is incomplete. |
 | `skipped` | A prerequisite was missing, or an earlier problem prevented the phase. |
 | `cancelled` | Stop was requested; remaining work was not completed. |

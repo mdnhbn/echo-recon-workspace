@@ -27,8 +27,8 @@ def parse_target(value):
     """Accept a domain or public http(s) URL and return its safe host and page URL.
 
     Query strings and fragments are intentionally omitted so they are not saved
-    or copied into third-party tool arguments. Only the default HTTP(S) port is
-    supported by the current adapters.
+    or copied into third-party tool arguments. Any valid HTTP(S) port is kept
+    for URL-aware adapters; the hostname remains the authorization scope.
     """
     if not isinstance(value, str) or not value.strip():
         raise ValueError("Enter a domain name or an http(s) URL; usernames are not supported.")
@@ -47,10 +47,8 @@ def parse_target(value):
         if str(exc):
             raise
         raise ValueError("Enter a domain name or an http(s) URL with a valid hostname.") from exc
-    expected_port = 443 if scheme == "https" else 80
-    if port not in {None, expected_port}:
-        raise ValueError("Only standard HTTP/HTTPS URLs are supported; custom ports are not accepted.")
-    page_url = urlunsplit((scheme, host, parsed.path or "/", "", ""))
+    authority = f"{host}:{port}" if port is not None else host
+    page_url = urlunsplit((scheme, authority, parsed.path or "/", "", ""))
     return host, page_url
 
 
@@ -86,10 +84,11 @@ def scoped_urls(text, scope):
     for line in text.splitlines():
         try:
             parsed = urlsplit(line.strip())
+            port = parsed.port
             if (parsed.scheme in {"http", "https"} and parsed.hostname in scope
-                    and not parsed.username and not parsed.password
-                    and parsed.port in {None, 80, 443}):
-                origin = f"{parsed.scheme}://{parsed.hostname}"
+                    and not parsed.username and not parsed.password):
+                authority = f"{parsed.hostname}:{port}" if port is not None else parsed.hostname
+                origin = f"{parsed.scheme}://{authority}"
                 if origin not in results:
                     results.append(origin)
         except ValueError:

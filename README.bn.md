@@ -1,12 +1,12 @@
-# Echo Recon 6.6.3 — বাংলা নির্দেশনা
+# Echo Recon 6.6.4 — বাংলা নির্দেশনা
 
 এটি নিজের কম্পিউটারে চালানোর dashboard। নয়টি আলাদা tool-এর কাজ নির্দিষ্ট ক্রমে চালায়, প্রমাণ রাখে এবং HTML/JSON report তৈরি করে। মূল project [Ahammed-এর Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); mdnhbn সহযোগিতায় এই সংস্করণ উন্নত হয়েছে।
 
-## 6.6.3-এ যা বদলেছে
+## 6.6.4-এ যা বদলেছে
 
-- Domain অথবা public HTTP(S) URL দিন; host নিজে থেকে scope-এ যোগ হয়, আর বাড়তি অনুমোদিত subdomain দেওয়া ঐচ্ছিক।
-- Dashboard-এর নির্দিষ্ট scan সময়সীমা সরানো হয়েছে; tool শেষ হওয়া বা **Stop** চাপা পর্যন্ত চলে।
-- সঠিক phase/host progress, elapsed time ও আনুমানিক বাকি সময় যোগ হয়েছে।
+- Domain অথবা page path/port-সহ public HTTP(S) URL দিন; hostname scope নির্ধারণ করে এবং URL-aware tool path/port পায়।
+- Scan ও tool check-এর process time limit সরানো হয়েছে; tool নিজে শেষ হয়, output cap-এ থামে, অথবা **Stop** চাপলে বন্ধ হয়।
+- Progress bar, elapsed time ও আনুমানিক বাকি সময় আগের মতো আছে।
 
 [English README](README.md) · [Kali APT update](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [টুল সেটআপ](docs/TOOLS.md) · [পূর্ণ ব্যবহারবিধি](docs/USAGE.bn.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [সীমাবদ্ধতা](SECURITY.md)
 
@@ -149,7 +149,7 @@ Browser নিজে থেকে খুলতে না চাইলে সঙ�
 
 বিস্তারিত [বাংলা ব্যবহারবিধি](docs/USAGE.bn.md)-তে আছে। সংক্ষেপে:
 
-1. নিজের বা স্পষ্ট অনুমতি থাকা domain অথবা public HTTP(S) URL **Primary domain**-এ দিন। URL-এর path HTTPX, Nuclei, Photon ও Arjun-এ যায়; query ও fragment বাদ থাকে। Username, IP, wildcard বা custom port গ্রহণ করা হয় না।
+1. নিজের বা স্পষ্ট অনুমতি থাকা domain অথবা public HTTP(S) URL **Primary domain**-এ দিন। URL-এর path ও port HTTPX, Nuclei, Photon ও Arjun-এ যায়; query ও fragment বাদ থাকে। Username, IP বা wildcard গ্রহণ করা হয় না।
 2. URL/domain থেকে পাওয়া primary host নিজে থেকে যুক্ত হয়। চাইলে **Additional authorized hosts**-এ আরও সর্বোচ্চ চারটি অনুমোদিত subdomain দিন (সব মিলিয়ে পাঁচটি)। URL দিলে scope check-এ শুধু hostname নেওয়া হয়।
 3. প্রয়োজনীয় check বাছুন। Photon/Arjun-এর জন্য একই run-এ HTTPX দিয়ে live scoped host পাওয়া লাগবে।
 4. **গতিসীমা** tool যেটুকু সমর্থন করে ততটুকু নিয়ন্ত্রণ করে; সব tool মিলিয়ে একটি মোট request meter নয়।

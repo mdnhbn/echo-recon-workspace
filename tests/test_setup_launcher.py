@@ -252,7 +252,7 @@ class SetupRouteTests(unittest.TestCase):
     def test_guidance_and_theme_hooks_render_without_creating_history(self):
         page = self.client.get("/").text
         for content in ['id="theme-toggle"', 'id="usage-guide"', 'id="guide-rate"',
-                        'id="guide-time"', 'data-setup-tools', 'No dashboard time limit', '/static/theme.js']:
+                        'id="guide-time"', 'data-setup-tools', 'No scan timer is set by Echo Recon', '/static/theme.js']:
             self.assertTrue(content in page, f"Missing guide content: {content}")
         self.assertEqual(self.client.get("/api/jobs").json, [])
 

@@ -64,7 +64,7 @@ These routes retain local access checks. No remote-agent interface, arbitrary fl
 
 ## Process and state semantics
 
-Phases are sequential. A nonzero exit is an error even with empty stdout. Timeout, output truncation and cancellation remain explicit. An assessment is complete only when all selected phases are done; interrupted/partial reports still expose available evidence and never imply full coverage.
+Phases are sequential. A nonzero exit is an error even with empty stdout. Output truncation and manual cancellation remain explicit; legacy reports can still show timeout. An assessment is complete only when all selected phases are done; interrupted/partial reports still expose available evidence and never imply full coverage.
 
 Windows tools start suspended, join a kill-on-close Job Object before tool code runs, and resume only after assignment succeeds. Linux uses a process group. Bounded output/pipes and cancellation apply across native adapter prefixes. If containment setup fails, the tool does not run uncontained.
 
