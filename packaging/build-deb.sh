@@ -11,7 +11,7 @@ VERSION="$(cd -- "$ROOT" && python3 -c 'from echo_recon import __version__; prin
 COMMIT_EPOCH="$(git -C "$ROOT" log -1 --format=%ct 2>/dev/null || true)"
 export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-${COMMIT_EPOCH:-0}}"
 [[ "$VERSION" =~ ^[0-9]+([.][0-9]+)*([+~.-][A-Za-z0-9.+~:-]+)?$ ]] || { echo "Invalid Debian package version: $VERSION" >&2; exit 1; }
-if [[ -n "${GITHUB_REF_NAME:-}" && "$GITHUB_REF_NAME" != "v$VERSION" ]]; then
+if [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${GITHUB_REF_NAME:-}" != "v$VERSION" ]]; then
   echo "Release tag $GITHUB_REF_NAME must match application version v$VERSION." >&2
   exit 1
 fi
