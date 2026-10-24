@@ -8,13 +8,22 @@ import time
 import uuid
 from urllib.parse import urlsplit
 from .runner import run
-from .security import hostname, redact, resolve_public, scoped_urls, validate_scope
+from .security import parse_target, redact, resolve_public, scoped_urls, validate_scope
 from .tools import TOOLS, command, diagnostics, is_windows, parse_findings
 from . import __version__
 
 
 def now():
     return datetime.now(timezone.utc).isoformat()
+
+
+def page_url_for(job, host):
+    parsed = urlsplit(host)
+    hostname = parsed.hostname or host
+    if hostname == job["domain"]:
+        return job["target_url"]
+    scheme = urlsplit(job["target_url"]).scheme
+    return f"{scheme}://{hostname}/"
 
 
 def clean_object(value):
@@ -58,7 +67,9 @@ class Manager:
         job["updated"] = now()
         if message:
             job["log"].append(f"{job['updated']} {message}")
-        self.store.save(clean_object(job))
+        snapshot = clean_object(job)
+        snapshot.pop("target_url", None)
+        self.store.save(snapshot)
 
     def start(self, payload, background=True):
         if payload.get("demo") is True:
@@ -67,25 +78,26 @@ class Manager:
             raise ValueError("Assessment execution is disabled for this dashboard. Tool setup and saved reports remain available.")
         if payload.get("authorized") is not True or payload.get("understands_limits") is not True:
             raise ValueError("Confirm ownership/permission and third-party traffic limitations.")
-        domain, scope = validate_scope(payload.get("domain"), payload.get("scope"))
+        domain, target_url = parse_target(payload.get("domain"))
+        scope_input = payload.get("scope")
+        if scope_input is None:
+            scope_input = []
+        domain, scope = validate_scope(domain, scope_input)
         selected = payload.get("tools", list(TOOLS))
         if (not isinstance(selected, list) or not selected or
                 any(not isinstance(name, str) or name not in TOOLS for name in selected)):
             raise ValueError("Select supported tools only.")
         selected = [name for name in TOOLS if name in selected]
         rate = payload.get("rate", 2)
-        timeout = payload.get("timeout", 120)
         if type(rate) is not int or not 1 <= rate <= 5:
             raise ValueError("Rate must be an integer from 1 to 5.")
-        if type(timeout) is not int or not 10 <= timeout <= 180:
-            raise ValueError("Per-tool timeout must be an integer from 10 to 180 seconds.")
         with self.lock:
             if self.active:
                 raise RuntimeError("An assessment is already active. Stop it or wait.")
             job_id = uuid.uuid4().hex
-            job = {"id": job_id, "version": __version__, "domain": domain, "scope": scope,
+            job = {"id": job_id, "version": __version__, "domain": domain, "target_url": target_url, "scope": scope,
                    "status": "running", "created": now(), "updated": now(),
-                   "settings": {"rate": rate, "timeout": timeout}, "log": [],
+                   "settings": {"rate": rate}, "log": [],
                    "phases": [{"tool": name, "label": TOOLS[name][0], "status": "pending",
                                "evidence": "", "stderr": "", "returncode": None,
                                "duration": 0, "findings": []} for name in selected],
@@ -93,6 +105,7 @@ class Manager:
                        "Automated findings require manual verification. No findings is not proof of safety.",
                        "Exact input scope is enforced by the dashboard, not a network sandbox. DNS can change; crawlers/templates may follow secondary links or contact third parties.",
                        "Rate is a per-tool ceiling where supported, not a global packet/request budget. DNS/OSINT tools have separate behavior.",
+                       "The supplied primary URL path is used by HTTPX, Nuclei, Photon and Arjun; query and fragment are omitted. Other checks use its hostname/origin. Usernames are not valid targets.",
                        "Evidence is truncated and common secrets are redacted best-effort; review reports before sharing.",
                    ]}
             if "nikto" in selected:
@@ -140,20 +153,24 @@ class Manager:
                 job["status"] = "partial"
         except Exception as exc:
             job["status"] = "error"
+            job["finished_at"] = now()
             for phase in job["phases"]:
                 if phase["status"] in {"running", "pending"}:
-                    phase["status"] = "error" if phase["status"] == "running" else "skipped"
+                    phase.update(status="error" if phase["status"] == "running" else "skipped",
+                                 finished_at=now())
             self.save(job, f"Assessment stopped: {redact(exc)}")
         finally:
             for phase in job["phases"]:
                 if phase["status"] == "pending":
-                    phase["status"] = "cancelled" if event.is_set() else "skipped"
+                    phase.update(status="cancelled" if event.is_set() else "skipped",
+                                 finished_at=now())
+            job.setdefault("finished_at", now())
             self.save(job, f"Assessment ended: {job['status']}. Review phase evidence and limitations.")
             with self.lock:
                 self.active.pop(job["id"], None)
 
     def pipeline(self, job, event):
-        scope, rate, timeout = job["scope"], job["settings"]["rate"], job["settings"]["timeout"]
+        scope, rate = job["scope"], job["settings"]["rate"]
         live = []
         selected_tools = {phase["tool"] for phase in job["phases"]}
         health = self.check_tools(cancel=event)
@@ -167,6 +184,7 @@ class Manager:
                 nuclei_phase = next((item for item in job["phases"] if item["tool"] == "nuclei"), None)
                 if nuclei_phase and nuclei_phase["status"] == "done":
                     phase.update(status="skipped", optional=True,
+                                 finished_at=now(),
                                  evidence="Nuclei completed successfully; the selected Nikto fallback was not needed.")
                     self.save(job, "Nikto fallback skipped; Nuclei completed.")
                     continue
@@ -177,7 +195,7 @@ class Manager:
                              evidence=health[name]["detail"])
                 self.save(job, f"{phase['label']}: {phase['status']}")
                 continue
-            phase["status"] = "running"
+            phase.update(status="running", started_at=now(), attempts=[], completed_hosts=0, duration=0)
             self.save(job, f"Starting {phase['label']}")
             # Revalidate each explicit hostname before each phase. This is not IP pinning.
             phase["resolved"] = {host: resolve_public(host, self.resolver) for host in scope}
@@ -195,10 +213,12 @@ class Manager:
             if name in {"photon", "arjun"}:
                 hosts = [host for host in scope if any(url.endswith("//" + host) for url in live)]
                 if not hosts:
-                    phase.update(status="skipped", evidence="No confirmed in-scope live host. Enable HTTPX or review probing errors.")
+                    phase.update(status="skipped", finished_at=now(), evidence="No confirmed in-scope live host. Enable HTTPX or review probing errors.")
                     self.save(job)
                     continue
             outputs, errors, states, findings, attempts = [], [], [], [], []
+            phase.update(total_hosts=len(hosts))
+            self.save(job)
             duration = 0
             for host in hosts:
                 if event.is_set():
@@ -206,10 +226,13 @@ class Manager:
                 target_host = urlsplit(host).hostname if name == "nikto" else host
                 scratch = self.data_dir / "scratch" / job["id"] / target_host
                 scratch.mkdir(parents=True, exist_ok=True)
-                args = command(name, host, rate, scratch, timeout=timeout)
-                # HTTPX and Nuclei receive exact explicit hosts, not discovered additions.
-                stdin = host + "\n" if name in {"httpx", "nuclei"} else ""
-                result = self.execute(args, cancel=event, timeout=timeout, stdin=stdin, cwd=scratch)
+                target_url = page_url_for(job, host)
+                phase.update(current_host=target_host, current_started_at=now())
+                self.save(job)
+                args = command(name, host, rate, scratch, target_url=target_url)
+                # HTTP-facing checks receive explicit scoped targets, not discoveries.
+                stdin = target_url + "\n" if name in {"httpx", "nuclei"} else ""
+                result = self.execute(args, cancel=event, stdin=stdin, cwd=scratch)
                 state = "error" if result.status == "done" and result.returncode != 0 else result.status
                 states.append(state)
                 duration += result.duration
@@ -218,6 +241,11 @@ class Manager:
                 phase["returncode"] = result.returncode
                 attempts.append({"host": host, "status": state,
                                  "returncode": result.returncode, "duration": result.duration})
+                phase.update(attempts=list(attempts), completed_hosts=len(attempts),
+                             duration=round(duration, 2))
+                phase.pop("current_host", None)
+                phase.pop("current_started_at", None)
+                self.save(job)
                 if name == "httpx" and state == "done":
                     live.extend(scoped_urls(result.stdout, scope))
                 if name == "nuclei":
@@ -239,9 +267,11 @@ class Manager:
             truncated = len(evidence) > 100_000 or len(stderr) > 25_000
             if truncated and status == "done":
                 status = "output_limit"
-            phase.update(status=status, duration=round(duration, 2), findings=findings,
+            phase.update(status=status, finished_at=now(), duration=round(duration, 2), findings=findings,
                          attempts=attempts, evidence_truncated=truncated,
                          evidence=evidence[:100_000], stderr=stderr[:25_000])
+            phase.pop("current_host", None)
+            phase.pop("current_started_at", None)
             if name == "nuclei" and status == "done" and not findings:
                 phase["evidence"] += "\nNo automated findings reported within this run's coverage; not proof of safety."
             self.save(job, f"{phase['label']}: {status}")

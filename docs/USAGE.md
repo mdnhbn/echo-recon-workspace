@@ -73,23 +73,25 @@ For dashboard-only installation use `bash install.sh --dashboard-only` or `.\ins
 
 ### Primary domain
 
-Enter a hostname only. The primary domain is the main name for this assessment, such as `example.com` in the explanation below.
+Enter a permitted domain or public HTTP(S) page URL. If you enter `https://example.com/help`, HTTPX, Nuclei, Photon and Arjun receive `/help`; domain-level checks use `example.com`. Query strings and fragments are dropped. Usernames, IPs, wildcards and custom ports are rejected. A username is not a supported target.
 
 | Entry | Accepted? | Why |
 |---|---|---|
 | `example.com` | Yes, as a hostname format | Replace with your authorized domain. |
 | `app.example.com` | Yes, as a hostname format | If it is primary, only that name and its own subdomains can be in scope. |
-| `https://example.com` | No | Includes a URL scheme. |
-| `example.com/login` | No | Includes a path. |
-| `example.com:443` | No | Includes a port. |
+| `https://example.com/help` | Yes | HTTPX, Nuclei, Photon and Arjun use its path; domain-level checks use the hostname. |
+| `http://example.com` | Yes | Standard HTTP is accepted too. |
+| `https://example.com:443/help` | Yes | Only the scheme's standard port is accepted. |
+| `example.com:8443` | No | Custom ports are not supported. |
+| `https://name:secret@example.com` | No | URLs with credentials are rejected. |
 | `*.example.com` | No | Wildcards are not supported. |
 | `127.0.0.1`, `192.168.1.10`, `localhost` | No | IP addresses and local hosts are not accepted live targets. |
 
 The live scanner requires hostnames that resolve only to public IP addresses. A hostname that resolves to private/reserved addresses is rejected. The local dashboard address is therefore not a target to paste into the form.
 
-### Exact authorized hosts
+### Additional authorized hosts
 
-This is the list of **exact hostnames you permit the active checks to receive**. Put one hostname on each line, include the primary domain, and use **no more than five entries**. Extra entries must be subdomains of that primary domain.
+The primary hostname is extracted from the target and included automatically. Leave this list blank to assess only that host. Or list up to **four additional exact subdomains** you are authorized to assess, one hostname or standard HTTP(S) URL per line; the application uses only each hostname for authorization. Five hosts total is the maximum.
 
 For example, the form structure would be:
 
@@ -99,14 +101,13 @@ For example, the form structure would be:
 example.com
 ```
 
-**Exact authorized hosts:**
+**Additional authorized hosts (optional):**
 
 ```text
-example.com
 app.example.com
 ```
 
-Replace both lines with real names you are authorized to assess before starting. Do not add a subdomain merely because it appears in a result: check ownership/permission first. If you authorize only the primary domain, put only that one line in scope. A separately owned domain cannot be added to this run; it needs its own assessment.
+Replace the example with a subdomain you are authorized to assess before starting. Do not add a subdomain merely because it appears in a result: check ownership/permission first. If you authorize only the primary domain, leave this field blank. A separately owned domain cannot be added to this run; it needs its own assessment.
 
 Discovery does not automatically enlarge scope. This input control is also **not a network firewall**: third-party tools may resolve DNS again or contact secondary services and destinations. Use a separately isolated environment if you require strict network containment.
 
@@ -128,9 +129,9 @@ The first three checks are preselected. The others are optional. The selected ch
 
 Choose both Nuclei and Nikto to enable fallback. Nikto runs only if Nuclei is missing, unverified, times out, errors or otherwise does not complete. A Nuclei run that completes successfully but reports no matches does **not** invoke Nikto. Choose Nikto alone to run it as a standalone phase. The fallback is recorded as a separate report phase and does not expand the explicit scope.
 
-Select **Live hosts / HTTPX** in the same run when using Photon or Arjun. Otherwise those phases have no confirmed live-host list and are skipped. The current Photon/Arjun adapters use `https://HOST` at the site root; they do not accept an arbitrary page path and do not automatically fall back to HTTP when HTTPS fails. An HTTPX response at HTTP alone does not guarantee these HTTPS checks will succeed.
+Select **Live hosts / HTTPX** in the same run when using Photon or Arjun. Otherwise those phases have no confirmed live-host list and are skipped. For the primary host, Photon/Arjun receive the supplied page path if you entered a URL; additional scope hosts use their site root. They use the submitted URL scheme and do not automatically retry using the other scheme if it fails.
 
-## 4. Understand rate and time before starting
+## 4. Understand rate, timing and progress
 
 ### Tool rate ceiling
 
@@ -146,33 +147,27 @@ Enter any whole number from **1 to 5 per second**; the default is **2**. Choosin
 | Nmap | Passed as `--max-rate`, a scan-packet setting, not a universal web-request limit. It does not bound every service-check or OS/network operation. |
 | DNSRecon, Subfinder, theHarvester | This adapter does not pass the selected rate to them. DNS and public-provider traffic follow their own behavior. |
 
-These tools count different operations. Nikto's pause is between tests, not a strict network request meter. The setting is a collection of tool-specific controls, **not a shared traffic meter or a total request budget**. Lower settings and short time limits can leave work incomplete.
+These tools count different operations. Nikto's pause is between tests, not a strict network request meter. The setting is a collection of tool-specific controls, **not a shared traffic meter or a total request budget**. Lower rates reduce request bursts but can make a run take longer.
 
-### Time per tool / host
+### Timing and progress
 
-Enter any whole-second value from **10 to 180**; the default is **120 seconds**. This is the process allowance for **one tool invocation on one host**, not the deadline for the whole assessment. Nikto receives the same cap as its maximum phase time as well as the dashboard's process timeout.
+The dashboard applies **no per-tool or whole-assessment time limit**. A tool runs until it exits or you press **Stop**. Some tool/provider requests may still fail on their own; those are not a dashboard timer. Only one assessment can run at once, each tool's output remains capped, and the Stop button terminates its process tree.
 
-For example, with a 120-second allowance, HTTPX on the first scoped host can use up to that allowance; HTTPX on the next scoped host gets its own allowance. Another selected tool then gets its own allowance. Tools also have some shorter internal connection/request timeouts, so an individual request may fail sooner.
+The overall progress bar shows the completed and remaining percentages based on resolved phases. Each tool row shows completed/remaining host-attempt percentages and elapsed time for its current attempt. Where a tool has completed hosts, its row estimates remaining time from its average completed-host duration. The overall estimate uses this run's completed phases. Both estimates are rough; tool and network speeds differ. Many command-line tools do not report their own percent within one host, so the UI labels that within-host progress unavailable instead of inventing a percentage.
 
-All phases and their hosts run sequentially. They do not all share one 120-second timer.
-
-- A simple conservative calculation is `9 tools × 5 hosts × 120 seconds = 5,400 seconds`, or **90 minutes** of process allowances. This overcounts the current pipeline because three tools use only the primary domain and Nikto is a fallback when Nuclei is also selected.
-- With five eligible hosts, the current pipeline allows at most `3 + (6 × 5) = 33` scanner invocations, so `33 × 120 = 3,960 seconds`, or **66 minutes** of scanner allowances. When Nuclei and Nikto are both selected, Nikto only runs for hosts where Nuclei failed. Photon/Arjun may have fewer hosts or be skipped.
-- Neither calculation is a hard wall-clock limit or an estimate of what your run will take. Identity/help checks, repeated DNS preflight, process startup/cleanup, provider behavior and other overhead add time. A DNS lookup is not wrapped in the scanner's per-process timer. Many tools finish early, fail, or are missing. There is no separate whole-job deadline.
-
-If a process exceeds its allowance, it is stopped and marked **timeout**. A timeout means **the phase is incomplete**, not “no vulnerability” or “site is safe.” Other selected phases may still continue; normally the job becomes **partial** if not every selected phase finishes successfully. A fatal pipeline error can instead end the job as **error**. Raising the timeout can let work continue longer, but it does not repair a missing tool, invalid scope or unavailable provider.
+A tool may still report its own `timeout` or network error. That means the tool stopped a request internally; the dashboard process limit has been removed. Review the phase evidence and retry only when you have permission and understand the expected traffic.
 
 ## 5. Start and stop deliberately
 
 1. Recheck the primary domain and exact scope. Remove hosts you do not intend to assess.
-2. Choose only the checks you need, then choose the rate and per-tool/host allowance.
+2. Choose only the checks you need and set the rate ceiling.
 3. Tick the ownership/permission confirmation only when true. Read and acknowledge the network limitations.
 4. Click **Start assessment** once. Only one job is allowed at a time.
 5. Watch **Progress & evidence** and **Live activity**. An initial delay can be the local tool checks or DNS preflight, not a frozen page.
 6. To stop the assessment, click **Stop** and wait for cancellation to complete before starting another job. On Linux, the application stops the current process group. Native Windows tools run in a kill-on-close Job Object so the contained process tree is terminated on cancellation/time/output limits, including descendants after their parent exits. If containment setup fails, the tool is not run uncontained. Abnormal OS shutdown or tool defects can still require inspection.
 7. To close the dashboard server, press **Ctrl+C in its original terminal**. Closing the browser tab alone does not stop the server or an assessment.
 
-For a first authorized run, keep just the primary host in scope, keep the three preselected checks, and choose rate 1 and a 120-second allowance. Add additional checks only when you understand and permit their traffic. This is a form example, not a scan performed by this guide.
+For a first authorized run, keep just the primary host in scope, keep the three preselected checks and choose rate 1. Add additional checks only when you understand and permit their traffic. This is a form example, not a scan performed by this guide.
 
 ## 6. Read history and reports correctly
 
@@ -185,7 +180,7 @@ After a job ends, use **View report**, **HTML** or **JSON**. Click a phase in th
 | `missing` | The required executable could not be found. |
 | `unverified` | Identity/help checks failed; this phase was not treated as a ready tool. |
 | `error` | Execution, parsing or another required operation failed. Read diagnostics. |
-| `timeout` | A tool invocation exceeded its allowance; coverage is incomplete. |
+| `timeout` | A tool or provider reported its own timeout/network deadline; the dashboard did not stop it for elapsed time. Coverage is incomplete. |
 | `output_limit` | An output limit was reached; the captured evidence is incomplete. |
 | `skipped` | A prerequisite was missing, or an earlier problem prevented the phase. |
 | `cancelled` | Stop was requested; remaining work was not completed. |
@@ -203,9 +198,8 @@ History and raw evidence stay under the project's private `data/` directory. The
 
 | Problem | Check first |
 |---|---|
-| “Enter a hostname” | Remove `https://`, path, port, wildcard or IP address. |
-| “Primary domain must appear” | Include exactly that primary hostname in the scope list. |
-| Scope is rejected | Use at most five hosts; each must be the primary name or its exact subdomain. |
+| Target URL rejected | Use a domain or public `http://` / `https://` URL with a valid domain. Credentials, IPs, wildcards and non-standard ports are not accepted. |
+| Scope is rejected | Use at most four additional hosts; each must be an exact subdomain of the primary host. The primary is added automatically. |
 | Non-public DNS error | This live mode does not accept private/reserved target addresses. |
 | Tool remains missing after setup | Verify installation in this same Kali environment and its PATH; recheck or restart after PATH changes. |
 | HTTPX is unverified | Confirm ProjectDiscovery HTTPX, not the unrelated Python HTTPX. |

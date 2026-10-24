@@ -138,24 +138,23 @@ def diagnostics(cancel=None):
     return result
 
 
-def command(name, host, rate, output_dir, timeout=120):
-    url = f"https://{host}"
+def command(name, host, rate, output_dir, target_url=None):
+    url = target_url or f"https://{host}/"
     args = {
         "dnsrecon": ["dnsrecon", "-d", host, "-t", "std"],
         "subfinder": ["subfinder", "-d", host, "-silent"],
-        "httpx": ["httpx", "-silent", "-rl", str(rate), "-threads", "1", "-timeout", "8", "-retries", "0"],
+        "httpx": ["httpx", "-silent", "-rl", str(rate), "-threads", "1", "-retries", "0"],
         "nmap": ["nmap", "-sT", "-sV", "--version-light", "--top-ports", "100", "--max-rate", str(rate), "--max-retries", "1", host],
         "theHarvester": ["theHarvester", "-d", host, "-b", "crtsh,otx"],
         "photon": ["photon", "-u", url, "-l", "1", "-t", "1", "-d", str(1 / rate), "--output", str(output_dir)],
-        "arjun": ["arjun", "-u", url, "-t", "1", "-T", "8", "--rate-limit", str(rate), "--disable-redirects"],
-        "nuclei": ["nuclei", "-silent", "-jsonl", "-duc", "-ni", "-dr", "-rl", str(rate), "-c", "1", "-bs", "1", "-timeout", "8", "-retries", "0", "-severity", "low,medium,high,critical", "-etags", "dos,fuzz,bruteforce,headless,code"],
+        "arjun": ["arjun", "-u", url, "-t", "1", "--rate-limit", str(rate), "--disable-redirects"],
+        "nuclei": ["nuclei", "-silent", "-jsonl", "-duc", "-ni", "-dr", "-rl", str(rate), "-c", "1", "-bs", "1", "-retries", "0", "-severity", "low,medium,high,critical", "-etags", "dos,fuzz,bruteforce,headless,code"],
         # Nikto's default scan is wider. Keep this adapter to informational,
         # configuration/default-file and software-identification categories.
         # These exclude its DoS, command-execution, SQLi and other exploit-style
         # tuning groups. The user-supplied rate maps to a delay between tests.
         "nikto": ["nikto", "-nointeractive", "-nocheck", "-ask", "no",
                   "-Tuning", "123b", "-Pause", f"{1 / rate:.3f}",
-                  "-maxtime", f"{timeout}s", "-timeout", str(min(8, timeout)),
                   "-host", host],
     }[name]
     if name == "nmap" and is_windows():

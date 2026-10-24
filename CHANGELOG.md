@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.6.3 — 2026-10-24
+
+- Accept public HTTP(S) URLs as well as domains; pass the primary URL path to HTTPX, Nuclei, Photon and Arjun, and omit query strings/fragments. Username targets remain unsupported.
+- Removed the dashboard's per-tool process deadline and tool-level request timeout flags. Tools run until exit or manual Stop; tools may still report their own network/provider errors. Output and cancellation safeguards remain.
+- Added overall and per-tool progress bars, completed/remaining percentages, elapsed time and clearly labelled rough remaining-time estimates where there is enough completed work to estimate.
+
 ## 6.6.2 — 2026-10-24
 
 - Removed the full-screen Matrix canvas, rotating header icon, progress pulse, smooth scrolling and report-chevron transition to reduce browser rendering work. Dark/light layouts and all interface controls remain.

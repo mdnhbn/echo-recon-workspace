@@ -64,13 +64,13 @@ class NativeWindowsAssessmentTests(unittest.TestCase):
             self.assertIn("Nuclei status was error", nikto["evidence"])
             for name, args, options in calls:
                 self.assertEqual(args[:len(prefixes[name])], list(prefixes[name]))
-                self.assertEqual(options["timeout"], 30)
+                self.assertNotIn("timeout", options)
                 self.assertIsInstance(options["cancel"], threading.Event)
                 self.assertTrue(options["cwd"].is_relative_to(folder / "scratch" / job["id"]))
                 self.assertNotIn("outside.example.com", args)
                 self.assertNotIn("outside.example.com", options["stdin"])
                 if name in {"httpx", "nuclei"}:
-                    self.assertIn(options["stdin"].strip(), scope)
+                    self.assertIn(options["stdin"].strip(), ["https://" + host + "/" for host in scope])
                 if name == "nmap":
                     self.assertIn("-sT", args)
                     self.assertIn("-Pn", args)

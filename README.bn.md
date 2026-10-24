@@ -143,13 +143,13 @@ Browser নিজে থেকে খুলতে না চাইলে সঙ�
 
 বিস্তারিত [বাংলা ব্যবহারবিধি](docs/USAGE.bn.md)-তে আছে। সংক্ষেপে:
 
-1. নিজের বা স্পষ্ট অনুমতি থাকা hostname **Primary domain**-এ দিন। `https://`, path, port বা wildcard নয়।
-2. **Exact authorized hosts**-এ primary-সহ সর্বোচ্চ পাঁচটি নাম এক লাইনে একটি দিন। অন্য নামগুলো primary-এর subdomain হতে হবে।
+1. নিজের বা স্পষ্ট অনুমতি থাকা domain অথবা public HTTP(S) URL **Primary domain**-এ দিন। URL-এর path HTTPX, Nuclei, Photon ও Arjun-এ যায়; query ও fragment বাদ থাকে। Username, IP, wildcard বা custom port গ্রহণ করা হয় না।
+2. URL/domain থেকে পাওয়া primary host নিজে থেকে যুক্ত হয়। চাইলে **Additional authorized hosts**-এ আরও সর্বোচ্চ চারটি অনুমোদিত subdomain দিন (সব মিলিয়ে পাঁচটি)। URL দিলে scope check-এ শুধু hostname নেওয়া হয়।
 3. প্রয়োজনীয় check বাছুন। Photon/Arjun-এর জন্য একই run-এ HTTPX দিয়ে live scoped host পাওয়া লাগবে।
 4. **গতিসীমা** tool যেটুকু সমর্থন করে ততটুকু নিয়ন্ত্রণ করে; সব tool মিলিয়ে একটি মোট request meter নয়।
-5. **১২০ সেকেন্ড** প্রতিটি tool/host চেষ্টার সময়; পুরো run-এর সময় নয়।
+5. Dashboard tool-কে নির্দিষ্ট সময় পরে বন্ধ করে না। Tool শেষ হওয়া পর্যন্ত চলে, অথবা **Stop** চাপলে থামে। Tool নিজে network/provider error দিতে পারে; output-এর সীমা থাকে।
 6. অনুমতি ও network সীমা পড়ে সত্য হলে confirmation দিয়ে Start চাপুন। ইনস্টল চললে assessment শুরু হয় না।
-7. **Stop** দিলে Linux process group বা Windows-এর contained process tree বন্ধ হয়। শেষে evidence ও report পড়ুন।
+7. Overall progress শেষ হওয়া tool phase গোনে; tool-এর bar শেষ হওয়া host attempt গোনে। Elapsed time দেখা যায়, আর যথেষ্ট কাজ শেষ হলে rough ETA আসে। Tool host-এর ভেতরের শতাংশ না জানালে তা বানিয়ে দেখানো হয় না। **Stop** দিলে Linux process group বা Windows-এর contained process tree বন্ধ হয়। শেষে evidence ও report পড়ুন।
 
 Nmap top-100 port-এ TCP connect/service check করে। Windows-এ `-Pn` ব্যবহার করে raw-packet discovery এড়ায়। Nuclei finding হাতে যাচাই না করা পর্যন্ত **unverified**। Tool সফল বা finding শূন্য মানেই website নিরাপদ নয়।
 

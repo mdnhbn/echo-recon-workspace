@@ -1,7 +1,7 @@
 """Input boundaries and best-effort evidence redaction."""
 import ipaddress
 import re
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 HOST = re.compile(r"^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 SECRET = re.compile(r"(?i)((?:password|passwd|api[_-]?key|access[_-]?token|secret|authorization|cookie)\s*[=:]\s*)([^\s&\"<>]+)")
@@ -14,24 +14,60 @@ def redact(value):
     return SECRET.sub(r"\1[REDACTED]", text)
 
 
-def hostname(value):
-    if not isinstance(value, str):
-        raise ValueError("Enter a hostname, not a URL, wildcard, IP or command.")
+def _canonical_hostname(value):
     value = value.strip().lower().rstrip(".")
     if not HOST.fullmatch(value):
-        raise ValueError("Enter a hostname, not a URL, wildcard, IP or command.")
+        raise ValueError("Enter a domain name or an http(s) URL; usernames, IPs, wildcards and commands are not accepted.")
     if value.endswith((".localhost", ".local", ".internal")):
         raise ValueError("Reserved/local hostnames are not accepted by the live scanner.")
     return value
 
 
+def parse_target(value):
+    """Accept a domain or public http(s) URL and return its safe host and page URL.
+
+    Query strings and fragments are intentionally omitted so they are not saved
+    or copied into third-party tool arguments. Only the default HTTP(S) port is
+    supported by the current adapters.
+    """
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("Enter a domain name or an http(s) URL; usernames are not supported.")
+    raw = value.strip()
+    candidate = raw if "://" in raw or raw.startswith("//") else f"//{raw}"
+    try:
+        parsed = urlsplit(candidate)
+        scheme = parsed.scheme.lower() if parsed.scheme else "https"
+        if scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError
+        if parsed.username or parsed.password:
+            raise ValueError("URLs containing usernames or passwords are not accepted.")
+        host = _canonical_hostname(parsed.hostname or "")
+        port = parsed.port
+    except ValueError as exc:
+        if str(exc):
+            raise
+        raise ValueError("Enter a domain name or an http(s) URL with a valid hostname.") from exc
+    expected_port = 443 if scheme == "https" else 80
+    if port not in {None, expected_port}:
+        raise ValueError("Only standard HTTP/HTTPS URLs are supported; custom ports are not accepted.")
+    page_url = urlunsplit((scheme, host, parsed.path or "/", "", ""))
+    return host, page_url
+
+
+def hostname(value):
+    """Normalize a hostname or URL to its host for exact scope checks."""
+    return parse_target(value)[0]
+
+
 def validate_scope(domain, entries):
     domain = hostname(domain)
-    if not isinstance(entries, list) or not 1 <= len(entries) <= 5:
-        raise ValueError("Provide 1–5 exact authorized hostnames.")
+    if not isinstance(entries, list) or len(entries) > 5:
+        raise ValueError("Provide no more than five additional exact authorized hostnames.")
     scope = list(dict.fromkeys(hostname(item) for item in entries))
     if domain not in scope:
-        raise ValueError("The primary domain must appear in the explicit scope.")
+        scope.insert(0, domain)
+    if len(scope) > 5:
+        raise ValueError("The primary host plus additional hosts cannot exceed five total.")
     if any(item != domain and not item.endswith("." + domain) for item in scope):
         raise ValueError("Scope entries must be the primary domain or its exact subdomains.")
     return domain, scope

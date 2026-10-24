@@ -40,12 +40,12 @@
       <section id="assessment" class="composer setup" aria-labelledby="setup-title">
         <div class="section-title"><span class="section-mark">01</span><h2 id="setup-title">Assessment / পরীক্ষার সেটআপ</h2></div>
         <form id="scan-form">
-          <label for="domain">Primary domain / মূল ডোমেইন</label>
-          <input id="domain" placeholder="your-authorized-domain.com" autocomplete="off" required>
-          <p class="hint">Write only the hostname, e.g. example.com. Replace this with your own permitted domain; no https://, path or port.<br>নিজের অনুমোদিত domain লিখুন; পুরো website link নয়।</p>
-          <label for="scope">Exact authorized hosts / অনুমোদিত host <small>One per line · maximum 5</small></label>
-          <textarea id="scope" rows="2" placeholder="your-authorized-domain.com&#10;app.your-authorized-domain.com" required></textarea>
-          <p class="hint">Include the primary domain; add only its permitted subdomains, one per line (maximum 5 total). Discovered hosts are not added automatically.<br>মূল domain-টিও লিখুন; মোট পাঁচটি পর্যন্ত। নতুন পাওয়া subdomain নিজে থেকে পরীক্ষা হবে না।</p>
+          <label for="domain">Target domain or page URL / domain বা page URL</label>
+          <input id="domain" placeholder="example.com or https://example.com/page" autocomplete="off" required>
+          <p class="hint">Enter a permitted domain or public http(s) URL. If you paste a page URL, its path is used by HTTPX, Nuclei, Photon and Arjun; query and fragment are omitted. Domain-level checks use the hostname. Usernames, IPs, wildcards and custom ports are not accepted.<br>অনুমোদিত domain বা public http(s) URL দিন। Page URL দিলে HTTPX, Nuclei, Photon ও Arjun path ব্যবহার করবে; query ও fragment বাদ যাবে। Domain-level check hostname ব্যবহার করে। Username, IP, wildcard বা custom port দেওয়া যাবে না।</p>
+          <label for="scope">Additional authorized hosts / বাড়তি অনুমোদিত host <small>Optional · maximum 4 extra</small></label>
+          <textarea id="scope" rows="2" placeholder="Leave blank to use the target host only&#10;app.your-authorized-domain.com"></textarea>
+          <p class="hint">Leave blank to use only the domain extracted from the target above. Or add up to four permitted subdomains, one per line; the primary host is included automatically (five hosts total). Hostnames or standard http(s) URLs are accepted; only each URL's hostname is used here. Discovered hosts are not added automatically.<br>ফাঁকা রাখলে উপরের target URL/domain থেকে পাওয়া host-টিই ব্যবহার হবে। চাইলে অনুমোদিত subdomain যোগ করুন; primary host নিজে থেকে যুক্ত হয় (সব মিলিয়ে সর্বোচ্চ পাঁচটি)। URL দিলে শুধু hostname নেওয়া হয়। নতুন পাওয়া subdomain নিজে থেকে পরীক্ষা হবে না।</p>
           <fieldset><legend>Select checks / পরীক্ষার ধাপ বেছে নিন</legend>
             <div id="checks" class="checks">
               <label><input type="checkbox" name="tool" value="dnsrecon" checked><span>DNS records</span></label>
@@ -60,8 +60,8 @@
             </div>
             <p class="hint">Select both Nuclei and Nikto to run Nikto only if Nuclei is missing or fails. Select Nikto alone for a standalone server check.<br>Nuclei ও Nikto দুটো বাছলে Nuclei না থাকলে বা ব্যর্থ হলে তবেই Nikto চলবে। শুধু Nikto বাছলে এটি আলাদা scan হিসেবে চলবে। Nikto-র check সীমিত রাখা হয়েছে।</p>
           </fieldset>
-          <div class="fields"><div><label for="rate">Tool rate ceiling / গতি সীমা (requests per second)</label><input id="rate" type="number" inputmode="numeric" min="1" max="5" step="1" value="2" required></div><div><label for="timeout">Time per tool / host (seconds)</label><input id="timeout" type="number" inputmode="numeric" min="10" max="180" step="1" value="120" required></div></div>
-          <div class="fields field-help"><p>Enter a whole number from 1 to 5. Lower rate reduces traffic for tools that support it; default: 2/second.<br>১–৫-এর পূর্ণসংখ্যা দিন; সব tool মিলিয়ে মোট গতি নয়। <button type="button" class="text-button" data-guide-target="guide-rate">গতিসীমার বিস্তারিত</button></p><p>Enter 10–180 seconds; default: 120. This is a per-tool/host limit, not the whole assessment time.<br>১০–১৮০ সেকেন্ড দিন; default ১২০। <button type="button" class="text-button" data-guide-target="guide-time">সময়সীমার বিস্তারিত</button></p></div>
+          <div class="fields single-field"><div><label for="rate">Tool rate ceiling / গতি সীমা (requests per second)</label><input id="rate" type="number" inputmode="numeric" min="1" max="5" step="1" value="2" required><p class="hint">Enter a whole number from 1 to 5. Lower rate reduces traffic for tools that support it; default: 2/second.<br>১–৫-এর পূর্ণসংখ্যা দিন; সব tool মিলিয়ে মোট গতি নয়। <button type="button" class="text-button" data-guide-target="guide-rate">গতিসীমার বিস্তারিত</button></p></div></div>
+          <p class="hint">No dashboard time limit. Each tool runs until it finishes or you press Stop. Tool-specific network timeouts may still apply.<br>Dashboard থেকে সময় বেঁধে দেওয়া নেই। Tool শেষ হওয়া পর্যন্ত চলবে, অথবা Stop চাপলে থামবে। Tool-এর নিজস্ব network timeout কখনো থাকতে পারে।</p>
           <label class="consent"><input type="checkbox" id="authorized" required><span>I own these hosts or have explicit permission.<br>এই host পরীক্ষা করার মালিকানা বা অনুমতি আমার আছে।</span></label>
           <label class="consent"><input type="checkbox" id="limits" required><span>Tool traffic varies. Nikto is an obvious active web-server check, limited here to informational and configuration checks.<br>Tool অনুযায়ী অনুরোধের গতি বদলায়। Nikto সক্রিয় web-server পরীক্ষা করে এবং এখানে তথ্য/কনফিগারেশন check-এ সীমিত।</span></label>
           <div class="composer-row"><span class="hint">Only assess authorized hosts.<br>শুধু অনুমোদিত host পরীক্ষা করুন।</span><button id="start" class="button primary" type="submit">Start assessment / শুরু করুন →</button></div>
@@ -73,7 +73,9 @@
         <div id="empty"><div class="pipeline" aria-hidden="true"><span class="step"><i></i>DNS</span><span class="step"><i></i>Subdomains</span><span class="step"><i></i>Hosts</span><span class="step"><i></i>Ports</span><span class="step"><i></i>OSINT & crawl</span><span class="step"><i></i>Parameters</span><span class="step"><i></i>Nuclei</span><span class="step"><i></i>Nikto fallback</span></div><p>Waiting for an assessment. No results yet.<br>পরীক্ষা শুরু হলে এখানে অগ্রগতি ও log দেখা যাবে।</p></div>
         <div id="job-content" hidden>
           <div class="job-heading"><h3 id="job-domain"></h3><button id="cancel" class="button danger">Stop / বন্ধ করুন</button></div>
-          <p id="job-meta" class="hint"></p><div id="phases"></div>
+          <p id="job-meta" class="hint"></p>
+          <div class="overall-progress"><div class="overall-progress-summary"><strong id="overall-progress-text">0% · 0 checks</strong><span id="overall-eta" class="hint">Elapsed time / চলার সময় গণনা হচ্ছে…</span></div><div id="overall-progress" class="overall-progress-track" role="progressbar" aria-label="Assessment progress / পরীক্ষার অগ্রগতি" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="overall-progress-fill"></span></div><p class="hint">Overall bar: resolved tool phases. Each tool row: completed host attempts, elapsed time, and a rough ETA when possible. A tool may not report progress within one host.<br>Overall bar-এ শেষ হওয়া tool phase দেখা যায়। প্রতিটি tool row-তে শেষ হওয়া host, elapsed time ও সম্ভব হলে আনুমানিক ETA দেখা যায়। একটি host-এর ভেতরের অগ্রগতি tool নাও জানাতে পারে।</p></div>
+          <div id="phases"></div>
           <div class="report-links" id="reports" hidden><a id="view-report" class="button primary" target="_blank" rel="noopener">View report ↗</a><a id="download-html" class="button">HTML ↓</a><a id="download-json" class="button">JSON ↓</a></div>
           <h3 class="log-title"><span class="terminal-dot"></span>Live activity / কার্যক্রম</h3><pre id="logs" aria-live="polite"></pre>
         </div>

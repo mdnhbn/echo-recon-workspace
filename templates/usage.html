@@ -2,7 +2,7 @@
   <section class="guide-section" id="guide-start">
     <h3>1. Start here / শুরু করবেন যেভাবে</h3>
     <p>Use your normal user account. Keep the dashboard terminal open. This page organizes nine separate tools and saves their evidence; opening it does not start a scan.<br>সাধারণ user থেকে চালান। শুধু পেজ খোলায় পরীক্ষা শুরু হয় না।</p>
-    <ol><li>Check installed tools → set up anything missing.</li><li>Enter your permitted domain and exact host list.</li><li>Select checks, rate and time limit; read and tick both confirmations.</li><li>Start assessment → watch progress → open the report.</li></ol>
+    <ol><li>Check installed tools → set up anything missing.</li><li>Enter your permitted domain or URL and exact host list.</li><li>Select checks and rate; read and tick both confirmations.</li><li>Start assessment → watch elapsed time and progress → open the report.</li></ol>
   </section>
   <section class="guide-section" id="guide-setup">
     <h3>2. Check and install / টুলের সেটআপ</h3>
@@ -13,10 +13,10 @@
   </section>
   <section class="guide-section" id="guide-fields">
     <h3>3. Fill the form / কোন ঘরে কী লিখবেন</h3>
-    <dl><dt>Primary domain / মূল ডোমেইন</dt><dd>Write the hostname only, such as <code>example.com</code>. Replace it with your own permitted domain. Do not include <code>https://</code>, a path, port, IP address or wildcard.</dd>
-    <dt>Exact authorized hosts / অনুমোদিত host</dt><dd>Put the primary domain here too. One hostname per line, maximum five total; additional hosts must be subdomains of the primary domain. Example structure: <pre>example.com
-app.example.com</pre>এগুলো উদাহরণ—নিজের অনুমোদিত domain দিয়ে বদলান। নতুন পাওয়া subdomain নিজে থেকে এই তালিকায় যোগ হবে না।</dd>
-    <dt>Select checks / পরীক্ষার ধাপ</dt><dd>Select only the steps you need. The first three are selected initially. Photon/Arjun need HTTPX selected in the same run and a confirmed live in-scope host; their current adapters use HTTPS. Select both Nuclei and Nikto for fallback: Nikto runs only if Nuclei does not complete. If Nuclei completes with no matches, Nikto is skipped. Select Nikto alone to run it by itself.</dd>
+    <dl><dt>Target domain or page URL / domain বা page URL</dt><dd>Enter a permitted domain such as <code>example.com</code> or a public <code>http(s)</code> page URL such as <code>https://example.com/help</code>. HTTPX, Nuclei, Photon and Arjun receive the page path for the primary host; domain-level checks use the hostname. Query strings and fragments are omitted. Credentials, IP addresses, wildcards and custom ports are rejected. A username is not a supported target.</dd>
+    <dt>Additional authorized hosts / বাড়তি অনুমোদিত host</dt><dd>Leave this blank to use only the hostname extracted from the target above. Or list up to four permitted subdomains, one per line; the primary host is included automatically, for up to five total. Hostnames or standard http(s) URLs are accepted; only their host is used for authorization. Example structure: <pre>app.example.com
+api.example.com</pre>এগুলো উদাহরণ—নিজের অনুমোদিত domain দিয়ে বদলান। নতুন পাওয়া subdomain নিজে থেকে এই তালিকায় যোগ হবে না।</dd>
+    <dt>Select checks / পরীক্ষার ধাপ</dt><dd>Select only the steps you need. The first three are selected initially. Photon/Arjun need HTTPX selected in the same run and a confirmed live in-scope host; they use the supplied URL scheme and do not retry another scheme automatically. Select both Nuclei and Nikto for fallback: Nikto runs only if Nuclei does not complete. If Nuclei completes with no matches, Nikto is skipped. Select Nikto alone to run it by itself.</dd>
     <dt>Confirmations / নিচের দুই checkbox</dt><dd>Confirm you own the hosts or have explicit permission, and understand that external tools have their own network behavior. Then press <b>Start assessment</b>.</dd></dl>
   </section>
   <section class="guide-section" id="guide-rate">
@@ -26,10 +26,11 @@ app.example.com</pre>এগুলো উদাহরণ—নিজের অন
     <p>সেকেন্ডে ১–৫-এর মধ্যে পূর্ণসংখ্যা লিখুন; default ২। গতিসীমা কম রাখলে server-এর ওপর চাপ কমতে পারে, তবে শেষ হতে বেশি সময় লাগতে পারে। সব tool একভাবে গতি নিয়ন্ত্রণ করে না।</p>
   </section>
   <section class="guide-section" id="guide-time">
-    <h3>5. Time per tool / host / ১২০ সেকেন্ড কী?</h3>
-    <p>Enter a whole number from <b>10 to 180 seconds</b>; the default is <b>120</b>. This is the process budget for one tool's attempt on one host. If it finishes in 8 seconds, the next attempt starts then; it does not wait for the full 120. If it is still running at the limit, the process is stopped and that attempt is marked <b>timeout</b>; cleanup can add a little time. Earlier output may be kept, but the result is incomplete.</p>
-    <p>This prevents a slow or stuck tool holding the queue indefinitely. A longer allowance may collect more evidence but also takes longer. Enter a whole-second value within the range. Lower rate plus a short limit can leave a stage unfinished; inspect the report before changing the settings.</p>
-    <p>১০–১৮০ সেকেন্ডের মধ্যে পূর্ণসংখ্যা লিখুন; default ১২০। এটি পুরো job-এর মোট সময় নয়। নয়টি tool এবং একটি host হলে শুধু process-এর সময়সীমাগুলো যোগ করে প্রায় ১৮ মিনিট পর্যন্ত হতে পারে। পাঁচটি host-এ সব ধাপ চললে বর্তমান pipeline-এ সর্বোচ্চ ৩৩টি attempt: ১২০ সেকেন্ডে প্রায় ৬৬ মিনিট process allowance। Nuclei সফল হলে Nikto fallback skipped হয়। Help/DNS/provider/startup/cleanup-এর বাড়তি সময় থাকতে পারে; এটি wall-clock deadline নয়। বাস্তবে দ্রুত শেষ হতে পারে বা কিছু ধাপ skipped হতে পারে।</p>
+    <h3>5. Timing and progress / চলার সময় ও অগ্রগতি</h3>
+    <p>The dashboard no longer applies a per-tool or whole-assessment time limit. Each tool runs until it exits or you press <b>Stop</b>. Some tools may still report their own network errors or request timeouts; those are tool/provider behavior, not a dashboard timer. Only one assessment runs at a time and output remains capped.</p>
+    <p>The overall bar counts resolved phases; each phase bar counts completed host attempts. The dashboard shows elapsed time and an estimated remaining time after completed work is available. Per-tool estimates use completed host attempts; the overall estimate uses completed phases. Both are rough because tools and targets differ. Many tools do not report a real percent within one host, so the dashboard marks that progress as unavailable instead of guessing.</p>
+    <p>Dashboard থেকে আলাদা tool বা পুরো scan-এর সময় বেঁধে দেওয়া নেই। Tool নিজে শেষ হবে অথবা <b>Stop</b> চাপলে থামবে। কোনো tool বা provider নিজের network/request error দিতে পারে—সেটি dashboard timer নয়। একসঙ্গে একটি assessment চলে এবং output-এর সীমা থাকে।</p>
+    <p>Overall bar-এ শেষ হওয়া phase, আর প্রতিটি tool-এর bar-এ শেষ হওয়া host attempt গোনা হয়। Elapsed time সবসময় দেখা যায়; একটি phase শেষ হলে বাকি সময়ের আনুমানিক হিসাব দেখায়। Tool-গুলো host-এর ভেতরের প্রকৃত percentage না দিলে dashboard তা বানিয়ে দেখায় না।</p>
   </section>
   <section class="guide-section" id="guide-checks">
     <h3>6. What each check does / কোন tool কী করে?</h3>

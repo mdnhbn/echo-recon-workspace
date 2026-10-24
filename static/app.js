@@ -5,6 +5,7 @@ const csrf = document.querySelector('meta[name="csrf-token"]').content;
 let activeId = null;
 let polling = null;
 const terminal = new Set(["complete", "partial", "error", "cancelled", "interrupted"]);
+const finishedPhases = new Set(["done", "error", "missing", "unverified", "skipped", "cancelled", "output_limit", "timeout"]);
 async function api(path, options = {}) {
   const res = await fetch(path, { ...options, headers: {"Content-Type": "application/json", "X-CSRF-Token": csrf, ...options.headers} });
   const data = await res.json();
@@ -18,20 +19,73 @@ function element(tag, text, className) {
   if (className) node.className = className;
   return node;
 }
+function formatDuration(value) {
+  const seconds = Math.max(0, Math.floor(Number(value) || 0));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const rest = seconds % 60;
+  return hours ? hours + "h " + minutes + "m" : minutes ? minutes + "m " + rest + "s" : rest + "s";
+}
+function since(value, end = Date.now()) {
+  const start = Date.parse(value || "");
+  return Number.isFinite(start) ? formatDuration((end - start) / 1000) : "—";
+}
 function render(job) {
   $("empty").hidden = true;
   $("job-content").hidden = false;
   $("job-domain").textContent = job.domain;
-  $("job-meta").textContent = `Scope: ${job.scope.join(", ")} · Created: ${new Date(job.created).toLocaleString()}`;
+  $("job-meta").textContent = "Scope: " + job.scope.join(", ") + " · Elapsed / চলেছে: " + since(job.created, terminal.has(job.status) && job.finished_at ? Date.parse(job.finished_at) : Date.now());
   $("job-state").textContent = job.status;
   $("job-state").className = `pill ${job.status}`;
   const done = terminal.has(job.status);
   $("cancel").hidden = done;
   $("start").disabled = !done || !canAssess;
+  const completedPhases = job.phases.filter(phase => finishedPhases.has(phase.status)).length;
+  const percent = job.phases.length ? Math.round(completedPhases / job.phases.length * 100) : 0;
+  $("overall-progress-fill").style.width = percent + "%";
+  $("overall-progress").setAttribute("aria-valuenow", String(percent));
+  $("overall-progress-text").textContent = percent + "% complete / সম্পন্ন · " + (100 - percent) + "% remaining / বাকি · " + completedPhases + "/" + job.phases.length + " checks resolved / ধাপ শেষ";
+  const samples = job.phases.filter(phase => finishedPhases.has(phase.status) && Number(phase.duration) > 0)
+    .map(phase => Number(phase.duration));
+  const remaining = job.phases.length - completedPhases;
+  $("overall-eta").textContent = done ? "Assessment finished / পরীক্ষা শেষ"
+    : samples.length && remaining
+      ? "Rough ETA / আনুমানিক বাকি: ~" + formatDuration(samples.reduce((sum, value) => sum + value, 0) / samples.length * remaining) + "; tool speeds vary / tool-এর গতি আলাদা।"
+      : remaining ? "ETA appears after a tool finishes / একটি tool শেষ হলে ETA দেখা যাবে; within-tool % may be unavailable / tool-এর ভেতরের % নাও পাওয়া যেতে পারে।" : "";
   $("phases").replaceChildren(...job.phases.map((phase) => {
     const row = element("div", undefined, `phase ${phase.status}`);
-    const text = element("div");
-    text.append(element("strong", phase.label), element("small", `${phase.tool} · ${phase.duration}s`));
+    const text = element("div", undefined, "phase-copy");
+    text.append(element("strong", phase.label));
+    const attempts = Array.isArray(phase.attempts) ? phase.attempts.length : 0;
+    const completedHosts = Number(phase.completed_hosts ?? attempts);
+    const totalHosts = Number(phase.total_hosts || (phase.status === "done" ? completedHosts : 0));
+    const hostPercent = totalHosts ? Math.round(completedHosts / totalHosts * 100)
+      : phase.status === "done" ? 100 : 0;
+    let detail = phase.status;
+    if (phase.status === "running") {
+      const started = phase.current_started_at || phase.started_at;
+      const hostProgress = totalHosts ? " · hosts " + completedHosts + "/" + totalHosts : "";
+      const current = phase.current_host ? " · " + phase.current_host : "";
+      const estimate = completedHosts && totalHosts > completedHosts
+        ? " · rough ETA / আনুমানিক বাকি ~" + formatDuration(Number(phase.duration) / completedHosts * (totalHosts - completedHosts))
+        : " · ETA appears after a host finishes / একটি host শেষ হলে ETA আসবে";
+      detail = "Running / চলছে · " + hostPercent + "% complete / সম্পন্ন · " + (100 - hostPercent) + "% remaining / বাকি · elapsed / চলেছে " + since(started) + hostProgress + current + estimate + " · within-host % unavailable / host-এর ভেতরের % নেই";
+    } else if (phase.duration) {
+      detail = phase.status + " · " + hostPercent + "% complete / সম্পন্ন · " + (100 - hostPercent) + "% remaining / বাকি · " + formatDuration(phase.duration) + " · hosts attempted / host চেষ্টা " + completedHosts + "/" + (totalHosts || completedHosts);
+    } else {
+      detail = phase.status + " · " + hostPercent + "% complete / সম্পন্ন · " + (100 - hostPercent) + "% remaining / বাকি";
+    }
+    text.append(element("small", detail));
+    const track = element("div", undefined, "phase-progress-track");
+    track.setAttribute("role", "progressbar");
+    track.setAttribute("aria-valuemin", "0");
+    track.setAttribute("aria-valuemax", "100");
+    track.setAttribute("aria-valuenow", String(hostPercent));
+    track.setAttribute("aria-label", phase.label + ": " + hostPercent + "% complete, " + (100 - hostPercent) + "% remaining; " + completedHosts + " of " + (totalHosts || completedHosts) + " host attempts finished");
+    const fill = element("span", undefined, "phase-progress-fill");
+    fill.style.width = hostPercent + "%";
+    track.append(fill);
+    text.append(track);
     row.append(element("span", "", "indicator"), text, element("span", phase.status, "phase-state"));
     return row;
   }));
@@ -67,7 +121,7 @@ $("scan-form").addEventListener("submit", (event) => {
   start({domain: $("domain").value, scope: $("scope").value.split(/\s+/).filter(Boolean),
     authorized: $("authorized").checked, understands_limits: $("limits").checked,
     tools: [...document.querySelectorAll('input[name="tool"]:checked')].map(input => input.value),
-    rate: Number($("rate").value), timeout: Number($("timeout").value)});
+    rate: Number($("rate").value)});
 });
 $("cancel").addEventListener("click", async () => {
   if (!activeId) return;

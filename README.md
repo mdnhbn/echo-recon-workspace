@@ -123,13 +123,13 @@ Working system tools stay in place. Unknown folders, conflicting wrappers and in
 
 Read [the English usage guide](docs/USAGE.md) or [বাংলা ব্যবহারবিধি](docs/USAGE.bn.md) for each field and setting.
 
-1. Enter a hostname you own or have explicit permission to assess, without a URL scheme/path/port.
-2. List exact authorized hosts, including the primary domain, one per line; maximum five. Extra names must be its subdomains.
-3. Select checks, rate ceiling and time per tool/host. Photon/Arjun require HTTPX-confirmed live scoped hosts in the same run.
+1. Enter a permitted domain or public HTTP(S) URL. HTTPX, Nuclei, Photon and Arjun receive a primary URL's path; query and fragment are omitted. Usernames, IPs, wildcards and custom ports are not accepted.
+2. The URL/domain's hostname is included automatically. Optionally list up to four additional authorized subdomains; maximum five hosts total. URL entries are normalized to their host for scope checks.
+3. Select checks and rate ceiling. There is no dashboard process time limit; tools run until they exit or you press Stop. Photon/Arjun require HTTPX-confirmed live scoped hosts in the same run.
 4. Confirm permission and network limitations, then start deliberately. Setup and assessments cannot start together.
-5. Read progress and evidence. Stop cancels the current process group on Linux or the contained process tree on Windows. Reports label incomplete work honestly; Nuclei findings remain **unverified** until human review.
+5. Read progress and evidence. Overall progress counts resolved tool phases; each tool row counts completed host attempts. Elapsed time is shown, with a rough remaining-time estimate when enough work has finished. Tools do not always report within-host percentage. Stop cancels the current process group on Linux or the contained process tree on Windows. Reports label incomplete work honestly; Nuclei findings remain **unverified** until human review.
 
-The rate is a ceiling for tools that support it, not one global traffic budget. The 120-second default is per tool/host attempt, not the whole job. Nmap uses limited top-100 TCP connect/service detection; Windows also skips raw-packet host discovery with `-Pn`.
+The rate is a ceiling for tools that support it, not one global traffic budget. The dashboard no longer stops tools based on elapsed time; each tool can still report its own network/provider errors. Output stays capped and you can manually stop the run. Nmap uses limited top-100 TCP connect/service detection; Windows also skips raw-packet host discovery with `-Pn`.
 
 This is an application-level scope boundary, **not a network sandbox**. Third-party tools may resolve DNS independently, follow secondary requests or contact public data services. An empty finding list is not proof of safety. Review [SECURITY.md](SECURITY.md).
 

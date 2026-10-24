@@ -73,6 +73,7 @@ legend { font-size: 12px; font-weight: 500; margin-bottom: 10px; }
 .checks label { display: flex; align-items: center; gap: 6px; margin: 0; padding: 7px 8px; border: 1px solid var(--line); background: #ffffff03; border-radius: 7px; font-size: 10px; font-weight: 400; }
 input[type=checkbox] { accent-color: var(--green); flex-shrink: 0; }
 .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fields.single-field { grid-template-columns: minmax(0, 1fr); }
 .fields label { margin-top: 0; }
 .consent { display: flex; align-items: flex-start; gap: 8px; color: var(--muted); font-size: 10px; font-weight: 400; margin: 12px 0 0; }
 .consent input { margin-top: 5px; }
@@ -86,6 +87,19 @@ input[type=checkbox] { accent-color: var(--green); flex-shrink: 0; }
 .message { font-size: 12px; color: var(--red); overflow-wrap: anywhere; }
 .message:empty { display: none; }
 .progress { min-width: 0; }
+.overall-progress { margin: 14px 0 4px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
+.overall-progress-summary { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.overall-progress-summary strong { font-size: 12px; }
+.overall-progress-summary .hint { text-align: right; }
+.overall-progress-track, .phase-progress-track { width: 100%; height: 7px; overflow: hidden; border-radius: 99px; background: #7773; }
+.overall-progress-track > span, .phase-progress-track > span { display: block; height: 100%; background: var(--blue); }
+.phase.done .phase-progress-track > span { background: var(--green); }
+.phase.error .phase-progress-track > span, .phase.timeout .phase-progress-track > span { background: var(--red); }
+.phase-copy { flex: 1; min-width: 0; }
+.phase-copy > strong, .phase-copy > small { display: block; overflow-wrap: anywhere; }
+.phase-copy > small { color: var(--muted); font-size: 10px; }
+.phase-progress-track { margin-top: 6px; height: 5px; }
+.overall-progress > .hint { margin: 8px 0 0; }
 #empty { text-align: center; padding: 12px 0; }
 #empty > p { font-size: 12px; color: var(--muted); margin: 18px 0 0; }
 .pipeline { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }

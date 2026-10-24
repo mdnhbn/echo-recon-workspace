@@ -44,13 +44,19 @@ def public_resolver(host, port, **kwargs):
 
 
 class SecurityTests(unittest.TestCase):
-    def test_scope_rejects_commands_urls_wildcards_and_suffix_confusion(self):
-        for value in ["https://example.com", "example.com;id", "*.example.com", "127.0.0.1", "--help"]:
+    def test_scope_normalizes_public_urls_and_rejects_unsafe_hosts(self):
+        domain, scope = validate_scope("https://Example.COM/help?token=private#section",
+                                       ["https://example.com/other", "http://app.example.com/"])
+        self.assertEqual(domain, "example.com")
+        self.assertEqual(scope, ["example.com", "app.example.com"])
+        for value in ["example.com;id", "*.example.com", "127.0.0.1", "--help",
+                      "https://name:secret@example.com", "https://example.com:8443"]:
             with self.subTest(value=value), self.assertRaises(ValueError):
                 validate_scope(value, [value])
-        for entries in [["example.com", "example.com.attacker.net"], ["example.com", "other.com"], []]:
+        for entries in [["example.com", "example.com.attacker.net"], ["example.com", "other.com"]]:
             with self.subTest(entries=entries), self.assertRaises(ValueError):
                 validate_scope("example.com", entries)
+        self.assertEqual(validate_scope("example.com", []), ("example.com", ["example.com"]))
         self.assertEqual(validate_scope("Example.COM", ["example.com", "app.example.com"])[1],
                          ["example.com", "app.example.com"])
 
@@ -159,13 +165,13 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(job["phases"][0]["status"], "error")
         self.assertNotIn("No automated findings", job["phases"][0]["evidence"])
 
-    def test_manual_rate_and_timeout_values_are_kept_with_safe_bounds(self):
+    def test_manual_rate_is_kept_and_legacy_timeout_is_ignored(self):
         manager = self.manager(lambda *a, **kw: Result("done", 0, ""))
         payload = self.payload(["nuclei"])
         payload.update(rate=4, timeout=47)
         job = self.store.get(manager.start(payload, background=False))
-        self.assertEqual(job["settings"], {"rate": 4, "timeout": 47})
-        for key, value in (("rate", 0), ("rate", 6), ("timeout", 9), ("timeout", 181), ("timeout", 1.5)):
+        self.assertEqual(job["settings"], {"rate": 4})
+        for key, value in (("rate", 0), ("rate", 6)):
             invalid = self.payload(["nuclei"])
             invalid[key] = value
             with self.subTest(key=key, value=value), self.assertRaises(ValueError):
@@ -175,10 +181,10 @@ class PipelineTests(unittest.TestCase):
         calls = []
         def execute(args, **kwargs):
             calls.append((args, kwargs["stdin"]))
-            return Result("done", 0, "outside.example.com" if args[0] == "subfinder" else "https://example.com\n")
+            return Result("done", 0, "outside.example.com" if args[0] == "subfinder" else "https://example.com/\n")
         manager = self.manager(execute)
         manager.start(self.payload(["subfinder", "httpx"]), background=False)
-        self.assertEqual(calls[1][1], "example.com\n")
+        self.assertEqual(calls[1][1], "https://example.com/\n")
         self.assertNotIn("outside.example.com", calls[1][1])
 
     def test_no_automatic_crawl_fallback(self):

@@ -10,7 +10,7 @@ Browser (127.0.0.1:8001)             ├─ Windows user-local worker + bounded 
   ▼
 Flask API → input/scope validation → one assessment manager
                                       ├─ fixed tool adapters (no shell)
-                                      ├─ bounded runner + cancellation
+                                      ├─ output-capped runner + cancellation (no assessment deadline)
                                       └─ SQLite snapshots + redacted evidence
                                                      └─ HTML / JSON report
 ```
@@ -27,9 +27,9 @@ Flask API → input/scope validation → one assessment manager
 | `setup_tools_windows.py` | Normal-user x64 Windows setup; fixed verified assets, separate Python environments and explicit managed command resolution. |
 | `setup_tools.py` | Kali package/Go setup plus supported portable Linux/package-manager families; fixed terminal sudo calls. |
 | `packaging/`, `.github/workflows/publish-apt.yml` | Build an architecture-independent Debian package and publish version-tagged releases to a signed static APT feed. |
-| `echo_recon/security.py` | Exact-host scope, public DNS preflight, returned URL filtering and best-effort redaction. |
+| `echo_recon/security.py` | Domain/HTTP(S)-URL parsing, exact-host scope, public DNS preflight, returned URL filtering and best-effort redaction. |
 | `echo_recon/tools.py` | Fixed argv adapters, identity/help diagnostics and scoped Nuclei JSONL parsing. |
-| `echo_recon/runner.py` | No-shell processes, combined output/time limits, Linux process groups and suspended Windows Job Object containment. |
+| `echo_recon/runner.py` | No-shell processes, capped combined output, manual cancellation, Linux process groups and suspended Windows Job Object containment. Assessment processes have no elapsed-time deadline. |
 | `echo_recon/service.py` | Sequential state machine, cancellation and complete/partial classification. |
 | `echo_recon/storage.py` | Short-lived SQLite connections and persistent snapshots. |
 | `maintenance.py` | Stopped-server cleanup of explicitly marked legacy demo jobs. |

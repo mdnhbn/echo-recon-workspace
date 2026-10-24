@@ -73,23 +73,25 @@ Default/`--plan` শুধু পরিকল্পনা দেখায়; comma
 
 ### Primary domain / মূল ডোমেইন
 
-এখানে শুধু hostname লিখবেন। অর্থাৎ এই assessment-এর মূল নাম। নিচে বোঝানোর জন্য `example.com` ব্যবহার করা হয়েছে।
+এখানে অনুমোদিত domain অথবা public HTTP(S) page URL লিখুন। যেমন `https://example.com/help` দিলে HTTPX, Nuclei, Photon ও Arjun `/help` ব্যবহার করবে, আর domain-ভিত্তিক tool `example.com` ব্যবহার করবে। Query ও fragment বাদ যায়। Username, IP, wildcard ও custom port গ্রহণ করে না। Username এই tool-এর সমর্থিত target নয়।
 
 | যা লিখলেন | গ্রহণ করবে? | কারণ |
 |---|---|---|
 | `example.com` | Hostname-এর format হিসেবে হ্যাঁ | নিজের অনুমোদিত domain দিয়ে বদলাবেন। |
 | `app.example.com` | Hostname-এর format হিসেবে হ্যাঁ | এটি primary হলে শুধু এই নাম ও এর নিচের subdomain scope-এ রাখা যাবে। |
-| `https://example.com` | না | URL-এর scheme আছে। |
-| `example.com/login` | না | Page path আছে। |
-| `example.com:443` | না | Port লেখা আছে। |
+| `https://example.com/help` | হ্যাঁ | HTTPX, Nuclei, Photon ও Arjun path নেয়; domain tool hostname নেয়। |
+| `http://example.com` | হ্যাঁ | সাধারণ HTTP URL-ও চলে। |
+| `https://example.com:443/help` | হ্যাঁ | Scheme-এর standard port গ্রহণ করে। |
+| `example.com:8443` | না | Custom port সমর্থিত নয়। |
+| `https://name:secret@example.com` | না | Credential থাকা URL গ্রহণ করে না। |
 | `*.example.com` | না | Wildcard সমর্থিত নয়। |
 | `127.0.0.1`, `192.168.1.10`, `localhost` | না | IP address ও local host live target হিসেবে গ্রহণ করে না। |
 
 Live scanner-এ hostname শুধু public IP-তে resolve করতে হবে। Private/reserved IP পাওয়া গেলে বাতিল হবে। তাই নিজের dashboard-এর localhost ঠিকানাটি target-এর ঘরে দেবেন না।
 
-### Exact authorized hosts / অনুমোদিত host
+### বাড়তি অনুমোদিত host / Additional authorized hosts
 
-এটি সেই **নির্দিষ্ট hostname-এর তালিকা, যেগুলো active check-কে দিতে অনুমতি দিচ্ছেন**। প্রতি লাইনে একটি নাম দিন। Primary domain-টিও থাকতে হবে। **সর্বোচ্চ পাঁচটি entry** দেওয়া যায়। বাড়তি নামগুলো primary domain-এর subdomain হতে হবে।
+Primary host target domain/URL থেকে নিজে বের হয়ে scope-এ যোগ হয়। শুধু ওই host পরীক্ষা করতে এই ঘর ফাঁকা রাখুন। অন্য অনুমোদিত host চাইলে প্রতি লাইনে hostname বা সাধারণ HTTP(S) URL দিন; শুধু hostname নেওয়া হয়। সর্বোচ্চ চারটি বাড়তি subdomain দেওয়া যায়, মোট পাঁচটি host।
 
 Form-এর গঠন বোঝার নমুনা:
 
@@ -99,14 +101,13 @@ Form-এর গঠন বোঝার নমুনা:
 example.com
 ```
 
-**Exact authorized hosts:**
+**Additional authorized hosts (optional):**
 
 ```text
-example.com
 app.example.com
 ```
 
-Start দেওয়ার আগে দুই জায়গার নমুনা বদলে নিজের অনুমোদিত নাম দিন। Result-এ কোনো subdomain এসেছে বলেই scope-এ যোগ করবেন না; আগে মালিকানা/অনুমতি যাচাই করুন। শুধু primary পরীক্ষা করতে চাইলে scope-এ শুধু সেই একটি লাইন দিন। অন্য আলাদা domain একই run-এ যোগ করা যায় না; আলাদা assessment করতে হবে।
+Start দেওয়ার আগে নমুনাটি নিজের অনুমোদিত subdomain দিয়ে বদলান। Result-এ কোনো subdomain এসেছে বলেই scope-এ যোগ করবেন না; আগে মালিকানা/অনুমতি যাচাই করুন। শুধু primary পরীক্ষা করতে চাইলে বাড়তি host-এর ঘর ফাঁকা রাখুন। অন্য আলাদা domain একই run-এ যোগ করা যায় না; আলাদা assessment করতে হবে।
 
 নতুন subdomain পাওয়া মানেই সেটিতে active scan শুরু হয় না। আবার এই input control **network firewall নয়**: বাইরের টুল DNS নতুন করে resolve করতে পারে বা অন্য service/destination-এ যোগাযোগ করতে পারে। কঠোর network সীমা দরকার হলে আলাদাভাবে isolated environment ব্যবহার করুন।
 
@@ -128,9 +129,9 @@ Start দেওয়ার আগে দুই জায়গার নমুনা 
 
 Fallback চালু করতে Nuclei ও Nikto দুটোই বাছুন। Nuclei missing, unverified, timeout বা error হলে Nikto চলবে। Nuclei সফলভাবে শেষ হলেও finding না পেলে Nikto **চলবে না**। শুধু Nikto বাছলে এটি আলাদা phase হিসেবে চলে। Report-এ fallback আলাদা ধাপ হিসেবে থাকে এবং দেওয়া scope বাড়ায় না।
 
-Photon বা Arjun বেছে নিলে একই run-এ **Live hosts / HTTPX**-ও বেছে নিন। না হলে confirmed live-host list থাকবে না; ধাপগুলো skipped হবে। বর্তমান Photon/Arjun adapter `https://HOST`-এর মূল ঠিকানা ব্যবহার করে। আলাদা page path দেওয়া যায় না এবং HTTPS ব্যর্থ হলে নিজে থেকে HTTP-তে বদলায় না। HTTPX শুধু HTTP-তে সাড়া পেলেও এই HTTPS check সফল হবে—এমন নিশ্চয়তা নেই।
+Photon বা Arjun বেছে নিলে একই run-এ **Live hosts / HTTPX**-ও বেছে নিন। না হলে confirmed live-host list থাকবে না; ধাপগুলো skipped হবে। Primary host-এর জন্য URL দিলে Photon/Arjun-এ তার page path যায়; অতিরিক্ত scope host-এ site root ব্যবহার হয়। দেওয়া URL-এর scheme-ই ব্যবহার হয়; ব্যর্থ হলে নিজে থেকে অন্য scheme-এ আবার চেষ্টা হয় না।
 
-## ৪. Rate ও সময়সীমা বুঝে নিন
+## ৪. Rate, চলার সময় ও অগ্রগতি বুঝে নিন
 
 ### Tool rate ceiling / গতি সীমা
 
@@ -146,33 +147,27 @@ Form-এ নিজে পূর্ণসংখ্যা লিখুন: **স�
 | Nmap | `--max-rate` দেয়। এটি scan-packet-এর setting, সব ধরনের web request-এর সর্বজনীন সীমা নয়। সব service check বা OS/network কাজ এতে বাঁধা থাকে না। |
 | DNSRecon, Subfinder, theHarvester | এই adapter-গুলোতে selected rate দেওয়া হয় না। DNS ও public provider-এর যোগাযোগ তাদের নিজস্ব আচরণ অনুযায়ী হয়। |
 
-একেক tool একেক ধরনের কাজ গোনে। Nikto-র বিরতি একেক test-এর মাঝে; এটি সব network request গোনার কঠোর মিটার নয়। তাই এই setting **সব টুলের জন্য একটি মিটারে মাপা মোট request budget নয়**। খুব কম rate বা অল্প সময় দিলে পরীক্ষা অসম্পূর্ণ থাকতে পারে।
+একেক tool একেক ধরনের কাজ গোনে। Nikto-র বিরতি একেক test-এর মাঝে; এটি সব network request গোনার কঠোর মিটার নয়। তাই এই setting **সব টুলের জন্য একটি মিটারে মাপা মোট request budget নয়**। Rate কম রাখলে traffic burst কমে, তবে run ধীর হতে পারে।
 
-### Time per tool / host / প্রতি টুল-হোস্টের সময়
+### চলার সময় ও অগ্রগতি
 
-Form-এ নিজে পূর্ণসংখ্যা লিখুন: **১০–১৮০ সেকেন্ড**; default **১২০ সেকেন্ড**। এটি **একটি host-এর জন্য একটি tool চালানোর process-এর সময়সীমা**। পুরো assessment-এর মোট সময়সীমা নয়। Nikto-কে এই একই সময় সর্বোচ্চ scan সময় এবং dashboard-এর process timeout হিসেবে দেওয়া হয়।
+Dashboard থেকে **প্রতি tool বা পুরো assessment-এর সময় বেঁধে দেওয়া নেই**। Tool নিজে শেষ হবে অথবা **Stop** চাপলে থামবে। Tool/provider নিজের network error বা request timeout দিতে পারে; সেটি dashboard timer নয়। একসঙ্গে একটি assessment চলে, প্রত্যেক tool-এর output-এর সীমা আছে এবং Stop process tree বন্ধ করে।
 
-যেমন, ১২০ সেকেন্ড বেছে নিলে প্রথম scoped host-এর HTTPX নিজের সময় পায়। দ্বিতীয় host-এর HTTPX আবার আলাদা সময় পায়। এরপর অন্য selected tool নিজের সময় পায়। কিছু tool-এর ভেতরে আরও ছোট connection/request timeout আছে; তাই কোনো request আগেও ব্যর্থ হতে পারে।
+Overall bar-এ শেষ হওয়া ও বাকি phase-এর শতাংশ দেখা যায়। প্রতিটি tool row-তে শেষ হওয়া/বাকি host attempt-এর শতাংশ ও বর্তমান attempt-এর elapsed time থাকে। Tool-এর অন্তত একটি host শেষ হলে তার গড় সময় ধরে ওই row-তে আনুমানিক বাকি সময় দেখায়। Overall estimate এই run-এর শেষ হওয়া phase দেখে হিসাব করে। দুটোই ধারণা: tool ও network-এর গতি আলাদা। অনেক command-line tool একটি host-এর ভেতরের progress percent দেয় না; UI অনুমান না করে সেটি জানায়।
 
-ধাপ ও তাদের host-গুলো একটির পরে আরেকটি চলে। সব কাজ মিলে একটি ১২০-সেকেন্ডের timer ভাগ করে না।
-
-- সহজ বড়সড় হিসাব: `৯ টুল × ৫ host × ১২০ সেকেন্ড = ৫,৪০০ সেকেন্ড`, অর্থাৎ **৯০ মিনিট** process allowance। বর্তমান pipeline-এ তিনটি tool শুধু primary domain-এ চলে, আর Nuclei বাছা থাকলে Nikto fallback হিসেবে কাজ করে—তাই এটি বেশি হিসাব।
-- পাঁচটি উপযুক্ত host-এ বর্তমান pipeline সর্বোচ্চ `৩ + (৬ × ৫) = ৩৩` বার scanner process চালাতে পারে। তাই `৩৩ × ১২০ = ৩,৯৬০ সেকেন্ড`, অর্থাৎ **৬৬ মিনিট** scanner allowance। Nuclei ও Nikto দুটো বাছলে শুধু যেসব host-এ Nuclei ব্যর্থ হয়েছে, সেখানে Nikto চলে। Photon/Arjun কম host পেতে পারে বা skipped হতে পারে।
-- কোনো হিসাবই ঘড়ি ধরে মোট সময়ের কঠোর সীমা বা আপনার run-এর নিশ্চিত সময় নয়। পরিচয়/help check, বারবার DNS preflight, process খোলা/বন্ধ করা, provider ও অন্যান্য overhead-এ আরও সময় লাগে। DNS lookup scanner process-এর timer-এর মধ্যে নয়। অনেক tool আগেই শেষ হবে, ব্যর্থ হবে বা missing থাকবে। আলাদা whole-job deadline নেই।
-
-কোনো process সময়সীমা পেরোলে সেটি বন্ধ করে **timeout** লেখা হয়। এর অর্থ **পরীক্ষা অসম্পূর্ণ**; “দুর্বলতা নেই” বা “সাইট নিরাপদ” নয়। অন্য selected ধাপ চলতে পারে। সব selected ধাপ সফলভাবে শেষ না হলে সাধারণত পুরো job **partial** হয়। Pipeline-এর গুরুতর সমস্যায় পুরো job **error**-ও হতে পারে। সময় বাড়ালে বেশি সময় পাবে; কিন্তু missing tool, ভুল scope বা বন্ধ provider ঠিক হবে না।
+কোনো tool নিজে `timeout` বা network error দিলে তার evidence পড়ুন। Dashboard-এর process time limit সরানো হয়েছে। অনুমতি ও traffic বুঝে প্রয়োজন হলে তবেই আবার চালান।
 
 ## ৫. Start ও Stop
 
 1. Primary domain ও exact scope আবার পড়ুন। পরীক্ষা করতে চান না এমন host সরিয়ে দিন।
-2. প্রয়োজনীয় check, rate ও প্রতি tool/host-এর সময় বেছে নিন।
+2. প্রয়োজনীয় check ও rate বেছে নিন।
 3. মালিকানা/অনুমতির কথা সত্য হলেই confirmation দিন। Network-এর সীমাবদ্ধতা পড়ে acknowledgement দিন।
 4. **Start assessment** একবার চাপুন। একই সময়ে একটি job চলতে পারে।
 5. **Progress & evidence** ও **Live activity** দেখুন। শুরুতে local tool check বা DNS preflight-এর জন্য অপেক্ষা হতে পারে; সবসময় page আটকে যাওয়া নয়।
 6. থামাতে **Stop** চাপুন। Cancellation শেষ হওয়া পর্যন্ত অপেক্ষা করে তারপর নতুন কাজ দিন। Linux-এ বর্তমান process group বন্ধ হয়। Windows-এ kill-on-close Job Object-এর contained process tree বন্ধ হয়; parent আগে শেষ হলেও ভেতরের child অন্তর্ভুক্ত থাকে। Containment তৈরি না হলে tool চালায় না। অস্বাভাবিক OS shutdown বা tool-এর ত্রুটিতে পরে system দেখতে হতে পারে।
 7. Dashboard server বন্ধ করতে **যে Terminal থেকে চালু করেছেন সেখানে Ctrl+C** দিন। শুধু browser tab বন্ধ করলে server বা assessment থামে না।
 
-প্রথম অনুমোদিত run-এ scope-এ শুধু primary host রাখুন, আগে থেকে selected তিনটি check রাখুন, rate ১ ও সময় ১২০ সেকেন্ড দিন। অন্য check-এর যোগাযোগ বুঝে ও অনুমতি থাকলে পরে যোগ করুন। এটি form পূরণের উদাহরণ; এই গাইড নিজে কোনো scan করে না।
+প্রথম অনুমোদিত run-এ scope-এ শুধু primary host রাখুন, আগে থেকে selected তিনটি check রাখুন এবং rate ১ দিন। অন্য check-এর যোগাযোগ বুঝে ও অনুমতি থাকলে পরে যোগ করুন। এটি form পূরণের উদাহরণ; এই গাইড নিজে কোনো scan করে না।
 
 ## ৬. History ও report বুঝুন
 
@@ -185,7 +180,7 @@ Job শেষ হলে **View report**, **HTML** বা **JSON** ব্যব�
 | `missing` | প্রয়োজনীয় executable পাওয়া যায়নি। |
 | `unverified` | পরিচয়/help যাচাই পাস হয়নি; প্রস্তুত tool হিসেবে ধরা হয়নি। |
 | `error` | Command, parsing বা অন্য প্রয়োজনীয় কাজ ব্যর্থ হয়েছে; diagnostic পড়ুন। |
-| `timeout` | একটি tool process নিজের সময়সীমা পেরিয়েছে; পরীক্ষা অসম্পূর্ণ। |
+| `timeout` | কোনো tool বা provider নিজের network/request সময়সীমা জানিয়েছে; dashboard elapsed time দেখে process বন্ধ করেনি। পরীক্ষা অসম্পূর্ণ। |
 | `output_limit` | Output-এর সীমা হয়েছে; সংরক্ষিত প্রমাণ অসম্পূর্ণ। |
 | `skipped` | পূর্বশর্ত মেলেনি বা আগের সমস্যায় ধাপ চালানো হয়নি। |
 | `cancelled` | Stop দেওয়া হয়েছে; বাকি কাজ শেষ হয়নি। |
@@ -203,9 +198,8 @@ History ও raw evidence project-এর private `data/`-তে থাকে। �
 
 | সমস্যা | আগে যা দেখবেন |
 |---|---|
-| “Enter a hostname” | `https://`, path, port, wildcard বা IP সরিয়ে শুধু hostname দিন। |
-| “Primary domain must appear” | Scope তালিকায় primary নামটি হুবহু রাখুন। |
-| Scope বাতিল | সর্বোচ্চ পাঁচটি host দিন; প্রতিটি primary বা তার exact subdomain হবে। |
+| Target URL গ্রহণ হচ্ছে না | Domain অথবা public `http://` / `https://` URL দিন। Username/password, IP, wildcard বা standard নয় এমন port গ্রহণ করা হয় না। |
+| Scope বাতিল | সর্বোচ্চ চারটি বাড়তি host দিন; প্রতিটি primary host-এর exact subdomain হতে হবে। Primary host নিজে থেকে যোগ হয়। |
 | Non-public DNS error | এই live mode private/reserved target address নেয় না। |
 | Setup-এর পরেও missing | একই Kali-তে ইনস্টল হয়েছে কি না ও PATH দেখুন। Recheck করুন; PATH বদলালে restart দিন। |
 | HTTPX unverified | ProjectDiscovery HTTPX কি না দেখুন; Python HTTPX আলাদা। |
