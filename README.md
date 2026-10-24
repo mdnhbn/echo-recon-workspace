@@ -1,6 +1,12 @@
-# Echo Recon 6.6.0
+# Echo Recon 6.6.3
 
 A local assessment dashboard with nine fixed tool adapters, explicit host scope, cancellable processes, saved history and evidence reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec), upgraded for the mdnhbn collaboration.
+
+## 6.6.3 update
+
+- Enter a domain or public HTTP(S) URL; its host is included automatically, and extra in-scope subdomains are optional.
+- Removed the dashboard's fixed assessment deadline; tools run until they exit or you press **Stop**.
+- Added honest phase/host progress, elapsed time and rough remaining-time estimates.
 
 **[বাংলা নির্দেশনা](README.bn.md)** · [Kali APT updates](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [Tool setup](docs/TOOLS.md) · [Complete usage guide](docs/USAGE.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
 
