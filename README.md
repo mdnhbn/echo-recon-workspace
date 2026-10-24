@@ -34,7 +34,7 @@ A dashboard-only installation supports Python 3.11+. For that workflow use `--da
 
 ### Kali APT-managed installation and updates
 
-The signed Kali/Debian APT feed is the automatic update path: install its signing key and source once using [Kali APT updates](docs/APT.md), then run `sudo apt update && sudo apt upgrade` to receive the latest **published release**. It does not fetch every Git commit. The feed becomes installable after the repository signing key is configured and the first matching release tag is published.
+The signed Kali/Debian APT feed is the automatic update path. It is published now; after installing the feed and `echo-recon` package once using [Kali APT updates](docs/APT.md), run `sudo apt update && sudo apt upgrade` to receive the latest **published release**. A normal commit to `main` is not an APT release: the maintainer must publish a matching `vX.Y.Z` tag, which triggers the signed package workflow. The initial feed is available on the [`apt-repo` branch](https://github.com/mdnhbn/echo-recon-workspace/tree/apt-repo).
 
 If you already use the source checkout, close it before migrating. The package keeps future report history in `~/.local/share/echo-recon`; the guide explains how to copy saved history and switch to the `/usr/bin/echo-recon` launcher. Keep the old checkout until you verify your reports.
 
@@ -135,7 +135,7 @@ This is an application-level scope boundary, **not a network sandbox**. Third-pa
 
 ## Update, backups and data
 
-Stop the server first, keep private backups of `data/`, and inspect local changes:
+Stop the server first, keep private backups of `data/`, and inspect local changes. For a Kali/Linux Git checkout, run:
 
 ```bash
 git status
@@ -144,7 +144,16 @@ bash install.sh
 bash run.sh
 ```
 
-Windows uses `.\install.ps1` and `.\run.ps1` after the pull. Do not force-reset local work or reuse a Linux venv on Windows. An existing broken/unknown venv or one made with a different Python major/minor is preserved and refused before recreation; keep a private data backup and use a fresh project folder or deliberately rebuild the environment after inspection. Private history, setup logs and raw evidence live under `data/`; do not commit or publish them. Common secret redaction is best effort. Reports are not sent to an AI service.
+For an existing native Windows Git checkout, open PowerShell in the repository folder, stop the running app, then run these commands:
+
+```powershell
+git status --short
+git pull --ff-only
+.\install.ps1
+.\run.ps1
+```
+
+`git pull` downloads the GitHub changes; the platform installer refreshes dependencies and missing backends. `sudo apt upgrade` is for Kali/Linux systems installed from the APT package, not native Windows. For a GitHub ZIP installation, download and extract the new ZIP into a fresh folder instead of extracting over the old one. Do not force-reset local work or reuse a Linux venv on Windows. An existing broken/unknown venv or one made with a different Python major/minor is preserved and refused before recreation; keep a private data backup and use a fresh project folder or deliberately rebuild the environment after inspection. Private history, setup logs and raw evidence live under `data/`; do not commit or publish them. Common secret redaction is best effort. Reports are not sent to an AI service.
 
 ### Remove saved demos from an earlier edition
 

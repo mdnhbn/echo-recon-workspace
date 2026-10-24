@@ -141,7 +141,16 @@ VirtualBox-এর Kali-তে সাধারণ user দিয়ে installer/app
 
 ## Updates, private data and troubleshooting
 
-Stop the app first, back up private `data/` if needed, then `git status` and `git pull --ff-only`. Rerun the correct environment's installer and launcher. Both host and WSL may need port 8001; avoid conflicting listeners.
+Stop the app first and keep a private backup of `data/`. For a native Windows Git checkout, open PowerShell in the repository folder and run:
+
+```powershell
+git status --short
+git pull --ff-only
+.\install.ps1
+.\run.ps1
+```
+
+For Kali/WSL installed from the signed APT package, run `sudo apt update && sudo apt upgrade`; this works after the feed was added once and installs the latest published release. APT does not update a Git checkout. For a Linux or WSL Git checkout, use `git pull --ff-only`, `bash install.sh`, then `bash run.sh`. Native Windows does not use `sudo apt upgrade`. If you installed from a ZIP, download/extract a fresh copy instead of overwriting an existing folder. Both host and WSL may need port 8001; avoid conflicting listeners.
 
 Windows inherits NTFS permissions; Unix `chmod` is not a Windows ACL setup. Keep data private. Do not commit history, raw evidence, tokens, logs or venvs. Reports need review before sharing.
 

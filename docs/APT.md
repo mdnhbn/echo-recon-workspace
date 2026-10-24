@@ -2,9 +2,9 @@
 
 **English** · [বাংলা](#kali-তে-apt-দিয়ে-echo-recon-আপডেট)
 
-This project is normally installed from a Git checkout. APT does not update that checkout. The signed APT channel below installs the dashboard as a Debian package; after it is installed and a newer signed release has been published, `sudo apt update && sudo apt upgrade` updates Echo Recon together with system packages.
+This project is normally installed from a Git checkout. APT does not update that checkout. The signed APT feed is live and installs Echo Recon as a Debian package. After adding the feed and installing the package once, `sudo apt update && sudo apt upgrade` updates Echo Recon when a newer signed release is published.
 
-APT receives **published release tags**, not every Git commit. The release workflow builds an architecture-independent `.deb`, publishes it in the `apt-repo` branch, and signs the repository indexes. It refuses to run until the repository signing key is configured. Never bypass signature verification with `trusted=yes`.
+APT receives **published release tags**, not every Git commit. The initial signed package is already published in the [`apt-repo` branch](https://github.com/mdnhbn/echo-recon-workspace/tree/apt-repo). For each later release, the maintainer bumps the project version and pushes the matching `vX.Y.Z` tag. That tag starts the release workflow, which builds an architecture-independent `.deb`, publishes it in `apt-repo`, and signs the repository indexes. A push to `main` alone does not change the APT feed. Never bypass signature verification with `trusted=yes`.
 
 ## Maintainer: configure the signing key once
 
@@ -35,11 +35,11 @@ In the GitHub repository's **Settings → Secrets and variables → Actions**:
 
 Keep a protected backup of the private key. Do not commit it or send it in chat. The release workflow checks that the secret key matches the public fingerprint variable before publishing. After the first signed release, the public key and fingerprint appear in the generated `apt-repo` branch.
 
-Publish a Git tag matching `echo_recon/__init__.py`, for example `v6.6.0`, only after configuring these values. Each later package release needs a version bump and a matching `vX.Y.Z` tag. The first feed is not available until the signing key is configured and the first release workflow succeeds.
+For every later package release, update `echo_recon/__init__.py` to the new version, commit the release changes, then push the matching tag (for example, version `6.7.0` uses tag `v6.7.0`). The workflow validates, builds, signs, and publishes the package automatically. Confirm the workflow succeeds before telling Kali users to upgrade.
 
 ## Kali user: add the feed and install
 
-Supported architectures are `amd64` and `arm64`. After the first signed package has been published, download and inspect its public key:
+Supported architectures are `amd64` and `arm64`. The signed feed already contains its public key and initial package. Download and inspect the public key once on each Kali installation:
 
 ```bash
 BASE=https://raw.githubusercontent.com/mdnhbn/echo-recon-workspace/apt-repo
@@ -76,9 +76,9 @@ If the checkout is in another folder, replace that path. Keep the old checkout u
 
 ## Kali-তে APT দিয়ে Echo Recon আপডেট
 
-এখনকার source install GitHub থেকে clone করা। `apt update` বা `apt upgrade` সেই clone-এর code বদলায় না। নিচের signed APT channel ব্যবহার করলে Echo Recon Debian package হিসেবে ইনস্টল হবে। নতুন signed release প্রকাশিত হলে `sudo apt update && sudo apt upgrade` চালিয়ে Echo Recon-ও update হবে।
+GitHub থেকে clone করা source install-এ `apt update` বা `apt upgrade` code বদলায় না। Signed APT feed-টি এখন চালু আছে। Kali-তে feed ও `echo-recon` package একবার বসানোর পর নতুন signed release এলে `sudo apt update && sudo apt upgrade` Echo Recon-সহ system package update করবে।
 
-APT-তে **প্রকাশিত release tag**-গুলো যায়; প্রতিটি Git commit নয়। Release workflow package তৈরি করে `apt-repo` branch-এ প্রকাশ ও repository index sign করে। Signing key configure না করা পর্যন্ত workflow প্রকাশ করবে না। Signature এড়াতে `trusted=yes` ব্যবহার করবেন না।
+APT-তে **প্রকাশিত release tag**-গুলো যায়; `main`-এর প্রতিটি commit নয়। প্রথম signed package [`apt-repo` branch](https://github.com/mdnhbn/echo-recon-workspace/tree/apt-repo)-এ আছে। পরের release-এর জন্য version বাড়িয়ে মেলা `vX.Y.Z` tag push করলে workflow package তৈরি, sign ও publish করে। `main`-এ commit push করলেই APT feed বদলায় না। Signature এড়াতে `trusted=yes` ব্যবহার করবেন না।
 
 ### Maintainer: signing key একবার configure করুন
 
@@ -109,11 +109,11 @@ GitHub repository-এর **Settings → Secrets and variables → Actions**-এ:
 
 Private key নিরাপদে backup রাখুন; GitHub-এ commit বা chat-এ পাঠাবেন না। Release workflow secret key ও public fingerprint মিলিয়ে তারপর publish করে। প্রথম signed release-এর পরে public key ও fingerprint `apt-repo` branch-এ থাকবে।
 
-এই মানগুলো বসানোর পর `echo_recon/__init__.py`-এর version-এর সঙ্গে মেলে এমন Git tag publish করুন—যেমন `v6.6.0`। পরের release-এ version bump করে একই version-এর `vX.Y.Z` tag দিন। Signing key configure এবং প্রথম release সফল না হওয়া পর্যন্ত APT feed চালু হবে না।
+পরের package release-এ `echo_recon/__init__.py`-এর version বাড়িয়ে সেই version-এর tag দিন—যেমন version `6.7.0` হলে `v6.7.0`। Workflow পরীক্ষা, package build, sign ও publish করবে। Kali user-দের upgrade বলতে হলে আগে workflow সফল হয়েছে নিশ্চিত করুন।
 
 ### Kali user: feed যোগ ও install করুন
 
-সমর্থিত architecture `amd64` ও `arm64`। প্রথম signed package প্রকাশের পর public key নামিয়ে fingerprint দেখুন:
+সমর্থিত architecture `amd64` ও `arm64`। Feed-এ public key ও প্রথম package প্রকাশিত আছে। প্রতিটি Kali-তে public key একবার নামিয়ে fingerprint দেখুন:
 
 ```bash
 BASE=https://raw.githubusercontent.com/mdnhbn/echo-recon-workspace/apt-repo

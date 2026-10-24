@@ -31,7 +31,7 @@ Linux-এ **root দিয়ে app চালাবেন না**। Windows-এ 
 
 ## ২. Kali-তে APT দিয়ে install ও update
 
-Signed Kali/Debian APT feed-ই স্বয়ংক্রিয় update পদ্ধতি: [Kali APT নির্দেশনা](docs/APT.md) মেনে signing key ও source একবার বসান। এরপর `sudo apt update && sudo apt upgrade` চালালে সর্বশেষ **প্রকাশিত release** আসবে। প্রতিটি Git commit নয়—শুধু release tag প্রকাশিত হলে APT পাবে। Repository signing key configure ও প্রথম matching release tag প্রকাশ না হওয়া পর্যন্ত feed ব্যবহারযোগ্য হবে না।
+Signed Kali/Debian APT feed-ই স্বয়ংক্রিয় update পদ্ধতি; feed এখন প্রকাশিত আছে। [Kali APT নির্দেশনা](docs/APT.md) মেনে source ও `echo-recon` package একবার বসানোর পর `sudo apt update && sudo apt upgrade` চালালে সর্বশেষ **প্রকাশিত release** আসবে। `main`-এ সাধারণ commit করলেই APT package বদলায় না—নতুন version-এর সঙ্গে মেলা `vX.Y.Z` tag maintainer publish করলে signed package workflow feed update করে। বর্তমান feed [`apt-repo` branch](https://github.com/mdnhbn/echo-recon-workspace/tree/apt-repo)-এ আছে।
 
 আগে Git clone ব্যবহার করলে migrate করার আগে app বন্ধ করুন। Package-এর report/history থাকবে `~/.local/share/echo-recon`-এ; পুরোনো report copy এবং `/usr/bin/echo-recon` ব্যবহার করার নিয়ম APT guide-এ আছে। নতুন version-এ report দেখা না পর্যন্ত পুরোনো clone মুছবেন না।
 
@@ -157,7 +157,7 @@ Nmap top-100 port-এ TCP connect/service check করে। Windows-এ `-Pn` �
 
 ## ৬. Update, backup এবং uninstall
 
-Server বন্ধ করে `data/`-এর private backup রাখুন। নিজের source edit থাকলে আগে `git status` দেখুন:
+Server বন্ধ করে `data/`-এর private backup রাখুন। Kali/Linux-এ Git clone দিয়ে ইনস্টল করলে repo folder-এর terminal-এ:
 
 ```bash
 git status
@@ -166,7 +166,16 @@ bash install.sh
 bash run.sh
 ```
 
-Windows-এ pull-এর পরে `.\install.ps1`, `.\run.ps1` ব্যবহার করুন। Force reset দেবেন না। পুরোনো venv অচেনা/নষ্ট বা অন্য Python major/minor দিয়ে তৈরি হলে installer সেটি রেখে থামে। Private data backup রেখে নতুন project folder ব্যবহার করুন, অথবা নিজের venv পরীক্ষা করে সচেতনভাবে rebuild করুন। Report/history/setup log/raw evidence-এ sensitive তথ্য থাকতে পারে; এগুলো GitHub-এ দেবেন না। কিছু secret ঢাকলেও সব চেনা সম্ভব নয়; report AI service-এ পাঠানো হয় না।
+Native Windows-এর Git clone update করতে PowerShell-এ repo folder খুলুন, চলমান app বন্ধ করুন, তারপর:
+
+```powershell
+git status --short
+git pull --ff-only
+.\install.ps1
+.\run.ps1
+```
+
+`git pull` GitHub-এর নতুন code আনে; installer Windows-এর dependency ও missing backend মিলিয়ে নেয়। `sudo apt upgrade` Kali/Linux APT install-এর জন্য, native Windows-এর জন্য নয়। ZIP দিয়ে install করলে নতুন ZIP নতুন folder-এ extract করুন; পুরোনো folder-এর ওপর extract করবেন না। Force reset দেবেন না। পুরোনো venv অচেনা/নষ্ট বা অন্য Python major/minor দিয়ে তৈরি হলে installer সেটি রেখে থামে। Private data backup রেখে নতুন project folder ব্যবহার করুন, অথবা নিজের venv পরীক্ষা করে সচেতনভাবে rebuild করুন। Report/history/setup log/raw evidence-এ sensitive তথ্য থাকতে পারে; এগুলো GitHub-এ দেবেন না। কিছু secret ঢাকলেও সব চেনা সম্ভব নয়; report AI service-এ পাঠানো হয় না।
 
 ### আগের সংস্করণের saved demo মুছতে
 
