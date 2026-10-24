@@ -1,0 +1,12 @@
+Package: echo-recon
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Echo Recon Contributors
+Depends: python3 (>= 3.11), python3-flask, python3-venv, git, ca-certificates
+Homepage: https://github.com/mdnhbn/echo-recon-workspace
+Description: local Echo Recon assessment dashboard
+ A local-only dashboard for authorized, scoped security assessments. The
+ package installs the dashboard; its optional scanner backends remain in the
+ normal user's home folder.

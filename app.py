@@ -15,10 +15,17 @@ from echo_recon.bootstrap import StartupToolSetup
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Echo Recon local dashboard")
+    parser.add_argument("--version", action="version", version=f"Echo Recon {__version__}")
     parser.add_argument("--no-browser", action="store_true", help="Start the server without opening a browser")
     parser.add_argument("--no-tool-setup", action="store_true",
                         help="Skip automatic backend setup at startup; manual setup remains available")
     return parser.parse_args(argv)
+
+
+def data_directory():
+    """Use an explicit per-user data folder when packaged; keep clone defaults."""
+    configured = os.environ.get("ECHO_RECON_DATA_DIR")
+    return Path(configured).expanduser() if configured else Path(__file__).resolve().parent / "data"
 
 
 if __name__ == "__main__":
@@ -26,14 +33,14 @@ if __name__ == "__main__":
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         raise SystemExit("Run as your normal user, not root.")
     os.umask(0o077)
-    data = Path(__file__).resolve().parent / "data"
+    data = data_directory()
     data.mkdir(mode=0o700, exist_ok=True)
     # Acquire before recovery so a second instance cannot mark an active run interrupted.
     try:
         instance_lock = InstanceLock(data / "server.lock").acquire()
     except RuntimeError as exc:
         raise SystemExit(str(exc))
-    app = create_app()
+    app = create_app(data_dir=data)
     browser_stop = threading.Event()
     startup_setup = None
 

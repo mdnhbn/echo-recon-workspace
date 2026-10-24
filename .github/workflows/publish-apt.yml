@@ -1,0 +1,98 @@
+name: Publish signed Kali APT release
+'on':
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+concurrency:
+  group: echo-recon-apt-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@v4
+      - name: Install Debian archive tools
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends apt-utils dpkg-dev gnupg python3-venv
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run release checks
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/echo-recon-test-venv"
+          "$RUNNER_TEMP/echo-recon-test-venv/bin/python" -m pip install --require-hashes --only-binary=:all: -r requirements.txt
+          "$RUNNER_TEMP/echo-recon-test-venv/bin/python" -m unittest discover -s tests -v
+          node --check static/app.js
+          node --check static/theme.js
+          node --check static/help.js
+          bash -n install.sh run.sh packaging/build-deb.sh
+      - name: Build the Debian package
+        run: bash packaging/build-deb.sh "$RUNNER_TEMP/deb"
+      - name: Check out the APT repository branch
+        uses: actions/checkout@v4
+        with:
+          ref: apt-repo
+          path: apt-repo
+          persist-credentials: true
+          fetch-depth: 1
+      - name: Publish package and signed repository metadata
+        working-directory: apt-repo
+        env:
+          APT_REPO_SIGNING_KEY: ${{ secrets.APT_REPO_SIGNING_KEY }}
+          APT_REPO_SIGNING_PASSPHRASE: ${{ secrets.APT_REPO_SIGNING_PASSPHRASE }}
+          APT_REPO_SIGNING_FINGERPRINT: ${{ vars.APT_REPO_SIGNING_FINGERPRINT }}
+          PACKAGE_VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          : "${APT_REPO_SIGNING_KEY:?Set the APT_REPO_SIGNING_KEY repository secret first}"
+          : "${APT_REPO_SIGNING_FINGERPRINT:?Set the APT_REPO_SIGNING_FINGERPRINT repository variable first}"
+          KEY_FILE="$RUNNER_TEMP/echo-recon-apt-signing-key.asc"
+          printf '%s' "$APT_REPO_SIGNING_KEY" > "$KEY_FILE"
+          gpg --batch --import "$KEY_FILE"
+          rm -f -- "$KEY_FILE"
+          actual_fingerprint="$(gpg --batch --with-colons --list-secret-keys | awk -F: '$1 == "fpr" { print toupper($10); exit }')"
+          expected_fingerprint="$(printf '%s' "$APT_REPO_SIGNING_FINGERPRINT" | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')"
+          if [[ -z "$actual_fingerprint" || "$actual_fingerprint" != "$expected_fingerprint" ]]; then
+            echo 'The private key does not match APT_REPO_SIGNING_FINGERPRINT.' >&2
+            exit 1
+          fi
+          printf '%s\n' "$actual_fingerprint" > KEY-FINGERPRINT.txt
+          gpg --batch --export "$actual_fingerprint" > archive-keyring.gpg
+
+          version="${PACKAGE_VERSION#v}"
+          package="$RUNNER_TEMP/deb/echo-recon_${version}_all.deb"
+          test -s "$package"
+          mkdir -p pool/main/e/echo-recon
+          find pool/main/e/echo-recon -maxdepth 1 -type f -name 'echo-recon_*.deb' -delete
+          cp "$package" "pool/main/e/echo-recon/"
+          for architecture in amd64 arm64; do
+            mkdir -p "dists/stable/main/binary-$architecture"
+            dpkg-scanpackages --multiversion pool /dev/null > "dists/stable/main/binary-$architecture/Packages"
+            gzip -9c "dists/stable/main/binary-$architecture/Packages" > "dists/stable/main/binary-$architecture/Packages.gz"
+          done
+          cat > "$RUNNER_TEMP/echo-recon-release.conf" <<'EOF'
+          APT::FTPArchive::Release::Origin "Echo Recon";
+          APT::FTPArchive::Release::Label "Echo Recon";
+          APT::FTPArchive::Release::Suite "stable";
+          APT::FTPArchive::Release::Codename "stable";
+          APT::FTPArchive::Release::Architectures "amd64 arm64";
+          APT::FTPArchive::Release::Components "main";
+          APT::FTPArchive::Release::Description "Echo Recon signed Kali/Debian package feed";
+          EOF
+          apt-ftparchive -c "$RUNNER_TEMP/echo-recon-release.conf" release dists/stable > dists/stable/Release
+          printf '%s' "$APT_REPO_SIGNING_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --local-user "$actual_fingerprint" --clearsign --output dists/stable/InRelease dists/stable/Release
+          printf '%s' "$APT_REPO_SIGNING_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --local-user "$actual_fingerprint" --armor --detach-sign --output dists/stable/Release.gpg dists/stable/Release
+          cat > README.md <<EOF
+          Echo Recon stable APT repository. Packages are published from signed v* release tags.
+          Repository URL: https://raw.githubusercontent.com/mdnhbn/echo-recon-workspace/apt-repo
+          Archive signing fingerprint: $actual_fingerprint
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m "Publish Echo Recon $version APT package"
+          git push origin HEAD:apt-repo

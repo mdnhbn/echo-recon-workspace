@@ -2,7 +2,7 @@
 
 A local assessment dashboard with eight fixed tool adapters, explicit host scope, cancellable processes, saved history and evidence reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec), upgraded for the mdnhbn collaboration.
 
-**[বাংলা নির্দেশনা](README.bn.md)** · [Windows / WSL](docs/WINDOWS.md) · [Tool setup](docs/TOOLS.md) · [Complete usage guide](docs/USAGE.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
+**[বাংলা নির্দেশনা](README.bn.md)** · [Kali APT updates](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [Tool setup](docs/TOOLS.md) · [Complete usage guide](docs/USAGE.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## What 6.5.0 changes
 
@@ -16,12 +16,12 @@ The eight tools are **DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarv
 
 ## Requirements and support
 
-Use a normal user account, a private user-owned folder, Git and internet access for installation. The dashboard refuses root on Linux.
+Use a normal user account and internet access. The dashboard refuses root on Linux. The source-checkout path also needs Git; the Kali APT path installs as a signed system package and stores reports in the user's data folder.
 
 | Environment | Setup path and requirements | Verification limits |
 |---|---|---|
 | Native Windows x64 | Python **3.12 x64** for bundled backend setup; `install.ps1` and `run.ps1`. Seven backends install automatically; Nmap uses its official installer. | Native installation/local help checks and local process/cancellation fixtures have been checked. No public-target scan certification. |
-| Kali Linux, including VirtualBox and Kali WSL | Distribution Python, `python3-venv`, normal user with sudo when fixed OS packages are needed. Missing compiled Go tools require Go **1.26+**. | Kali local tool checks and regression tests; provider/network availability still varies. |
+| Kali Linux, including VirtualBox and Kali WSL | Signed APT package needs sudo once for feed/package setup; source checkout needs Git, Python and venv support. Missing compiled Go tools require Go **1.26+**. | Kali local tool checks and regression tests; provider/network availability still varies. |
 | Other supported glibc Linux families | Debian/Ubuntu (`apt`), Fedora/RHEL (`dnf`), Arch (`pacman`), openSUSE (`zypper`); portable assets for x86_64/aarch64. Python **3.12+** is required when installing pinned DNSRecon/theHarvester sources. | Installer logic is tested with mocked downloads/package managers. A fresh full installation on every distribution is **not** claimed. |
 | Other distributions/architectures | Dashboard requires Python 3.11+; install compatible backend tools manually. Alpine/musl is not an automatic-install target. | Not an automatically provisioned platform. |
 
@@ -29,7 +29,13 @@ A dashboard-only installation supports Python 3.11+. For that workflow use `--da
 
 ## Download, install and run
 
-### Kali / Linux
+### Kali APT-managed installation and updates
+
+The signed Kali/Debian APT feed is the automatic update path: install its signing key and source once using [Kali APT updates](docs/APT.md), then run `sudo apt update && sudo apt upgrade` to receive the latest **published release**. It does not fetch every Git commit. The feed becomes installable after the repository signing key is configured and the first matching release tag is published.
+
+If you already use the source checkout, close it before migrating. The package keeps future report history in `~/.local/share/echo-recon`; the guide explains how to copy saved history and switch to the `/usr/bin/echo-recon` launcher. Keep the old checkout until you verify your reports.
+
+### Kali / Linux from a Git checkout
 
 On Kali, install the initial prerequisites if absent:
 

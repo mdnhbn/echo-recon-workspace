@@ -19,13 +19,14 @@ Flask API → input/scope validation → one assessment manager
 
 | File | Responsibility |
 |---|---|
-| `app.py` | Normal-user entry point; bind loopback before browser/setup startup; signals; `--no-tool-setup`. |
+| `app.py` | Normal-user entry point; bind loopback before browser/setup startup; signals; `--no-tool-setup`; optional per-user data directory for packages. |
 | `echo_recon/bootstrap.py` | Asynchronous help checks, skip-ready behavior and owned automatic-attempt fingerprints. Cancels checking on shutdown without terminating installation. |
 | `echo_recon/locking.py` | Linux/Windows instance lock acquired before history recovery; shared setup lock. |
 | `echo_recon/web.py` | Local/Host boundaries, session/CSRF, fixed setup routes and escaped reports. |
 | `echo_recon/setup_launcher.py` | Startup-check state, fixed platform launch, setup/assessment mutual exclusion and bounded setup log/status. |
 | `setup_tools_windows.py` | Normal-user x64 Windows setup; fixed verified assets, separate Python environments and explicit managed command resolution. |
 | `setup_tools.py` | Kali package/Go setup plus supported portable Linux/package-manager families; fixed terminal sudo calls. |
+| `packaging/`, `.github/workflows/publish-apt.yml` | Build an architecture-independent Debian package and publish version-tagged releases to a signed static APT feed. |
 | `echo_recon/security.py` | Exact-host scope, public DNS preflight, returned URL filtering and best-effort redaction. |
 | `echo_recon/tools.py` | Fixed argv adapters, identity/help diagnostics and scoped Nuclei JSONL parsing. |
 | `echo_recon/runner.py` | No-shell processes, combined output/time limits, Linux process groups and suspended Windows Job Object containment. |
@@ -37,6 +38,8 @@ Flask API → input/scope validation → one assessment manager
 ## Setup lifecycle
 
 Installation scripts create the local dashboard venv and request backend setup unless dashboard-only is selected. Startup also checks tools asynchronously after the loopback socket binds. Ready backends are retained. If an owned automatic-attempt fingerprint already covers the same application/platform/Python/missing-tool set, the app explains how to retry explicitly instead of reopening the same failed desktop setup on every restart.
+
+The optional Kali APT package places application code in `/usr/lib/echo-recon` and uses the normal user's XDG data directory for SQLite history, locks and setup state. A package upgrade replaces only application files. Scanner backends remain user-local. The signed feed updates only when a matching version tag is published; a plain Git checkout continues to use `git pull` and its own project-local `data/` folder.
 
 Startup and manual setup share the launcher's guard; assessments cannot race into a pending tool check or running setup. The automatic record is private `data/auto-setup.json`, with a bounded strict schema and atomic writes. Unrecognized/redirected state is left untouched. A deliberate setup button/CLI retry is independent of this record.
 

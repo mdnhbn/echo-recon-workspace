@@ -1,6 +1,7 @@
 """Launch only the repository's fixed platform installer and report progress."""
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -70,11 +71,12 @@ class SetupLauncher:
                 return self.launch_windows()
             if not self.supports_platform():
                 raise ValueError("Automatic tool setup supports native Windows and supported Linux distributions. See the setup guide for this platform.")
-            if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
-                raise ValueError("No desktop terminal is available. In your Linux/WSL terminal run: .venv/bin/python setup_tools.py --install")
             script = self.root / "setup_tools.py"
             if not script.is_file():
                 raise ValueError("Installer file is missing. Update the complete repository first.")
+            manual = shlex.join([sys.executable, str(script), "--install", "--data-dir", str(self.data)])
+            if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+                raise ValueError(f"No desktop terminal is available. In your Linux/WSL terminal run: {manual}")
             candidates = (
                 ("qterminal", ["--title", "Echo Recon — tool setup", "-e"]),
                 ("xfce4-terminal", ["--disable-server", "--title=Echo Recon — tool setup", "--execute"]),
@@ -94,7 +96,7 @@ class SetupLauncher:
                     self.pending_until = time.monotonic() + 5
                     self.log_path = None
                     return {"launched": True, "message": "Setup terminal opened. Follow its progress; enter your sudo password only there if asked. Then close it and check installed tools again. / সেটআপ terminal দেখুন; প্রয়োজন হলে শুধু সেখানেই sudo password দিন। শেষে terminal বন্ধ করে আবার tool check করুন।"}
-            raise ValueError("No supported desktop terminal found. In your Linux/WSL terminal run: .venv/bin/python setup_tools.py --install")
+            raise ValueError(f"No supported desktop terminal found. In your Linux/WSL terminal run: {manual}")
 
     def launch_windows(self):
         """Run a fixed hidden worker; installer output is shown in the dashboard."""

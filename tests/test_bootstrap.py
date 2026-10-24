@@ -6,9 +6,9 @@ import tempfile
 from types import SimpleNamespace
 import threading
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
-from app import parse_args
+from app import data_directory, parse_args
 from echo_recon.bootstrap import StartupToolSetup
 from echo_recon.setup_launcher import SetupLauncher
 from echo_recon.tools import TOOLS
@@ -56,6 +56,13 @@ class FakeLauncher:
 
 
 class StartupToolSetupTests(unittest.TestCase):
+    def test_packaged_data_directory_can_be_user_local_and_clone_default_is_preserved(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(data_directory(), Path(__file__).resolve().parents[1] / "data")
+        configured = "C:/Users/test/.local/share/echo-recon"
+        with patch.dict(os.environ, {"ECHO_RECON_DATA_DIR": configured}, clear=True):
+            self.assertEqual(data_directory(), Path(configured))
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.data = Path(self.tmp.name)

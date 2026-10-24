@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Echo Recon
+Comment=Local Echo Recon assessment dashboard
+Exec=/usr/bin/echo-recon
+Terminal=true
+Categories=Development;Security;
+StartupNotify=false

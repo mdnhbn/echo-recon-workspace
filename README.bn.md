@@ -2,7 +2,7 @@
 
 এটি নিজের কম্পিউটারে চালানোর dashboard। আটটি আলাদা tool-এর কাজ নির্দিষ্ট ক্রমে চালায়, প্রমাণ রাখে এবং HTML/JSON report তৈরি করে। মূল project [Ahammed-এর Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); mdnhbn সহযোগিতায় এই সংস্করণ উন্নত হয়েছে।
 
-[English README](README.md) · [Windows / WSL](docs/WINDOWS.md) · [টুল সেটআপ](docs/TOOLS.md) · [পূর্ণ ব্যবহারবিধি](docs/USAGE.bn.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [সীমাবদ্ধতা](SECURITY.md)
+[English README](README.md) · [Kali APT update](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [টুল সেটআপ](docs/TOOLS.md) · [পূর্ণ ব্যবহারবিধি](docs/USAGE.bn.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [সীমাবদ্ধতা](SECURITY.md)
 
 ## কী উন্নতি হয়েছে
 
@@ -20,7 +20,7 @@
 | কোথায় চালাবেন | প্রয়োজন ও সীমা |
 |---|---|
 | সরাসরি Windows x64 | Backend setup-এর জন্য **Python 3.12 x64**, Git, সাধারণ user। সাতটি tool স্বয়ংক্রিয়; Nmap-এর official installer-এ নিজে confirmation দিতে হবে। |
-| Kali Linux / VirtualBox / Kali WSL | Distro Python, venv, দরকারি OS package-এর জন্য terminal-এ sudo। Missing Go tool build করতে Go 1.26+ লাগতে পারে। |
+| Kali Linux / VirtualBox / Kali WSL | Signed APT package বসাতে feed ও package-এর জন্য একবার sudo লাগবে; Git clone পদ্ধতিতে Git, Python ও venv লাগবে। Missing Go tool build করতে Go 1.26+ লাগতে পারে। |
 | অন্যান্য সমর্থিত glibc Linux | Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE family; x86_64/aarch64 portable asset। DNSRecon/theHarvester source ইনস্টল করতে Python 3.12+ লাগে। |
 | অন্য distro/architecture | Dashboard Python 3.11+; compatible backend নিজে official source থেকে সেটআপ করতে হতে পারে। Alpine/musl automatic target নয়। |
 
@@ -28,7 +28,13 @@ Windows ও Kali-তে স্থানীয় tool/help এবং regression প
 
 Linux-এ **root দিয়ে app চালাবেন না**। Windows-এ administrator terminal লাগে না; Nmap installer দরকার হলে নিজে admin confirmation চাইবে। Password chat/dashboard-এ লিখবেন না।
 
-## ২. Kali/Linux-এ download ও install
+## ২. Kali-তে APT দিয়ে install ও update
+
+Signed Kali/Debian APT feed-ই স্বয়ংক্রিয় update পদ্ধতি: [Kali APT নির্দেশনা](docs/APT.md) মেনে signing key ও source একবার বসান। এরপর `sudo apt update && sudo apt upgrade` চালালে সর্বশেষ **প্রকাশিত release** আসবে। প্রতিটি Git commit নয়—শুধু release tag প্রকাশিত হলে APT পাবে। Repository signing key configure ও প্রথম matching release tag প্রকাশ না হওয়া পর্যন্ত feed ব্যবহারযোগ্য হবে না।
+
+আগে Git clone ব্যবহার করলে migrate করার আগে app বন্ধ করুন। Package-এর report/history থাকবে `~/.local/share/echo-recon`-এ; পুরোনো report copy এবং `/usr/bin/echo-recon` ব্যবহার করার নিয়ম APT guide-এ আছে। নতুন version-এ report দেখা না পর্যন্ত পুরোনো clone মুছবেন না।
+
+### Kali/Linux-এ Git clone করে install
 
 Kali-তে প্রথমে প্রয়োজন হলে:
 

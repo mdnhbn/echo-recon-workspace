@@ -23,6 +23,9 @@ jobs:
       - run: |
           bash -n install.sh run.sh
         if: runner.os == 'Linux'
+      - name: Build and inspect Kali/Debian package
+        if: runner.os == 'Linux'
+        run: bash packaging/build-deb.sh "$RUNNER_TEMP/deb"
       - run: |
           node --check static/app.js
           node --check static/theme.js

@@ -85,8 +85,10 @@ class SetupLauncherTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "supported Linux"):
                 self.launcher.launch()
         with patch("echo_recon.setup_launcher.sys.platform", "linux"), patch("echo_recon.setup_launcher.is_kali", return_value=True), patch.dict(os.environ, {}, clear=True):
-            with self.assertRaisesRegex(ValueError, "setup_tools.py --install"):
+            with self.assertRaises(ValueError) as caught:
                 self.launcher.launch()
+            self.assertIn(str(self.root / "setup_tools.py"), str(caught.exception))
+            self.assertIn("--data-dir", str(caught.exception))
 
     def test_windows_fixed_hidden_worker_logs_and_duplicate_refusal(self):
         process = Mock()
