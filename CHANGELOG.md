@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.6.5 — 2026-10-24
+
+- Correct the live-URL discovery expectation so in-scope URLs keep custom ports without allowing a different hostname into scope.
+- Carry forward the 6.6.4 URL-input and no-scan-deadline fixes.
+
 ## 6.6.4 — 2026-10-24
 
 - Make the primary URL a first-class form/API input while continuing to accept legacy domain fields. URL-aware tools retain the HTTP(S) page path and any valid port; the authorization scope remains the hostname.

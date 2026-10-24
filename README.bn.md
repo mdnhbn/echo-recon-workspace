@@ -1,8 +1,8 @@
-# Echo Recon 6.6.4 — বাংলা নির্দেশনা
+# Echo Recon 6.6.5 — বাংলা নির্দেশনা
 
 এটি নিজের কম্পিউটারে চালানোর dashboard। নয়টি আলাদা tool-এর কাজ নির্দিষ্ট ক্রমে চালায়, প্রমাণ রাখে এবং HTML/JSON report তৈরি করে। মূল project [Ahammed-এর Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); mdnhbn সহযোগিতায় এই সংস্করণ উন্নত হয়েছে।
 
-## 6.6.4-এ যা বদলেছে
+## 6.6.5-এ যা বদলেছে
 
 - Domain অথবা page path/port-সহ public HTTP(S) URL দিন; hostname scope নির্ধারণ করে এবং URL-aware tool path/port পায়।
 - Scan ও tool check-এর process time limit সরানো হয়েছে; tool নিজে শেষ হয়, output cap-এ থামে, অথবা **Stop** চাপলে বন্ধ হয়।

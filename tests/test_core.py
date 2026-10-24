@@ -68,7 +68,8 @@ class SecurityTests(unittest.TestCase):
 
     def test_live_urls_cannot_expand_scope(self):
         output = "https://example.com\nhttps://evil.net\nhttps://example.com:9999\nhttps://user:pass@example.com\nnot-a-url"
-        self.assertEqual(scoped_urls(output, ["example.com"]), ["https://example.com"])
+        self.assertEqual(scoped_urls(output, ["example.com"]),
+                         ["https://example.com", "https://example.com:9999"])
 
     def test_common_credentials_are_redacted(self):
         text = redact("https://user:pass@example.com/?api_key=abc&password=secret Cookie=abc")

@@ -1,8 +1,8 @@
-# Echo Recon 6.6.4
+# Echo Recon 6.6.5
 
 A local assessment dashboard with nine fixed tool adapters, explicit host scope, cancellable processes, saved history and evidence reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec), upgraded for the mdnhbn collaboration.
 
-## 6.6.4 update
+## 6.6.5 update
 
 - Enter a domain or public HTTP(S) URL, including a page path or port; the hostname sets scope, and URL-aware tools receive the path/port.
 - Removed the subprocess wall-clock deadline from scans and installed-tool checks; tools end on their own, at the output cap, or when you press **Stop**.
