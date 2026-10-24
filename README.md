@@ -26,7 +26,7 @@ Use a normal user account and internet access. The dashboard refuses root on Lin
 | Other supported glibc Linux families | Debian/Ubuntu (`apt`), Fedora/RHEL (`dnf`), Arch (`pacman`), openSUSE (`zypper`); portable assets for x86_64/aarch64. Python **3.12+** is required when installing pinned DNSRecon/theHarvester sources. | Installer logic is tested with mocked downloads/package managers. A fresh full installation on every distribution is **not** claimed. |
 | Other distributions/architectures | Dashboard requires Python 3.11+; install compatible backend tools manually. Alpine/musl is not an automatic-install target. | Not an automatically provisioned platform. |
 
-For the 6.6.0 changes, Python syntax and whitespace checks passed. The test suite and fresh-machine installs were not run for this release; earlier desktop checks documented in [validation notes](docs/VALIDATION.md) refer to earlier versions.
+For the 6.6.0 changes, Python syntax and whitespace checks passed. The test suite was not run locally; the first automatic GitHub Actions run found three stale assertions/fixtures, now corrected in the current update. Fresh-machine installs were not run. Earlier desktop checks documented in [validation notes](docs/VALIDATION.md) refer to earlier versions.
 
 A dashboard-only installation supports Python 3.11+. For that workflow use `--dashboard-only` / `-DashboardOnly`, then start with `--no-tool-setup` / `-NoToolSetup` if you want to avoid automatic backend setup.
 

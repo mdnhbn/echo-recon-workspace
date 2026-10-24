@@ -2,8 +2,8 @@
 
 ## 6.6.0 Nikto integration status
 
-- The 6.6.0 Nikto integration, setup adapters and documentation were reviewed. Changed Python files passed an in-memory syntax parse and `git diff --check` reported no whitespace errors.
-- The test suite was not run for this change. A fresh Kali install, native Windows Perl setup, Nikto assessment and public-target scan were not run. The 6.3 desktop checks below describe that earlier release and do not validate Nikto or the 6.6.0 setup changes.
+- The 6.6.0 Nikto integration, setup adapters and documentation were reviewed. Changed Python files passed an in-memory syntax parse and `git diff --check` reported no whitespace errors. The test suite was not run locally.
+- GitHub Actions automatically ran the suite for commit `f164513` and found three stale expectations/fixtures: the Bengali duration assertion (56 vs. 66 minutes) and two Windows plan-only checks affected by an eagerly created fake Perl file. This update corrects those. A fresh Kali install, native Windows Perl setup, Nikto assessment and public-target scan were not run. The 6.3 desktop checks below describe that earlier release and do not validate Nikto or the 6.6.0 setup changes.
 
 ## 6.3 guidance, layout switch and tool setup
 

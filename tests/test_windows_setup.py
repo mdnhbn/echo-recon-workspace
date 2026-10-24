@@ -61,7 +61,6 @@ class WindowsSetupTests(unittest.TestCase):
         self.fetches = []
         self.payloads = {}
         self.perl_path = self.local / "perl.exe"
-        self.perl_path.write_bytes(b"fixture Perl executable; never run")
         perl_path = self.perl_path
         which_guard = patch.object(setup.shutil, "which",
                                    side_effect=lambda name: str(perl_path) if name in {"perl", "perl.exe"} else None)
@@ -187,6 +186,7 @@ class WindowsSetupTests(unittest.TestCase):
         self.assertFalse(any("All 8" in message for message in self.messages))
 
     def test_supported_tools_install_with_explicit_paths_and_manual_nmap(self):
+        self.perl_path.write_bytes(b"fixture Perl executable; never run")
         installer = self.installer(health(*setup.TOOL_NAMES), health("nmap"))
         original_path = os.environ.get("PATH")
         self.assertEqual(installer.install(), 2)
