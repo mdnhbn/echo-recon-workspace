@@ -58,7 +58,33 @@ bash run.sh
 
 ## ৩. সরাসরি Windows-এ install
 
-[Python 3.12 x64](https://www.python.org/downloads/windows/) ও [Git](https://git-scm.com/downloads/win) ইনস্টল করে সাধারণ PowerShell-এ দিন:
+Windows 10 (version 1809 বা নতুন) অথবা Windows 11-এ Windows Terminal/PowerShell খুলে আগে দেখুন WinGet আছে কি না:
+
+```powershell
+winget --version
+```
+
+version দেখালে সাধারণ user হিসেবেই নিচের দুটি command দিন। Installer কোনো prompt দেখালে পড়ে নিজে সম্মতি দিন:
+
+```powershell
+winget install --id Python.Python.3.12 --exact --source winget
+winget install --id Git.Git --exact --source winget
+```
+
+Terminal বন্ধ করে আবার খুলুন, তারপর যাচাই করুন:
+
+```powershell
+py -3.12 --version
+git --version
+```
+
+এই project-এর Windows backend-এর জন্য **Python 3.12 x64** দরকার। Git শুধু GitHub থেকে repo clone/update করতে লাগে; আলাদা compiler বা Linux system দরকার হয় না। `winget` না থাকলে Microsoft Store থেকে Microsoft-এর **App Installer** install/update করে Terminal আবার খুলুন। App Installer আগে থেকেই থাকলেও WinGet register না হলে PowerShell-এ এই command দিন; তারপর Terminal বন্ধ করে আবার খুলুন:
+
+```powershell
+Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe
+```
+
+বিকল্পভাবে [Python.org](https://www.python.org/downloads/windows/) থেকে Python এবং [Git for Windows](https://git-scm.com/downloads/win) থেকে Git install করা যায়। দুটো install হলে সাধারণ PowerShell-এ নিচের command দিন:
 
 ```powershell
 git clone https://github.com/mdnhbn/echo-recon-workspace.git

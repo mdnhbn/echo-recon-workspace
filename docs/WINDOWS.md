@@ -16,7 +16,33 @@ These are separate installations. Do not share a Windows venv with Linux, reuse 
 
 ## Native Windows: download → install → run
 
-Use normal PowerShell in a private user-owned folder. Install [Python 3.12 x64](https://www.python.org/downloads/windows/) and [Git](https://git-scm.com/downloads/win) first.
+Use Windows Terminal or PowerShell as your normal user (not an Administrator terminal). On Windows 10 version 1809 or later, and Windows 11, check that WinGet is available:
+
+```powershell
+winget --version
+```
+
+WinGet is provided by Microsoft's App Installer. Install the supported prerequisites by their exact package IDs, reviewing any installer prompts:
+
+```powershell
+winget install --id Python.Python.3.12 --exact --source winget
+winget install --id Git.Git --exact --source winget
+```
+
+Close and reopen the terminal after installation, then verify:
+
+```powershell
+py -3.12 --version
+git --version
+```
+
+The bundled native Windows backend setup requires Python **3.12 x64**. Git is needed to clone or update this repository; Windows Terminal, PowerShell and Python's bundled `pip` are sufficient for the documented install, so no separate compiler or WSL is required. WinGet itself comes with Microsoft's **App Installer**. If `winget` is not recognized, install/update App Installer from Microsoft Store, reopen the terminal and check again. If App Installer is installed but WinGet is not registered for this user, request its registration from PowerShell:
+
+```powershell
+Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe
+```
+
+If Microsoft Store/WinGet is unavailable, install [Python 3.12 x64](https://www.python.org/downloads/windows/) and [Git for Windows](https://git-scm.com/downloads/win) directly. Then use normal PowerShell:
 
 ```powershell
 git clone https://github.com/mdnhbn/echo-recon-workspace.git

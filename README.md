@@ -55,7 +55,33 @@ On another supported Linux family, install Git, a suitable Python and its venv s
 
 ### Native Windows
 
-Install [Python 3.12 x64](https://www.python.org/downloads/windows/) and [Git](https://git-scm.com/downloads/win), then open normal PowerShell:
+On Windows 10 (version 1809 or later) or Windows 11, open Windows Terminal or PowerShell as your normal user and check whether WinGet is available:
+
+```powershell
+winget --version
+```
+
+If it prints a version, install the prerequisites with these commands. Review and accept any installer prompts:
+
+```powershell
+winget install --id Python.Python.3.12 --exact --source winget
+winget install --id Git.Git --exact --source winget
+```
+
+Close and reopen the terminal, then verify both commands:
+
+```powershell
+py -3.12 --version
+git --version
+```
+
+The project needs Python **3.12 x64** for its bundled Windows backends. Git is only needed to clone/update the repository; no separate compiler or Linux layer is required. If `winget` is unavailable, install or update **App Installer** by Microsoft from Microsoft Store, reopen the terminal and try again. If App Installer is already present but WinGet has not registered for this Windows user, run this in PowerShell, then reopen the terminal:
+
+```powershell
+Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe
+```
+
+You can also install Python from [Python.org](https://www.python.org/downloads/windows/) and Git from [Git for Windows](https://git-scm.com/downloads/win). After installing the prerequisites, open normal PowerShell:
 
 ```powershell
 git clone https://github.com/mdnhbn/echo-recon-workspace.git
