@@ -6,6 +6,7 @@ import socket
 import threading
 import time
 import uuid
+from urllib.parse import urlsplit
 from .runner import run
 from .security import hostname, redact, resolve_public, scoped_urls, validate_scope
 from .tools import TOOLS, command, diagnostics, is_windows, parse_findings
@@ -22,6 +23,24 @@ def clean_object(value):
     if isinstance(value, list):
         return [clean_object(item) for item in value]
     return redact(value) if isinstance(value, str) else value
+
+
+def nikto_targets(scope, live):
+    """Choose at most one HTTP origin per explicit host, preferring HTTPS."""
+    origins = {}
+    for value in live:
+        try:
+            parsed = urlsplit(value)
+            host = parsed.hostname
+            if (parsed.scheme in {"http", "https"} and host in scope
+                    and not parsed.username and not parsed.password
+                    and parsed.port in {None, 80, 443}):
+                previous = origins.get(host)
+                if previous is None or (parsed.scheme == "https" and not previous.startswith("https://")):
+                    origins[host] = f"{parsed.scheme}://{host}"
+        except ValueError:
+            continue
+    return [origins.get(host, f"https://{host}") for host in scope]
 
 
 class Manager:
@@ -76,6 +95,9 @@ class Manager:
                        "Rate is a per-tool ceiling where supported, not a global packet/request budget. DNS/OSINT tools have separate behavior.",
                        "Evidence is truncated and common secrets are redacted best-effort; review reports before sharing.",
                    ]}
+            if "nikto" in selected:
+                job["limitations"].append(
+                    "Nikto is a noticeable active web-server scanner. Echo Recon restricts its selected checks to informational, configuration/default-file and software-identification groups, but this is not a network sandbox.")
             if is_windows():
                 job["limitations"].append(
                     "Windows Nmap uses TCP connect scanning without ping discovery (-sT -Pn); raw packet, UDP and operating-system detection are not enabled.")
@@ -110,7 +132,9 @@ class Manager:
             self.pipeline(job, event)
             if event.is_set():
                 job["status"] = "cancelled"
-            elif all(phase["status"] == "done" for phase in job["phases"]):
+            elif all(phase["status"] == "done" or
+                     (phase["status"] == "skipped" and phase.get("optional") is True)
+                     for phase in job["phases"]):
                 job["status"] = "complete"
             else:
                 job["status"] = "partial"
@@ -131,12 +155,23 @@ class Manager:
     def pipeline(self, job, event):
         scope, rate, timeout = job["scope"], job["settings"]["rate"], job["settings"]["timeout"]
         live = []
+        selected_tools = {phase["tool"] for phase in job["phases"]}
         health = self.check_tools(cancel=event)
         job["tool_health"] = health
         for phase in job["phases"]:
             if event.is_set():
                 break
             name = phase["tool"]
+            fallback_reason = None
+            if name == "nikto" and "nuclei" in selected_tools:
+                nuclei_phase = next((item for item in job["phases"] if item["tool"] == "nuclei"), None)
+                if nuclei_phase and nuclei_phase["status"] == "done":
+                    phase.update(status="skipped", optional=True,
+                                 evidence="Nuclei completed successfully; the selected Nikto fallback was not needed.")
+                    self.save(job, "Nikto fallback skipped; Nuclei completed.")
+                    continue
+                fallback_reason = nuclei_phase.get("status", "unavailable") if nuclei_phase else "unavailable"
+                phase["fallback_reason"] = fallback_reason
             if health[name]["status"] != "ready":
                 phase.update(status="missing" if health[name]["status"] == "missing" else "unverified",
                              evidence=health[name]["detail"])
@@ -147,6 +182,16 @@ class Manager:
             # Revalidate each explicit hostname before each phase. This is not IP pinning.
             phase["resolved"] = {host: resolve_public(host, self.resolver) for host in scope}
             hosts = [job["domain"]] if name in {"dnsrecon", "subfinder", "theHarvester"} else scope
+            if name == "nikto":
+                hosts = nikto_targets(scope, live)
+                if fallback_reason is not None:
+                    nuclei_phase = next((item for item in job["phases"] if item["tool"] == "nuclei"), None)
+                    attempts = nuclei_phase.get("attempts", []) if nuclei_phase else []
+                    failed_hosts = {item.get("host") for item in attempts if item.get("status") != "done"}
+                    if failed_hosts:
+                        hosts = [target for target in hosts if urlsplit(target).hostname in failed_hosts]
+                    if not hosts:
+                        hosts = nikto_targets(scope, live)
             if name in {"photon", "arjun"}:
                 hosts = [host for host in scope if any(url.endswith("//" + host) for url in live)]
                 if not hosts:
@@ -158,20 +203,22 @@ class Manager:
             for host in hosts:
                 if event.is_set():
                     break
-                scratch = self.data_dir / "scratch" / job["id"] / host
+                target_host = urlsplit(host).hostname if name == "nikto" else host
+                scratch = self.data_dir / "scratch" / job["id"] / target_host
                 scratch.mkdir(parents=True, exist_ok=True)
-                args = command(name, host, rate, scratch)
+                args = command(name, host, rate, scratch, timeout=timeout)
                 # HTTPX and Nuclei receive exact explicit hosts, not discovered additions.
                 stdin = host + "\n" if name in {"httpx", "nuclei"} else ""
                 result = self.execute(args, cancel=event, timeout=timeout, stdin=stdin, cwd=scratch)
-                states.append(result.status)
+                state = "error" if result.status == "done" and result.returncode != 0 else result.status
+                states.append(state)
                 duration += result.duration
                 outputs.append(f"Host: {host}\n{result.stdout}")
                 errors.append(result.stderr)
                 phase["returncode"] = result.returncode
-                attempts.append({"host": host, "status": result.status,
+                attempts.append({"host": host, "status": state,
                                  "returncode": result.returncode, "duration": result.duration})
-                if name == "httpx" and result.status == "done":
+                if name == "httpx" and state == "done":
                     live.extend(scoped_urls(result.stdout, scope))
                 if name == "nuclei":
                     parsed, invalid = parse_findings(result.stdout, scope)
@@ -181,12 +228,14 @@ class Manager:
                         if states[-1] == "done":
                             states[-1] = "error"
                 # Stop this phase if the executable is missing; do not repeat per host.
-                if result.status in {"missing", "cancelled", "output_limit"}:
+                if state in {"missing", "cancelled", "output_limit"}:
                     break
             status = next((state for state in states if state != "done"), "done")
             if event.is_set():
                 status = "cancelled"
             evidence, stderr = redact("\n".join(outputs)), redact("\n".join(errors))
+            if name == "nikto" and fallback_reason is not None:
+                evidence = redact(f"Nuclei status was {fallback_reason}; running the selected Nikto fallback.\n" + evidence)
             truncated = len(evidence) > 100_000 or len(stderr) > 25_000
             if truncated and status == "done":
                 status = "output_limit"

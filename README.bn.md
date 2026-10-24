@@ -1,6 +1,6 @@
-# Echo Recon 6.5.0 — বাংলা নির্দেশনা
+# Echo Recon 6.6.0 — বাংলা নির্দেশনা
 
-এটি নিজের কম্পিউটারে চালানোর dashboard। আটটি আলাদা tool-এর কাজ নির্দিষ্ট ক্রমে চালায়, প্রমাণ রাখে এবং HTML/JSON report তৈরি করে। মূল project [Ahammed-এর Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); mdnhbn সহযোগিতায় এই সংস্করণ উন্নত হয়েছে।
+এটি নিজের কম্পিউটারে চালানোর dashboard। নয়টি আলাদা tool-এর কাজ নির্দিষ্ট ক্রমে চালায়, প্রমাণ রাখে এবং HTML/JSON report তৈরি করে। মূল project [Ahammed-এর Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); mdnhbn সহযোগিতায় এই সংস্করণ উন্নত হয়েছে।
 
 [English README](README.md) · [Kali APT update](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [টুল সেটআপ](docs/TOOLS.md) · [পূর্ণ ব্যবহারবিধি](docs/USAGE.bn.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [সীমাবদ্ধতা](SECURITY.md)
 
@@ -12,19 +12,20 @@
 - সরাসরি Windows, Kali VirtualBox, WSL এবং সমর্থিত Linux family-এর আলাদা সেটআপ আছে। Windows-এর native adapter চালাতে WSL বাধ্যতামূলক নয়।
 - Dark/Light layout এক ক্লিকে বদলায়; form-এর লেখা থাকে। দুই layout-এই Matrix animation আছে; reduced-motion পছন্দ মেনে চলে।
 - আগে থেকে বানানো scan result বা demo data নেই। ব্যর্থতা, সময় শেষ হওয়া ও অসম্পূর্ণ ফল report-এ দেখা যায়।
+- Nikto-কে নবম tool হিসেবে যোগ করা হয়েছে। Nuclei ও Nikto দুটো বাছলে Nuclei পাওয়া না গেলে বা ব্যর্থ হলে Nikto চেষ্টা করে; শুধু Nikto বাছলেও চলে। এর check সীমিত রাখা হয়েছে।
 
-আটটি tool হলো **DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun ও Nuclei**। এগুলো ইনস্টল হলেই scan শুরু হয় না, কোনো API account/key তৈরি হয় না।
+আগের আটটি tool হলো **DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun ও Nuclei**; **Nikto** এখন নবম। Nuclei ও Nikto দুটো বাছলে Nuclei অনুপস্থিত বা ব্যর্থ হলেই Nikto fallback হিসেবে চলে। শুধু Nikto বাছলেও standalone check চলে। এগুলো install হলেই scan শুরু হয় না, কোনো API account/key তৈরি হয় না।
 
 ## ১. আগে যা লাগবে
 
 | কোথায় চালাবেন | প্রয়োজন ও সীমা |
 |---|---|
-| সরাসরি Windows x64 | Backend setup-এর জন্য **Python 3.12 x64**, Git, সাধারণ user। সাতটি tool স্বয়ংক্রিয়; Nmap-এর official installer-এ নিজে confirmation দিতে হবে। |
+| সরাসরি Windows x64 | Backend setup-এর জন্য **Python 3.12 x64**, Git, সাধারণ user। আগের সাতটি tool স্বয়ংক্রিয়; Nikto-র জন্য আগে Strawberry Perl install করে PATH-এ রাখতে হবে। Nmap-এর official installer-এ নিজে confirmation দিতে হবে। |
 | Kali Linux / VirtualBox / Kali WSL | Signed APT package বসাতে feed ও package-এর জন্য একবার sudo লাগবে; Git clone পদ্ধতিতে Git, Python ও venv লাগবে। Missing Go tool build করতে Go 1.26+ লাগতে পারে। |
 | অন্যান্য সমর্থিত glibc Linux | Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE family; x86_64/aarch64 portable asset। DNSRecon/theHarvester source ইনস্টল করতে Python 3.12+ লাগে। |
 | অন্য distro/architecture | Dashboard Python 3.11+; compatible backend নিজে official source থেকে সেটআপ করতে হতে পারে। Alpine/musl automatic target নয়। |
 
-Windows ও Kali-তে স্থানীয় tool/help এবং regression পরীক্ষা করা হয়েছে। অন্য distro-গুলোর installer logic mock দিয়ে পরীক্ষা করা হয়েছে; প্রতিটি distro-তে fresh install বা বাইরের website-এ পূর্ণ scan হয়েছে—এমন দাবি করা হচ্ছে না।
+আগের version-এ Windows ও Kali-তে স্থানীয় tool/help এবং regression পরীক্ষা করা হয়েছিল। 6.6.0 পরিবর্তনের ক্ষেত্রে Python syntax ও whitespace check পাস করেছে; test suite বা fresh install চালানো হয়নি। [Validation নোটে](docs/VALIDATION.md) আগের desktop check কোন version-এর তা লেখা আছে। অন্য distro-গুলোর installer logic mock দিয়ে পরীক্ষা করা হয়েছিল; প্রতিটি distro-তে fresh install বা বাইরের website-এ পূর্ণ scan হয়েছে—এমন দাবি করা হচ্ছে না।
 
 Linux-এ **root দিয়ে app চালাবেন না**। Windows-এ administrator terminal লাগে না; Nmap installer দরকার হলে নিজে admin confirmation চাইবে। Password chat/dashboard-এ লিখবেন না।
 

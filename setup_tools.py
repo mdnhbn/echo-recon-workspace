@@ -2,7 +2,7 @@
 """Interactive, fixed-source backend setup for a normal Linux user.
 
 Default/--plan only reads local paths: no commands, network requests or writes.
---install executes a conditional plan, then verifies all eight tool adapters.
+--install executes a conditional plan, then verifies all nine tool adapters.
 No scan target is accepted and no assessment is started by this program.
 """
 import argparse
@@ -34,11 +34,18 @@ GO_MODULES = {
     "httpx": "github.com/projectdiscovery/httpx/cmd/httpx@v1.12.0",
     "nuclei": "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@v3.11.1",
 }
-APT_TOOLS = {"dnsrecon": "dnsrecon", "nmap": "nmap", "theHarvester": "theharvester"}
+APT_TOOLS = {"dnsrecon": "dnsrecon", "nmap": "nmap", "theHarvester": "theharvester",
+             "nikto": "nikto"}
 PHOTON_URL = "https://github.com/s0md3v/Photon.git"
 PHOTON_COMMIT = "c8d2566841d69a268b244609921143d84b72b0c6"
 ARJUN_VERSION = "2.2.7"
-PORTABLE_SOURCE_VERSIONS = {"dnsrecon": "1.6.3", "theHarvester": "4.11.1"}
+PORTABLE_SOURCE_VERSIONS = {"dnsrecon": "1.6.3", "theHarvester": "4.11.1", "nikto": "2.6.1"}
+PORTABLE_NIKTO_PERL_PACKAGES = {
+    "apt": ("perl", "libio-socket-ssl-perl", "libnet-ssleay-perl", "libxml-writer-perl"),
+    "dnf": ("perl", "perl-IO-Socket-SSL", "perl-Net-SSLeay", "perl-XML-Writer"),
+    "pacman": ("perl", "perl-io-socket-ssl", "perl-net-ssleay", "perl-xml-writer"),
+    "zypper": ("perl", "perl-IO-Socket-SSL", "perl-Net-SSLeay", "perl-XML-Writer"),
+}
 # Package names are fixed, never supplied by browser input. No third-party
 # distro repository, profile edits, remote shell pipe, or whole-system upgrade.
 LINUX_FAMILIES = {
@@ -85,6 +92,9 @@ def tool_target(home, name):
     if name in GO_MODULES:
         return go_target(home, name), ()
     if name in PORTABLE_SOURCE_VERSIONS:
+        if name == "nikto":
+            folder = managed_root(home) / f"nikto-{PORTABLE_SOURCE_VERSIONS[name]}"
+            return folder / "source/program/nikto.pl", ()
         return managed_root(home) / f"{name}-{PORTABLE_SOURCE_VERSIONS[name]}" / f"venv/bin/{name}", ()
     if name == "arjun":
         return managed_root(home) / f"arjun-{ARJUN_VERSION}" / "venv/bin/arjun", ()
@@ -96,6 +106,9 @@ def tool_target(home, name):
 
 def wrapper_text(home, name):
     target, extra = tool_target(home, name)
+    if name == "nikto":
+        return (f"#!/bin/sh\n{WRAPPER_MARKER}\n# tool: {name}\n"
+                f"exec /usr/bin/perl {shlex.quote(str(target))} \"$@\"\n")
     return (f"#!/bin/sh\n{WRAPPER_MARKER}\n# tool: {name}\n"
             f"exec {shlex.join([str(target), *extra])} \"$@\"\n")
 
@@ -122,7 +135,7 @@ def show_plan(home=None, output=print):
     for name in TOOLS:
         path = shutil.which(name, path=local_path(home))
         output(f"  {name}: {path or 'not on PATH'} (not probed in plan mode)")
-    output("Kali branch only — conditional apt packages: dnsrecon, nmap, theharvester; missing prerequisites:")
+    output("Kali branch only — conditional apt packages: dnsrecon, nmap, theharvester, nikto; missing prerequisites:")
     output("  Kali: python3-venv, git, ca-certificates, golang-go. Go >=1.26 is required; no Go bootstrap scripts.")
     output("  sudo /usr/bin/apt-get update")
     output("  sudo /usr/bin/apt-get install --yes --no-install-recommends <needed fixed packages above>")
@@ -136,6 +149,7 @@ def show_plan(home=None, output=print):
     output("Nuclei: newly installed engines download official templates with -update-templates -duc.")
     output("Existing ready Nuclei/templates are untouched unless --update-templates is explicitly added.")
     output("Template refresh downloads current official templates (not a pinned template snapshot); no target is scanned.")
+    output("Nikto: Kali uses the official distro package. Other supported Linux families use the pinned Nikto 2.6.1 source and Perl runtime packages.")
     output("Launchers are added in ~/.local/bin only when absent or exactly managed by this installer.")
     output("Other supported distro families: Debian/Ubuntu (apt), Fedora/RHEL (dnf), Arch (pacman), openSUSE (zypper).")
     output("Portable branch: fixed distro packages for Nmap/prerequisites, pinned official Linux amd64/arm64 binaries (no Go SDK) and isolated Python >=3.12 source environments.")
@@ -420,7 +434,7 @@ class Installer:
                 if current and Path(current).resolve() != expected.resolve():
                     raise SetupError(f"Unverified command shadows Kali's {name}: {current}. It was not replaced. Inspect your PATH/launcher before retrying; the official apt command is {expected}.")
         if not install_needed and not update_templates and not missing_templates:
-            self.output("All 8 tools and local Nuclei template data passed checks. No downloads or installations were needed. No scan was run.")
+            self.output("All 9 tools and local Nuclei template data passed checks. No downloads or installations were needed. No scan was run.")
             return 0
         custom_needed = any(name not in APT_TOOLS for name in install_needed)
         if custom_needed:
@@ -464,7 +478,7 @@ class Installer:
             self.output("Setup is incomplete. Review errors above; existing tools were not deleted or moved.")
             self.output("Rerunning retries failed/missing tools and skips tools that now pass checks.")
             return 1
-        self.output("All 8 tools passed local checks; the local Nuclei template version was also found. Restart the dashboard via bash run.sh and refresh Check installed tools.")
+        self.output("All 9 tools passed local checks; the local Nuclei template version was also found. Restart the dashboard via bash run.sh and refresh Check installed tools.")
         self.output("These checks do not verify every template file, API credentials, upstream sources or assessment results.")
         return 0
 
@@ -528,10 +542,13 @@ class PortableInstaller(Installer):
 
     def prerequisites(self, needed):
         python_needed = any(name not in GO_MODULES and name != "nmap" for name in needed)
-        if any(name in PORTABLE_SOURCE_VERSIONS for name in needed) and tuple(sys.version_info[:2]) < (3, 12):
+        if any(name in {"dnsrecon", "theHarvester"} for name in needed) and tuple(sys.version_info[:2]) < (3, 12):
             raise SetupError("Pinned DNSRecon/theHarvester require Python >=3.12. Install a supported distro Python 3.12+ and recreate the dashboard venv with it before retrying.")
         settings = LINUX_FAMILIES[self.family]
         packages = ["nmap"] if "nmap" in needed else []
+        if "nikto" in needed:
+            packages.extend(PORTABLE_NIKTO_PERL_PACKAGES[self.family])
+            python_needed = any(name not in GO_MODULES and name not in {"nmap", "nikto"} for name in needed)
         if python_needed and any(importlib.util.find_spec(name) is None for name in ("venv", "ensurepip")):
             packages.extend(settings["base"])
         trust = ssl.get_default_verify_paths()
@@ -610,6 +627,9 @@ class PortableInstaller(Installer):
             assets.extract_zip(payload, folder / "source", prefix=item["prefix"])
         else:
             folder.mkdir(parents=True, exist_ok=False)
+        if name == "nikto":
+            self.write_wrapper(name)
+            return
         venv = folder / "venv"
         python = venv / "bin/python"
         self.command([sys.executable, "-I", "-m", "venv", "--copies", str(venv)])
@@ -638,7 +658,7 @@ class PortableInstaller(Installer):
                       "needs setup" if name in needed else "SKIP — existing tool passed local checks")
             self.output(f"{name}: {status}")
         if not install_needed and not update_templates and not missing_templates:
-            self.output("All 8 tools and local Nuclei template data passed checks. No install or scan was needed.")
+            self.output("All 9 tools and local Nuclei template data passed checks. No install or scan was needed.")
             return 0
         self.preflight(install_needed, initial)
         self.prerequisites(install_needed)
@@ -676,7 +696,7 @@ class PortableInstaller(Installer):
         if failures or not_ready:
             self.output("Setup is incomplete. Existing files were preserved; inspect errors before retrying.")
             return 1
-        self.output("All 8 tools passed local checks; the local Nuclei template version was also found. Refresh Check installed tools. No scan was run.")
+        self.output("All 9 tools passed local checks; the local Nuclei template version was also found. Refresh Check installed tools. No scan was run.")
         return 0
 
 

@@ -2,7 +2,7 @@
 
 **[বাংলা নির্দেশনা](USAGE.bn.md)** · [Installation](../README.md) · [Tool setup](TOOLS.md) · [Windows / WSL](WINDOWS.md)
 
-Echo Recon is a local dashboard that runs eight separate assessment tools in a fixed order and saves their evidence. Opening the dashboard does not start a scan. This guide uses `example.com` only to explain the fields: **replace it with a domain you own or have explicit permission to assess. Do not start a run against the example addresses.**
+Echo Recon is a local dashboard that runs nine separate assessment tools in a fixed order and saves their evidence. Opening the dashboard does not start a scan. This guide uses `example.com` only to explain the fields: **replace it with a domain you own or have explicit permission to assess. Do not start a run against the example addresses.**
 
 ## 1. Open the dashboard
 
@@ -29,7 +29,7 @@ The background matrix animation is available in both layouts; reduced-motion pre
 
 The default installer sets up the dashboard and missing backends together. Normal desktop startup also checks local tools asynchronously and starts the fixed setup when needed. Headless Linux/WSL uses the launcher's existing terminal so sudo prompts stay visible. Installing tools does not start an assessment.
 
-1. Read **Tool health** / **Download / Setup** progress. Windows installs seven compatible backends in separate user folders; Nmap uses its official Windows installer and your license/admin confirmations. Linux desktop setup opens a supported visible terminal.
+1. Read **Tool health** / **Download / Setup** progress. Windows installs the seven original compatible backends and installs Nikto source when Strawberry Perl is on PATH; Nmap uses its official Windows installer and your license/admin confirmations. Linux desktop setup opens a supported visible terminal.
 2. Enter sudo only in the Linux terminal when the fixed package manager requests it. Never send a password to the dashboard or a chat. Close the finished setup terminal before starting an assessment.
 3. Wait for completion or a clear error. An opened terminal/downloaded source is not proof of installation. Existing unrelated/incomplete folders are preserved for inspection rather than overwritten.
 4. Click **Check installed tools**. The main cards and open setup popup refresh their states together.
@@ -124,6 +124,9 @@ The first three checks are preselected. The others are optional. The selected ch
 | 6 | Shallow web crawl — Photon | Crawls one level using a single worker and a configured delay. | Scoped hosts confirmed live by HTTPX in this same run. |
 | 7 | HTTP parameters — Arjun | Looks for HTTP input parameters using one worker and the adapter's bounded settings. | Scoped hosts confirmed live by HTTPX in this same run. |
 | 8 | Template checks — Nuclei | Runs available low/medium/high/critical templates with selected high-impact categories excluded and out-of-band interaction disabled. Matches require verification. | Each exact scoped host. |
+| 9 | Web-server checks — Nikto | Checks tuning groups 1, 2, 3 and b: interesting files, misconfiguration/default files, information disclosure and software identification. These are active requests; results need review. | At most one HTTP origin per exact scoped host. |
+
+Choose both Nuclei and Nikto to enable fallback. Nikto runs only if Nuclei is missing, unverified, times out, errors or otherwise does not complete. A Nuclei run that completes successfully but reports no matches does **not** invoke Nikto. Choose Nikto alone to run it as a standalone phase. The fallback is recorded as a separate report phase and does not expand the explicit scope.
 
 Select **Live hosts / HTTPX** in the same run when using Photon or Arjun. Otherwise those phases have no confirmed live-host list and are skipped. The current Photon/Arjun adapters use `https://HOST` at the site root; they do not accept an arbitrary page path and do not automatically fall back to HTTP when HTTPS fails. An HTTPX response at HTTP alone does not guarantee these HTTPS checks will succeed.
 
@@ -139,21 +142,22 @@ Enter any whole number from **1 to 5 per second**; the default is **2**. Choosin
 | Nuclei | Passed as its request-rate setting; concurrency and batch size are one, no retries. |
 | Arjun | Passed as its rate-limit setting; one worker. |
 | Photon | Converted into a delay of `1 / rate` seconds; one worker. At rate 2, that requested delay is 0.5 seconds. |
+| Nikto | Converted into a delay between tests of `1 / rate` seconds. At rate 2, that requested delay is 0.5 seconds. |
 | Nmap | Passed as `--max-rate`, a scan-packet setting, not a universal web-request limit. It does not bound every service-check or OS/network operation. |
 | DNSRecon, Subfinder, theHarvester | This adapter does not pass the selected rate to them. DNS and public-provider traffic follow their own behavior. |
 
-These tools count different operations. The setting is a collection of tool-specific controls, **not a shared traffic meter or a total request budget**. Lower settings and short time limits can leave work incomplete.
+These tools count different operations. Nikto's pause is between tests, not a strict network request meter. The setting is a collection of tool-specific controls, **not a shared traffic meter or a total request budget**. Lower settings and short time limits can leave work incomplete.
 
 ### Time per tool / host
 
-Enter any whole-second value from **10 to 180**; the default is **120 seconds**. This is the process allowance for **one tool invocation on one host**, not the deadline for the whole assessment.
+Enter any whole-second value from **10 to 180**; the default is **120 seconds**. This is the process allowance for **one tool invocation on one host**, not the deadline for the whole assessment. Nikto receives the same cap as its maximum phase time as well as the dashboard's process timeout.
 
 For example, with a 120-second allowance, HTTPX on the first scoped host can use up to that allowance; HTTPX on the next scoped host gets its own allowance. Another selected tool then gets its own allowance. Tools also have some shorter internal connection/request timeouts, so an individual request may fail sooner.
 
 All phases and their hosts run sequentially. They do not all share one 120-second timer.
 
-- A simple conservative calculation is `8 tools × 5 hosts × 120 seconds = 4,800 seconds`, or **80 minutes** of process allowances. This overcounts the present pipeline because three tools use only the primary domain.
-- In the current code, all eight checks with five eligible hosts mean at most `3 + (5 × 5) = 28` scanner invocations, so `28 × 120 = 3,360 seconds`, or **56 minutes** of scanner allowances. Photon/Arjun may have fewer hosts or be skipped.
+- A simple conservative calculation is `9 tools × 5 hosts × 120 seconds = 5,400 seconds`, or **90 minutes** of process allowances. This overcounts the current pipeline because three tools use only the primary domain and Nikto is a fallback when Nuclei is also selected.
+- With five eligible hosts, the current pipeline allows at most `3 + (6 × 5) = 33` scanner invocations, so `33 × 120 = 3,960 seconds`, or **66 minutes** of scanner allowances. When Nuclei and Nikto are both selected, Nikto only runs for hosts where Nuclei failed. Photon/Arjun may have fewer hosts or be skipped.
 - Neither calculation is a hard wall-clock limit or an estimate of what your run will take. Identity/help checks, repeated DNS preflight, process startup/cleanup, provider behavior and other overhead add time. A DNS lookup is not wrapped in the scanner's per-process timer. Many tools finish early, fail, or are missing. There is no separate whole-job deadline.
 
 If a process exceeds its allowance, it is stopped and marked **timeout**. A timeout means **the phase is incomplete**, not “no vulnerability” or “site is safe.” Other selected phases may still continue; normally the job becomes **partial** if not every selected phase finishes successfully. A fatal pipeline error can instead end the job as **error**. Raising the timeout can let work continue longer, but it does not repair a missing tool, invalid scope or unavailable provider.
@@ -189,7 +193,7 @@ After a job ends, use **View report**, **HTML** or **JSON**. Click a phase in th
 | `complete` | Every selected phase ended `done`. This is successful execution, not proof of safety. |
 | `partial` | At least one selected phase is incomplete or unsuccessful. |
 
-**Selected Tools**, **Completed Phases** and **Incomplete Phases** count recorded phases, not verified vulnerabilities. **Automated Findings** counts parsed findings, not a complete count of security problems. Nuclei matches are labelled **unverified automated finding** until a person reviews them. Zero findings can mean limited coverage, incompatible/missing templates, unavailable sources or simply no match in this run.
+**Selected Tools**, **Completed Phases** and **Incomplete Phases** count recorded phases, not verified vulnerabilities. **Automated Findings** counts parsed findings, not a complete count of security problems. Nuclei matches are labelled **unverified automated finding** until a person reviews them. Nikto output is evidence text rather than parsed vulnerability findings. Zero findings can mean limited coverage, incompatible/missing templates, unavailable sources or simply no match in this run.
 
 The report's **Tool execution time** sums recorded scanner durations; it is not the total time you waited, because diagnostics and DNS overhead are outside those values. Report timestamps are recorded in UTC; the dashboard may display dates in your browser's local time.
 

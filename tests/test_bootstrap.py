@@ -83,7 +83,7 @@ class StartupToolSetupTests(unittest.TestCase):
         self.assertTrue(worker.start())
         checker.assert_called_once_with(cancel=worker.cancel)
         self.setup.launch.assert_not_called()
-        self.assertIn("All 8 tools", self.setup.message)
+        self.assertIn("All 9 tools", self.setup.message)
         self.assertFalse(worker.state_path.exists())
 
     def test_running_setup_or_existing_check_is_not_replaced(self):

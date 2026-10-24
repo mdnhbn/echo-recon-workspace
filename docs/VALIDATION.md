@@ -1,5 +1,10 @@
 # Release validation — 2026-10-24
 
+## 6.6.0 Nikto integration status
+
+- The 6.6.0 Nikto integration, setup adapters and documentation were reviewed. Changed Python files passed an in-memory syntax parse and `git diff --check` reported no whitespace errors.
+- The test suite was not run for this change. A fresh Kali install, native Windows Perl setup, Nikto assessment and public-target scan were not run. The 6.3 desktop checks below describe that earlier release and do not validate Nikto or the 6.6.0 setup changes.
+
 ## 6.3 guidance, layout switch and tool setup
 
 - Windows: 58 tests total, 55 passed and three platform/privileged-symlink cases skipped. Kali: 58 total, 57 passed and the Windows process-tree case skipped. Installer tests mock every apt, Git, pip and Go command; no scan or fresh machine provisioning is performed by these tests.

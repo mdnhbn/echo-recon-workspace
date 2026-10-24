@@ -1,8 +1,8 @@
-# Backend tool setup / আটটি টুল একসঙ্গে সেটআপ
+# Backend tool setup / নয়টি টুল একসঙ্গে সেটআপ
 
 [Install and run](../README.md) · [বাংলা নির্দেশনা](../README.bn.md) · [Windows / WSL](WINDOWS.md) · [Usage](USAGE.md)
 
-These are eight independent third-party tools with their own licenses and dependencies. The repository installs missing backends together and preserves tools that already pass local help/identity checks. Downloading source, finishing installation and passing a local check are different steps. No installer accepts a target or starts an assessment.
+These are nine independent third-party tools with their own licenses and dependencies. The repository installs missing backends together and preserves tools that already pass local help/identity checks. Downloading source, finishing installation and passing a local check are different steps. No installer accepts a target or starts an assessment.
 
 ## Automatic installation
 
@@ -10,7 +10,7 @@ These are eight independent third-party tools with their own licenses and depend
 - **Normal app startup:** local checks run asynchronously. Missing backends use the fixed setup launcher. Ready tools cause no download. Desktop automatic attempts are recorded privately so identical failures do not reopen setup on every restart; **Setup all tools** is the deliberate retry.
 - **Linux desktop:** a visible local terminal opens. Fixed OS package installation may ask for sudo there.
 - **Headless Linux/WSL:** `run.sh` uses the same interactive terminal for CLI setup; it rechecks ready tools on subsequent runs. Use `--no-tool-setup` to skip that step.
-- **Windows:** seven compatible backends install as a normal user, with progress in the dashboard. Nmap requires its official Windows installer and the user's license/administrator confirmations.
+- **Windows:** the seven original compatible backends install as a normal user, with progress in the dashboard. Nikto's pinned source also installs when Strawberry Perl is already on PATH. Nmap requires its official Windows installer and the user's license/administrator confirmations; Perl itself is a separate manual prerequisite.
 - **Check installed tools:** refreshes local health. A displayed error or incomplete setup is not success.
 
 বাংলায়: installer একসঙ্গে কাজগুলো করে, কিন্তু tool ইনস্টল হলেই scan হয় না। ঠিক থাকা tool আবার নামায় না। Windows-এর progress dashboard-এ, Linux desktop-এর progress আলাদা Terminal-এ দেখা যায়। Sudo password শুধু ওই Terminal-এ দিন। একই desktop automatic চেষ্টা ব্যর্থ হলে error পড়ে **Setup all tools** চাপুন; শুধু restart দিয়ে সমস্যাটি ঢাকবেন না।
@@ -84,6 +84,11 @@ Run `doctor.py` with the environment's venv Python to see resolved paths/command
 | Photon | [s0md3v/Photon](https://github.com/s0md3v/Photon) | Shallow crawl of HTTPX-confirmed scoped hosts. |
 | Arjun | [s0md3v/Arjun](https://github.com/s0md3v/Arjun) | HTTP parameter discovery with bounded adapter settings. |
 | Nuclei | [ProjectDiscovery/nuclei](https://github.com/projectdiscovery/nuclei) | Selected-severity template checks; findings require human verification. |
+| Nikto | [sullo/nikto](https://github.com/sullo/nikto) | Selected web-server checks; GPL-3.0-only source stays separate and keeps its own license. |
+
+Select both Nuclei and Nikto to use Nikto as a fallback: it runs only if the Nuclei phase is missing, unverified or fails. A completed Nuclei phase does not trigger fallback, even when it reports no matches. Select Nikto without Nuclei to run it by itself. The adapter checks only Nikto tuning groups **1, 2, 3 and b** (interesting files, misconfiguration/default files, information disclosure and software identification); it excludes the other groups. These are active web requests and can be visible in server logs. Use it only on exact hosts you are authorized to assess.
+
+On Kali, the setup uses the distro's `nikto` package. Other supported Linux package families install Perl prerequisites and the pinned official Nikto 2.6.1 source. Native Windows setup needs Strawberry Perl already installed and `perl.exe` on `PATH`; Echo Recon downloads the pinned source but does not install the Perl runtime for you. Nikto's own license remains separate from Echo Recon's MIT license.
 
 Fixed releases/commits and their pins are visible in the installer source. Keep original license notices when contributing or redistributing.
 

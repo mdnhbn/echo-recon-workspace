@@ -68,7 +68,7 @@ Phases are sequential. A nonzero exit is an error even with empty stdout. Timeou
 
 Windows tools start suspended, join a kill-on-close Job Object before tool code runs, and resume only after assignment succeeds. Linux uses a process group. Bounded output/pipes and cancellation apply across native adapter prefixes. If containment setup fails, the tool does not run uncontained.
 
-HTTPX filters origins against exact scope; discovery is evidence only. Photon/Arjun require a live scoped host from the same run. Nmap uses limited top-100 TCP connect/service detection, with Windows `-Pn`. Nuclei JSONL is filtered to scope and labelled unverified. A stdout line count is not a vulnerability count.
+HTTPX filters origins against exact scope; discovery is evidence only. Photon/Arjun require a live scoped host from the same run. Nmap uses limited top-100 TCP connect/service detection, with Windows `-Pn`. Nuclei JSONL is filtered to scope and labelled unverified. Nikto uses one in-scope web origin per explicit host and bounded tuning groups; when both Nuclei and Nikto are selected, Nikto runs only after the Nuclei phase is incomplete or fails. A stdout line count is not a vulnerability count.
 
 Tool readiness is a local help/identity result, not an external network/API or provider compatibility certification. Other Linux installer branches use mocked package-manager/download tests; actual fresh installation on every distro is not claimed.
 

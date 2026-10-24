@@ -21,7 +21,7 @@ def public_fixture(host, port, **kwargs):
 
 
 class NativeWindowsAssessmentTests(unittest.TestCase):
-    def test_all_eight_adapters_use_managed_prefixes_exact_scope_and_scratch(self):
+    def test_nine_adapters_use_managed_prefixes_scope_and_nikto_fallback(self):
         with tempfile.TemporaryDirectory(prefix="echo Windows paths ") as directory:
             folder = Path(directory)
             prefixes = {name: (str(folder / "isolated tools" / name / (name + ".exe")),)
@@ -40,9 +40,7 @@ class NativeWindowsAssessmentTests(unittest.TestCase):
                 elif name == "httpx":
                     output = "\n".join("https://" + host for host in scope) + "\nhttps://outside.example.com\n"
                 elif name == "nuclei":
-                    host = options["stdin"].strip()
-                    output = json.dumps({"template-id": "local-fixture", "matched-at": "https://" + host,
-                                         "info": {"name": "fixture", "severity": "info"}})
+                    return runner.Result("error", 1, "", "fixture Nuclei failure", duration=.01)
                 else:
                     output = "Local fixture; no tool or network request was run."
                 return runner.Result("done", 0, output, duration=.01)
@@ -57,8 +55,13 @@ class NativeWindowsAssessmentTests(unittest.TestCase):
                     patch("echo_recon.service.is_windows", return_value=True), \
                     patch.object(tools, "native_tool_command", side_effect=lambda name: prefixes[name]):
                 job = store.get(manager.start(payload, background=False))
-            self.assertEqual(job["status"], "complete")
+            self.assertEqual(job["status"], "partial")
             self.assertEqual({name for name, _, _ in calls}, set(tools.TOOLS))
+            nuclei = next(phase for phase in job["phases"] if phase["tool"] == "nuclei")
+            nikto = next(phase for phase in job["phases"] if phase["tool"] == "nikto")
+            self.assertEqual(nuclei["status"], "error")
+            self.assertEqual(nikto["status"], "done")
+            self.assertIn("Nuclei status was error", nikto["evidence"])
             for name, args, options in calls:
                 self.assertEqual(args[:len(prefixes[name])], list(prefixes[name]))
                 self.assertEqual(options["timeout"], 30)

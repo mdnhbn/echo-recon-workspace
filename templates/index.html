@@ -37,7 +37,7 @@
     <header><span class="local"><span class="pulse"></span> 127.0.0.1 · LOCAL</span><div class="header-actions"><button id="theme-toggle" type="button" class="button" aria-pressed="false">Light layout / হালকা</button><button id="open-guide-top" type="button" class="button" aria-haspopup="dialog">How to use / ব্যবহারবিধি</button><button id="check-tools-top" class="button">Check installed tools</button><button id="download-tools-top" class="button download-button" aria-haspopup="dialog">Download / Setup ↗</button></div></header>
     <div class="center">
       <div class="greeting"><span class="gear" aria-hidden="true">⚙</span><div><h1>রিকন <span>Echo Recon</span></h1><p>Scope first. Evidence always. / প্রমাণসহ পরীক্ষা।</p></div></div>
-      {% if native_windows %}<div class="windows-note"><strong>Windows native: automatic backend setup and scoped assessments.</strong><p>First startup prepares missing tools together. Nmap uses its official Windows installer and TCP connect scans (-sT -Pn). Setup progress and local checks appear below.<br>প্রথমবার চালালে প্রয়োজনীয় tool-গুলো একসঙ্গে সেটআপ হবে। Nmap-এর official installer-এ প্রয়োজনীয় confirmation দিন। এরপর অনুমোদিত host পরীক্ষা করতে পারবেন।</p></div>{% endif %}
+      {% if native_windows %}<div class="windows-note"><strong>Windows native: automatic backend setup and scoped assessments.</strong><p>First startup prepares missing tools together. Nmap uses its official Windows installer and TCP connect scans (-sT -Pn). Nikto setup needs Perl available on PATH; the installer will show how to add it if missing.<br>প্রথমবার চালালে প্রয়োজনীয় tool-গুলো একসঙ্গে সেটআপ হবে। Nmap-এর official installer-এ প্রয়োজনীয় confirmation দিন। Nikto চালাতে Perl লাগবে; না থাকলে installer নির্দেশনা দেখাবে।</p></div>{% endif %}
       <section id="assessment" class="composer setup" aria-labelledby="setup-title">
         <div class="section-title"><span class="section-mark">01</span><h2 id="setup-title">Assessment / পরীক্ষার সেটআপ</h2></div>
         <form id="scan-form">
@@ -57,19 +57,21 @@
               <label><input type="checkbox" name="tool" value="photon"><span>Shallow web crawl</span></label>
               <label><input type="checkbox" name="tool" value="arjun"><span>HTTP parameters</span></label>
               <label><input type="checkbox" name="tool" value="nuclei"><span>Template checks</span></label>
+              <label><input type="checkbox" name="tool" value="nikto"><span>Nikto web-server checks / Nuclei fallback</span></label>
             </div>
+            <p class="hint">Select both Nuclei and Nikto to run Nikto only if Nuclei is missing or fails. Select Nikto alone for a standalone server check.<br>Nuclei ও Nikto দুটো বাছলে Nuclei না থাকলে বা ব্যর্থ হলে তবেই Nikto চলবে। শুধু Nikto বাছলে এটি আলাদা scan হিসেবে চলবে। Nikto-র check সীমিত রাখা হয়েছে।</p>
           </fieldset>
           <div class="fields"><div><label for="rate">Tool rate ceiling / গতি সীমা (requests per second)</label><input id="rate" type="number" inputmode="numeric" min="1" max="5" step="1" value="2" required></div><div><label for="timeout">Time per tool / host (seconds)</label><input id="timeout" type="number" inputmode="numeric" min="10" max="180" step="1" value="120" required></div></div>
           <div class="fields field-help"><p>Enter a whole number from 1 to 5. Lower rate reduces traffic for tools that support it; default: 2/second.<br>১–৫-এর পূর্ণসংখ্যা দিন; সব tool মিলিয়ে মোট গতি নয়। <button type="button" class="text-button" data-guide-target="guide-rate">গতিসীমার বিস্তারিত</button></p><p>Enter 10–180 seconds; default: 120. This is a per-tool/host limit, not the whole assessment time.<br>১০–১৮০ সেকেন্ড দিন; default ১২০। <button type="button" class="text-button" data-guide-target="guide-time">সময়সীমার বিস্তারিত</button></p></div>
           <label class="consent"><input type="checkbox" id="authorized" required><span>I own these hosts or have explicit permission.<br>এই host পরীক্ষা করার মালিকানা বা অনুমতি আমার আছে।</span></label>
-          <label class="consent"><input type="checkbox" id="limits" required><span>Third-party tools may contact secondary destinations; rate limits vary by tool.<br>এটি network sandbox নয়; tool অন্য গন্তব্যেও অনুরোধ পাঠাতে পারে।</span></label>
+          <label class="consent"><input type="checkbox" id="limits" required><span>Tool traffic varies. Nikto is an obvious active web-server check, limited here to informational and configuration checks.<br>Tool অনুযায়ী অনুরোধের গতি বদলায়। Nikto সক্রিয় web-server পরীক্ষা করে এবং এখানে তথ্য/কনফিগারেশন check-এ সীমিত।</span></label>
           <div class="composer-row"><span class="hint">Only assess authorized hosts.<br>শুধু অনুমোদিত host পরীক্ষা করুন।</span><button id="start" class="button primary" type="submit">Start assessment / শুরু করুন →</button></div>
           <p id="message" class="message" role="alert"></p>
         </form>
       </section>
       <section class="progress" aria-labelledby="progress-title">
         <div class="section-title"><span class="section-mark">02</span><h2 id="progress-title">Progress & evidence / অগ্রগতি</h2><span id="job-state" class="pill">Ready</span></div>
-        <div id="empty"><div class="pipeline" aria-hidden="true"><span class="step"><i></i>DNS</span><span class="step"><i></i>Subdomains</span><span class="step"><i></i>Hosts</span><span class="step"><i></i>Ports</span><span class="step"><i></i>OSINT & crawl</span><span class="step"><i></i>Parameters</span><span class="step"><i></i>Templates</span></div><p>Waiting for an assessment. No results yet.<br>পরীক্ষা শুরু হলে এখানে অগ্রগতি ও log দেখা যাবে।</p></div>
+        <div id="empty"><div class="pipeline" aria-hidden="true"><span class="step"><i></i>DNS</span><span class="step"><i></i>Subdomains</span><span class="step"><i></i>Hosts</span><span class="step"><i></i>Ports</span><span class="step"><i></i>OSINT & crawl</span><span class="step"><i></i>Parameters</span><span class="step"><i></i>Nuclei</span><span class="step"><i></i>Nikto fallback</span></div><p>Waiting for an assessment. No results yet.<br>পরীক্ষা শুরু হলে এখানে অগ্রগতি ও log দেখা যাবে।</p></div>
         <div id="job-content" hidden>
           <div class="job-heading"><h3 id="job-domain"></h3><button id="cancel" class="button danger">Stop / বন্ধ করুন</button></div>
           <p id="job-meta" class="hint"></p><div id="phases"></div>
@@ -92,7 +94,7 @@
 </div>
 <dialog id="tool-downloads" aria-labelledby="downloads-title">
   <div class="modal-head"><h2 id="downloads-title">Tool downloads & setup / টুল সেটআপ</h2><button id="close-downloads" class="modal-close" aria-label="Close / বন্ধ করুন">×</button></div>
-  <p class="download-note">Set up missing tools together, or use the individual official sources below.<br>{% if native_windows %}Windows setup progress নিচে দেখা যাবে। সাতটি compatible tool স্বয়ংক্রিয়ভাবে ইনস্টল হবে; Nmap-এর <a href="https://nmap.org/download.html" target="_blank" rel="noopener noreferrer">official Windows installer</a>-এ প্রয়োজনীয় confirmation নিজে সম্পন্ন করুন।{% else %}Linux-এ ইনস্টল আলাদা terminal-এ চলবে; প্রয়োজন হলে শুধু ওই terminal-এ sudo password দিন।{% endif %}</p>
+  <p class="download-note">Set up missing tools together, or use the individual official sources below.<br>{% if native_windows %}Windows setup progress নিচে দেখা যাবে। আগের সাতটি compatible tool স্বয়ংক্রিয়ভাবে ইনস্টল হবে; Nikto-র জন্য Strawberry Perl PATH-এ থাকতে হবে। Nmap-এর <a href="https://nmap.org/download.html" target="_blank" rel="noopener noreferrer">official Windows installer</a>-এ প্রয়োজনীয় confirmation নিজে সম্পন্ন করুন।{% else %}Linux-এ ইনস্টল আলাদা terminal-এ চলবে; প্রয়োজন হলে শুধু ওই terminal-এ sudo password দিন।{% endif %}</p>
   <div class="tool-actions"><button class="button primary" type="button" data-setup-tools>Setup all tools / সব টুল সেটআপ</button><button class="button" type="button" data-guide-target="guide-setup">Setup help / সেটআপ নিয়ম</button></div>
   <p class="setup-status" data-setup-message role="status"></p>
   <pre class="setup-log" data-setup-log hidden aria-live="polite"></pre>

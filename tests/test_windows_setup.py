@@ -60,6 +60,13 @@ class WindowsSetupTests(unittest.TestCase):
         self.commands = FakeCommands()
         self.fetches = []
         self.payloads = {}
+        self.perl_path = self.local / "perl.exe"
+        self.perl_path.write_bytes(b"fixture Perl executable; never run")
+        perl_path = self.perl_path
+        which_guard = patch.object(setup.shutil, "which",
+                                   side_effect=lambda name: str(perl_path) if name in {"perl", "perl.exe"} else None)
+        which_guard.start()
+        self.addCleanup(which_guard.stop)
         self.releases = {name: dict(item) for name, item in setup.WINDOWS_RELEASES.items()}
         self.sources = {name: dict(item) for name, item in setup.SOURCE_ARCHIVES.items()}
         for name, item in self.releases.items():
@@ -71,7 +78,8 @@ class WindowsSetupTests(unittest.TestCase):
             self.payloads[item["url"]] = payload
             self.payloads[item["checksums_url"]] = manifest
         for name, item in self.sources.items():
-            entry = "photon.py" if name == "photon" else "pyproject.toml"
+            entry = ("photon.py" if name == "photon" else
+                     "program/nikto.pl" if name == "nikto" else "pyproject.toml")
             payload = zipped([(item["prefix"] + "/" + entry, b"# fixture source"),
                               (item["prefix"] + "/LICENSE", b"fixture license")])
             item["sha256"] = hashlib.sha256(payload).hexdigest()
@@ -178,7 +186,7 @@ class WindowsSetupTests(unittest.TestCase):
         self.assertTrue(any("nmap: manual" in message for message in self.messages))
         self.assertFalse(any("All 8" in message for message in self.messages))
 
-    def test_seven_supported_tools_install_with_explicit_paths_and_manual_nmap(self):
+    def test_supported_tools_install_with_explicit_paths_and_manual_nmap(self):
         installer = self.installer(health(*setup.TOOL_NAMES), health("nmap"))
         original_path = os.environ.get("PATH")
         self.assertEqual(installer.install(), 2)
@@ -186,7 +194,11 @@ class WindowsSetupTests(unittest.TestCase):
         for name in setup.TOOL_VERSIONS:
             command = setup.tool_command(name, self.local)
             self.assertTrue(command, name)
-            self.assertTrue(Path(command[0]).is_relative_to(installer.base))
+            if name == "nikto":
+                self.assertEqual(Path(command[0]), self.perl_path)
+                self.assertTrue(Path(command[1]).is_relative_to(installer.base))
+            else:
+                self.assertTrue(Path(command[0]).is_relative_to(installer.base))
             self.assertFalse(any(arg.endswith((".cmd", ".bat")) for arg in command))
             folder = setup.tool_folder(name, self.local)
             self.assertEqual(json.loads((folder / setup.TOOL_MARKER).read_text()), setup.marker_data(name))

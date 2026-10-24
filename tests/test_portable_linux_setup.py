@@ -41,7 +41,8 @@ class PortableLinuxTests(unittest.TestCase):
             self.payloads[item["checksums_url"]] = manifest
             item["checksums_sha256"] = hashlib.sha256(manifest).hexdigest()
         for name, item in self.source_pins.items():
-            filename = "photon.py" if name == "photon" else "pyproject.toml"
+            filename = ("photon.py" if name == "photon" else
+                        "program/nikto.pl" if name == "nikto" else "pyproject.toml")
             payload = archive([(item["prefix"] + "/" + filename, b"# fixture source")])
             self.payloads[item["url"]] = payload
             item["sha256"] = hashlib.sha256(payload).hexdigest()
@@ -183,7 +184,7 @@ class PortableLinuxTests(unittest.TestCase):
     def test_portable_source_tools_use_separate_final_venvs_and_os_requirements(self):
         installer = self.installer()
         installer.prepare()
-        for name in ("dnsrecon", "theHarvester", "photon", "arjun"):
+        for name in ("dnsrecon", "theHarvester", "photon", "arjun", "nikto"):
             installer.install_source(name)
             target, _ = setup.tool_target(self.home, name)
             self.assertTrue(target.is_file())

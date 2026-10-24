@@ -1,18 +1,19 @@
-# Echo Recon 6.5.0
+# Echo Recon 6.6.0
 
-A local assessment dashboard with eight fixed tool adapters, explicit host scope, cancellable processes, saved history and evidence reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec), upgraded for the mdnhbn collaboration.
+A local assessment dashboard with nine fixed tool adapters, explicit host scope, cancellable processes, saved history and evidence reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec), upgraded for the mdnhbn collaboration.
 
 **[বাংলা নির্দেশনা](README.bn.md)** · [Kali APT updates](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [Tool setup](docs/TOOLS.md) · [Complete usage guide](docs/USAGE.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-## What 6.5.0 changes
+## What 6.6.0 changes
 
 - The installer sets up the dashboard and missing backends together. Normal startup also checks local tools and starts automatic setup when needed; verified working tools are kept.
 - Native Windows tools use a stable user folder, `~/Tools/EchoRecon/tooling`, so installation from a packaged application remains visible when a desktop shortcut starts the dashboard.
 - Native Windows, Kali VirtualBox, WSL and supported Linux package-manager families have dedicated setup paths. Windows no longer requires WSL for its native adapters.
 - Both layouts keep the same form and evidence controls. The Light/Dark button switches in one click; both include Matrix animation and respect reduced-motion preferences.
 - History starts empty. There are no generated demo findings. Reports retain errors, timeouts, incomplete output and unverified findings.
+- Added Nikto as an optional standalone web-server check and a fallback when a selected Nuclei phase is missing, unverified or fails. Its checks are narrowed to informational, misconfiguration/default-file and software-identification groups.
 
-The eight tools are **DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun and Nuclei**. Installing them does not start an assessment, create API accounts or provide API keys.
+The eight original tools are **DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun and Nuclei**; **Nikto** is now the ninth. Select both Nuclei and Nikto to use Nikto only when Nuclei is unavailable or fails, or select Nikto alone for a standalone check. Installing them does not start an assessment, create API accounts or provide API keys.
 
 ## Requirements and support
 
@@ -20,10 +21,12 @@ Use a normal user account and internet access. The dashboard refuses root on Lin
 
 | Environment | Setup path and requirements | Verification limits |
 |---|---|---|
-| Native Windows x64 | Python **3.12 x64** for bundled backend setup; `install.ps1` and `run.ps1`. Seven backends install automatically; Nmap uses its official installer. | Native installation/local help checks and local process/cancellation fixtures have been checked. No public-target scan certification. |
+| Native Windows x64 | Python **3.12 x64** for bundled backend setup; `install.ps1` and `run.ps1`. The original seven backends install automatically; Nikto also installs when Strawberry Perl is already on PATH. Nmap and the Perl runtime require manual setup. | Native installation/local help checks and local process/cancellation fixtures have been checked. No public-target scan certification. |
 | Kali Linux, including VirtualBox and Kali WSL | Signed APT package needs sudo once for feed/package setup; source checkout needs Git, Python and venv support. Missing compiled Go tools require Go **1.26+**. | Kali local tool checks and regression tests; provider/network availability still varies. |
 | Other supported glibc Linux families | Debian/Ubuntu (`apt`), Fedora/RHEL (`dnf`), Arch (`pacman`), openSUSE (`zypper`); portable assets for x86_64/aarch64. Python **3.12+** is required when installing pinned DNSRecon/theHarvester sources. | Installer logic is tested with mocked downloads/package managers. A fresh full installation on every distribution is **not** claimed. |
 | Other distributions/architectures | Dashboard requires Python 3.11+; install compatible backend tools manually. Alpine/musl is not an automatic-install target. | Not an automatically provisioned platform. |
+
+For the 6.6.0 changes, Python syntax and whitespace checks passed. The test suite and fresh-machine installs were not run for this release; earlier desktop checks documented in [validation notes](docs/VALIDATION.md) refer to earlier versions.
 
 A dashboard-only installation supports Python 3.11+. For that workflow use `--dashboard-only` / `-DashboardOnly`, then start with `--no-tool-setup` / `-NoToolSetup` if you want to avoid automatic backend setup.
 

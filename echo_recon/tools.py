@@ -17,6 +17,7 @@ TOOLS = {
     "photon": ("Shallow web crawl", ["-h"], "photon"),
     "arjun": ("HTTP parameters", ["-h"], "arjun"),
     "nuclei": ("Template checks", ["-h"], "nuclei"),
+    "nikto": ("Nikto web-server checks", ["-Help"], "nikto"),
 }
 
 SOURCES = {
@@ -28,6 +29,7 @@ SOURCES = {
     "photon": "https://github.com/s0md3v/Photon",
     "arjun": "https://github.com/s0md3v/Arjun",
     "nuclei": "https://github.com/projectdiscovery/nuclei/releases",
+    "nikto": "https://github.com/sullo/nikto",
 }
 
 
@@ -92,7 +94,9 @@ def nuclei_template_health(prefix, cancel=None):
 def tool_sources():
     guide = "https://github.com/mdnhbn/echo-recon-workspace/blob/main/docs/TOOLS.md"
     return {name: {"label": TOOLS[name][0], "url": url, "setup_url": guide,
-                   "note": ("Native Windows setup uses isolated compatible tools; Nmap uses its official installer and TCP connect scans without raw packet privileges."
+                   "note": (("Nikto requires Strawberry Perl on PATH; Nmap uses its official installer. Windows setup does not install runtimes or drivers unattended."
+                             if name == "nikto" else
+                             "Native Windows setup uses isolated compatible tools; Nmap uses its official installer and TCP connect scans without raw packet privileges.")
                             if is_windows() else "Use the official source and follow the Kali setup guide.")}
             for name, url in SOURCES.items()}
 
@@ -102,7 +106,8 @@ def diagnostics(cancel=None):
     cancel = cancel or threading.Event()
     required = {"httpx": ("-rate-limit", "-silent"),
                 "arjun": ("--rate-limit", "--disable-redirects"),
-                "nuclei": ("-jsonl", "-disable-redirects", "-exclude-tags")}
+                "nuclei": ("-jsonl", "-disable-redirects", "-exclude-tags"),
+                "nikto": ("-host", "-tuning", "-maxtime", "-pause")}
     for name, (label, flags, identity) in TOOLS.items():
         prefix = resolve_tool(name)
         item = {"label": label, "path": prefix[0] if prefix else None,
@@ -133,7 +138,7 @@ def diagnostics(cancel=None):
     return result
 
 
-def command(name, host, rate, output_dir):
+def command(name, host, rate, output_dir, timeout=120):
     url = f"https://{host}"
     args = {
         "dnsrecon": ["dnsrecon", "-d", host, "-t", "std"],
@@ -144,6 +149,14 @@ def command(name, host, rate, output_dir):
         "photon": ["photon", "-u", url, "-l", "1", "-t", "1", "-d", str(1 / rate), "--output", str(output_dir)],
         "arjun": ["arjun", "-u", url, "-t", "1", "-T", "8", "--rate-limit", str(rate), "--disable-redirects"],
         "nuclei": ["nuclei", "-silent", "-jsonl", "-duc", "-ni", "-dr", "-rl", str(rate), "-c", "1", "-bs", "1", "-timeout", "8", "-retries", "0", "-severity", "low,medium,high,critical", "-etags", "dos,fuzz,bruteforce,headless,code"],
+        # Nikto's default scan is wider. Keep this adapter to informational,
+        # configuration/default-file and software-identification categories.
+        # These exclude its DoS, command-execution, SQLi and other exploit-style
+        # tuning groups. The user-supplied rate maps to a delay between tests.
+        "nikto": ["nikto", "-nointeractive", "-nocheck", "-ask", "no",
+                  "-Tuning", "123b", "-Pause", f"{1 / rate:.3f}",
+                  "-maxtime", f"{timeout}s", "-timeout", str(min(8, timeout)),
+                  "-host", host],
     }[name]
     if name == "nmap" and is_windows():
         # Official Nmap guidance for Windows without Npcap: use sockets only.

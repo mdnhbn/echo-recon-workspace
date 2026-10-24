@@ -2,8 +2,8 @@
 """Fixed-source, normal-user native Windows backend setup.
 
 Default/--plan does not write, download, or execute anything. --install sets up
-seven supported tools in separate user-local version folders. Nmap uses its
-interactive Windows installer and is reported as manual when absent.
+supported tools in separate user-local version folders. Nmap's installer and
+Nikto's Perl runtime are manual prerequisites when absent.
 Only local help/version checks run; no assessment target is accepted.
 """
 import argparse
@@ -15,6 +15,7 @@ import os
 from pathlib import Path, PurePosixPath
 import platform
 import re
+import shutil
 import stat
 import struct
 import subprocess
@@ -29,7 +30,7 @@ sys.dont_write_bytecode = True
 from echo_recon.locking import InstanceLock
 
 ROOT = Path(__file__).resolve().parent
-TOOL_NAMES = ("dnsrecon", "subfinder", "httpx", "nmap", "theHarvester", "photon", "arjun", "nuclei")
+TOOL_NAMES = ("dnsrecon", "subfinder", "httpx", "nmap", "theHarvester", "photon", "arjun", "nuclei", "nikto")
 MARKER = "Echo Recon native Windows tooling v1\n"
 TOOL_MARKER = ".echo-recon-tool.json"
 SCHEMA = 1
@@ -64,6 +65,7 @@ ARJUN_SOURCE = ("https://files.pythonhosted.org/packages/04/22/"
 PHOTON_COMMIT = "c8d2566841d69a268b244609921143d84b72b0c6"
 DNSRECON_COMMIT = "8ba53cec0e1d61886cd0251da753a586fafa7a28"
 HARVESTER_COMMIT = "fd832dee7936458a4f6e2029bf37ba6797228676"
+NIKTO_COMMIT = "d201dac320fc5187eac75e723dd07a716196ec5a"
 SOURCE_ARCHIVES = {
     "photon": {"version": PHOTON_COMMIT, "repository": "s0md3v/Photon", "commit": PHOTON_COMMIT,
                "sha256": "440e730b243e43381f0972bccb7e6959bbfe5d0c713c271ed763ade9406272a8"},
@@ -71,6 +73,8 @@ SOURCE_ARCHIVES = {
                  "sha256": "4552b3221706c5f9b66187dc1836e04b6975237a3d25cc8803a5e5904bef47e6"},
     "theHarvester": {"version": "4.11.1", "repository": "laramies/theHarvester", "commit": HARVESTER_COMMIT,
                      "sha256": "c250f692b92aa21a18948c5fc2ac68b088fcc9f96e87254bd15fd237146c1ca0"},
+    "nikto": {"version": "2.6.1", "repository": "sullo/nikto", "commit": NIKTO_COMMIT,
+              "sha256": "80683343b725645f58f90ef51191527891557adadd2396f23cd5726d1c8a3900"},
 }
 for _source in SOURCE_ARCHIVES.values():
     _source["url"] = f"https://codeload.github.com/{_source['repository']}/zip/{_source['commit']}"
@@ -114,7 +118,10 @@ TOOL_VERSIONS = {name: item["version"] for name, item in {**WINDOWS_RELEASES, **
 TOOL_VERSIONS["arjun"] = ARJUN_VERSION
 MANUAL_TOOLS = {"nmap": ("Install official Windows Nmap from https://nmap.org/download.html and rerun setup. "
                          "Its interactive installer may request administrator permission. "
-                         "Setup never opens installers, installs drivers, or changes security settings.")}
+                         "Setup never opens installers, installs drivers, or changes security settings."),
+                "nikto": ("Install Strawberry Perl from https://strawberryperl.com/ and make sure perl.exe is on PATH, "
+                          "then rerun Setup all tools. Echo Recon downloads the pinned official Nikto source but does not "
+                          "install a separate Windows Perl runtime.")}
 ALLOWED_URLS = frozenset([item[key] for item in WINDOWS_RELEASES.values() for key in ("url", "checksums_url")]
                         + [item["url"] for item in SOURCE_ARCHIVES.values()])
 ALLOWED_HOSTS = frozenset({"github.com", "codeload.github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"})
@@ -172,6 +179,11 @@ def marker_data(name):
 def _command_in(name, folder):
     if name in WINDOWS_RELEASES:
         return (str(folder / "bin" / f"{name}.exe"),)
+    if name == "nikto":
+        perl = shutil.which("perl.exe") or shutil.which("perl")
+        if not perl or Path(perl).suffix.lower() != ".exe":
+            return None
+        return (perl, str(folder / "source/program/nikto.pl"))
     python = str(folder / "venv/Scripts/python.exe")
     if name == "photon":
         return (python, str(folder / "source/photon.py"))
@@ -198,8 +210,10 @@ def tool_command(name, local_app_data=None):
         if json.loads(metadata.read_text(encoding="utf-8")) != marker_data(name):
             return None
         command = _command_in(name, folder)
+        if not command:
+            return None
         targets = [Path(command[0])]
-        if name == "photon":
+        if name in {"photon", "nikto"}:
             targets.append(Path(command[1]))
         if not all(plain_path(path).is_file() for path in targets):
             return None
@@ -232,6 +246,7 @@ def show_plan(local_app_data=None, output=print):
     output(f"  arjun {ARJUN_VERSION}: official PyPI source with pinned SHA256; isolated Python 3.12 venv")
     output("Python tools each receive their own venv and exact runtime pins from official PyPI.")
     output("Nmap: " + MANUAL_TOOLS["nmap"])
+    output("Nikto: " + MANUAL_TOOLS["nikto"])
     output("No PATH/profile/Registry changes, driver installation, elevation, WSL, or remote installer pipes.")
     output("Existing version folders are never replaced; unrecognized or partial collisions stop that tool.")
     output("New Nuclei engines fetch official templates; --update-templates also refreshes an existing ready engine.")
@@ -424,7 +439,8 @@ class Installer:
 
     def complete(self, name, folder):
         command = _command_in(name, folder)
-        if not plain_path(Path(command[0])).is_file() or (name == "photon" and not plain_path(Path(command[1])).is_file()):
+        if (not command or not plain_path(Path(command[0])).is_file() or
+                (name in {"photon", "nikto"} and not plain_path(Path(command[1])).is_file())):
             raise SetupError("Expected installed entry point is missing; incomplete environment was preserved.")
         with (folder / TOOL_MARKER).open("x", encoding="utf-8") as metadata:
             metadata.write(json.dumps(marker_data(name), sort_keys=True) + "\n")
@@ -471,6 +487,15 @@ class Installer:
         self.command([str(python), "-I", "-m", "pip", "--isolated", "check"])
         self.complete(name, folder)
 
+    def install_nikto(self):
+        self.check_collision("nikto")
+        item = SOURCE_ARCHIVES["nikto"]
+        payload = self.fetch(item["url"])
+        verify_sha256(payload, item["sha256"])
+        folder = self.new_folder("nikto")
+        extract_zip(payload, folder / "source", prefix=item["prefix"])
+        self.complete("nikto", folder)
+
     def update_templates(self, health):
         item = health.get("nuclei", {})
         command = item.get("command") or ([item["path"]] if item.get("path") else None)
@@ -488,7 +513,10 @@ class Installer:
         needed = [name for name in TOOL_NAMES if initial.get(name, {}).get("status") != "ready"]
         missing_templates = nuclei_templates_incomplete(initial)
         install_needed = [name for name in needed if not (name == "nuclei" and missing_templates)]
-        automatic = [name for name in install_needed if name in TOOL_VERSIONS]
+        perl_available = bool(shutil.which("perl.exe") or
+                              (shutil.which("perl") and Path(shutil.which("perl")).suffix.lower() == ".exe"))
+        automatic = [name for name in install_needed if name in TOOL_VERSIONS and
+                     not (name == "nikto" and not perl_available)]
         for name in TOOL_NAMES:
             if name == "nuclei" and missing_templates:
                 status = "TEMPLATE CHECK NEEDS REPAIR — refresh official templates only"
@@ -507,6 +535,8 @@ class Installer:
             try:
                 if name in WINDOWS_RELEASES:
                     self.install_release(name)
+                elif name == "nikto":
+                    self.install_nikto()
                 else:
                     self.install_python(name)
                 new_nuclei |= name == "nuclei"
@@ -533,8 +563,8 @@ class Installer:
                 not_ready.append(name)
         if failures or not_ready:
             self.output("Setup is incomplete. Review the listed tools; existing files and tools were preserved.")
-            return 2 if not failures and not_ready == ["nmap"] else 1
-        self.output("All 8 tools passed local checks; the local Nuclei template version was also found. Refresh Check installed tools in the dashboard.")
+            return 2 if not failures and set(not_ready).issubset(MANUAL_TOOLS) else 1
+        self.output("All 9 tools passed local checks; the local Nuclei template version was also found. Refresh Check installed tools in the dashboard.")
         self.output("These checks do not verify every template file, API credentials, upstream sources, or assessment results.")
         return 0
 

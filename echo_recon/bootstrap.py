@@ -113,7 +113,7 @@ class StartupToolSetup:
                     return
                 missing = [name for name in TOOLS if health.get(name, {}).get("status") != "ready"]
                 if not missing:
-                    self.setup.finish_startup_check("All 8 tools passed local help/identity checks. No setup was needed.")
+                    self.setup.finish_startup_check("All 9 tools passed local help/identity checks. No setup was needed.")
                     return
                 if self.manager.active:
                     self.setup.finish_startup_check(

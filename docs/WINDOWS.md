@@ -59,9 +59,9 @@ The installer prefers Python 3.12. If you have several interpreters:
 
 A normal launch opens **http://127.0.0.1:8001**. Automatic startup help checks keep ready tools and start the fixed setup when needed. Progress appears under **Tool health** / **Download / Setup**. An identical unsuccessful automatic attempt is remembered to prevent restart loops; click **Setup all tools** after fixing its error.
 
-### Seven automatic backends; Nmap confirmation
+### Seven original automatic backends, Nikto and Nmap
 
-Subfinder, ProjectDiscovery HTTPX and Nuclei use verified official Windows x64 ZIPs. DNSRecon, theHarvester, Photon and Arjun have separate versioned Python environments. Storage is:
+Subfinder, ProjectDiscovery HTTPX and Nuclei use verified official Windows x64 ZIPs. DNSRecon, theHarvester, Photon and Arjun have separate versioned Python environments. Nikto source is pinned to its upstream 2.6.1 release and runs through Perl. Install [Strawberry Perl](https://strawberryperl.com/) yourself, then open a new terminal and confirm `perl.exe` is on `PATH`; **Setup all tools** will download Nikto's source and perform the local help check. Echo Recon does not download or silently install a Perl runtime. Nikto retains its own GPL-3.0-only license. Storage is:
 
 ```text
 C:\Users\YOUR-USER\Tools\EchoRecon\tooling
@@ -70,6 +70,8 @@ C:\Users\YOUR-USER\Tools\EchoRecon\tooling
 This location is shared by ordinary desktop launches and packaged-application launches. Older copies in virtualized AppData are not moved or deleted automatically. Windows tools are resolved using explicit managed paths without changing the global PATH.
 
 Nmap uses its [official Windows installer](https://nmap.org/download.html). Complete the license and any administrator confirmations yourself, then recheck. The application does not install Npcap drivers or accept agreements unattended. The Windows adapter uses TCP connect `-sT`, service detection and `-Pn`; this does not add UDP, OS detection or raw-packet scanning.
+
+Nikto is an active web-server scanner. Selecting it with Nuclei makes it a fallback only when Nuclei is missing, unverified or fails; selecting Nikto alone runs a standalone check. The adapter limits its checks to information, configuration/default-file and software-identification groups. Use exact hosts only with permission.
 
 `ready` proves a local help/identity check, not all upstream network/API behavior. Native cancellation uses a Windows Job Object to contain the tool process tree and fails rather than running a tool uncontained if assignment is unavailable. Local process fixtures exercise this behavior; no public assessment has been used as a release certification.
 
@@ -135,7 +137,7 @@ Its default Linux project is `~/Tools/02-Custom/echo-recon-workspace`. It does n
 
 Run the Linux commands **inside Kali**, as the normal user. A Windows-host copy is separate from the guest. Inside the Kali browser, `127.0.0.1:8001` reaches the Kali app. Opening the same address in Windows reaches a Windows listener, not the guest automatically.
 
-VirtualBox-এর Kali-তে সাধারণ user দিয়ে installer/app চালান। Linux package-এর sudo password শুধু Kali Terminal-এ দিন। নতুন চালু app-এ **Check installed tools** ও **Setup all tools** দেখে আটটি tool-এর অবস্থা যাচাই করুন।
+VirtualBox-এর Kali-তে সাধারণ user দিয়ে installer/app চালান। Linux package-এর sudo password শুধু Kali Terminal-এ দিন। নতুন চালু app-এ **Check installed tools** ও **Setup all tools** দেখে নয়টি tool-এর অবস্থা যাচাই করুন।
 
 ## Updates, private data and troubleshooting
 
@@ -145,7 +147,7 @@ Windows inherits NTFS permissions; Unix `chmod` is not a Windows ACL setup. Keep
 
 | Symptom | Check |
 |---|---|
-| Only Nmap appears after a packaged-app installation | Update to 6.5.0 and run **Setup all tools**; it rebuilds missing managed tools in `~/Tools/EchoRecon/tooling` rather than moving old venvs. |
+| Only Nmap appears after a packaged-app installation | Update to 6.6.0 and run **Setup all tools**; it rebuilds missing managed tools in `~/Tools/EchoRecon/tooling` rather than moving old venvs. |
 | Python version/setup error | Use Python 3.12 x64 for Windows bundled backends. An existing broken/unknown/different-Python venv is preserved: back up private data and use a fresh project folder or deliberately recreate the environment after inspection. Dashboard-only is separate. |
 | HTTPX unverified | ProjectDiscovery HTTPX and Python HTTPX are different programs; inspect the resolved path. |
 | Setup failed or partial | Read progress/stderr. Existing unrelated/partial folders are preserved, not silently replaced. Retry deliberately after fixing the issue. |

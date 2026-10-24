@@ -2,7 +2,7 @@
 
 **[English guide](USAGE.md)** · [ইনস্টল](../README.bn.md) · [টুল সেটআপ](TOOLS.md) · [Windows / WSL](WINDOWS.md)
 
-Echo Recon একটি স্থানীয় dashboard। এটি নির্দিষ্ট ক্রমে আটটি আলাদা টুল চালায় এবং তাদের প্রমাণ রিপোর্টে রাখে। Dashboard খুললেই scan শুরু হয় না। এই গাইডে `example.com` শুধু form বোঝানোর নমুনা: **নিজের বা স্পষ্ট অনুমতি থাকা domain দিয়ে এটি বদলাবেন। নমুনা ঠিকানাগুলোতে Start চাপবেন না।**
+Echo Recon একটি স্থানীয় dashboard। এটি নির্দিষ্ট ক্রমে নয়টি আলাদা টুল চালায় এবং তাদের প্রমাণ রিপোর্টে রাখে। Dashboard খুললেই scan শুরু হয় না। এই গাইডে `example.com` শুধু form বোঝানোর নমুনা: **নিজের বা স্পষ্ট অনুমতি থাকা domain দিয়ে এটি বদলাবেন। নমুনা ঠিকানাগুলোতে Start চাপবেন না।**
 
 ## ১. Dashboard খুলুন
 
@@ -29,7 +29,7 @@ Layout বদলালে form-এ লেখা নাম, চলমান job �
 
 Default installer dashboard ও missing backend একসঙ্গে সেটআপ করে। স্বাভাবিক desktop startup-এও আগে স্থানীয় tool দেখে প্রয়োজন হলে fixed installer শুরু হয়। Headless Linux/WSL-এ একই Terminal ব্যবহার হয়, যাতে sudo prompt দেখা যায়। Tool ইনস্টল হলেই scan শুরু হয় না।
 
-1. **Tool health** / **Download / Setup**-এর progress পড়ুন। Windows-এ সাতটি compatible backend আলাদা user folder-এ ইনস্টল হয়। Nmap-এর official Windows installer-এ license/admin confirmation নিজে দিতে হবে।
+1. **Tool health** / **Download / Setup**-এর progress পড়ুন। Windows-এ আগের সাতটি compatible backend আলাদা user folder-এ ইনস্টল হয়; Strawberry Perl PATH-এ থাকলে Nikto source-ও ইনস্টল হয়। Nmap-এর official Windows installer-এ license/admin confirmation নিজে দিতে হবে।
 2. Linux desktop-এ আলাদা visible Terminal খুলবে। Fixed OS package manager চাইলে password **শুধু ওই Terminal-এ** দিন; dashboard বা chat-এ নয়। কাজ শেষ হলে setup Terminal বন্ধ করুন।
 3. সফল/ব্যর্থ হওয়ার বার্তা না আসা পর্যন্ত অপেক্ষা করুন। Download বা Terminal খোলাই সফল ইনস্টল নয়। অন্যের wrapper, অচেনা folder বা অসম্পূর্ণ environment নিজে থেকে overwrite করে না।
 4. **Check installed tools** চাপুন। Main card ও খোলা setup popup-এর ফল একসঙ্গে নতুন হবে।
@@ -124,6 +124,9 @@ Start দেওয়ার আগে দুই জায়গার নমুনা 
 | ৬ | Shallow web crawl — Photon | একটি worker ও delay দিয়ে এক স্তরের crawl করে। | একই run-এ HTTPX যেসব scoped host-কে live পেয়েছে। |
 | ৭ | HTTP parameters — Arjun | একটি worker ও adapter-এর সীমিত settings দিয়ে HTTP input parameter খোঁজে। | একই run-এ HTTPX যেসব scoped host-কে live পেয়েছে। |
 | ৮ | Template checks — Nuclei | পাওয়া low/medium/high/critical template চালায়; নির্দিষ্ট উচ্চপ্রভাবের category বাদ থাকে এবং out-of-band interaction বন্ধ থাকে। Match হাতে যাচাই করতে হয়। | Scope-এর প্রতিটি নির্দিষ্ট host। |
+| ৯ | Web-server checks — Nikto | Tuning group 1, 2, 3 ও b পরীক্ষা করে: interesting file, ভুল/default config file, তথ্য ফাঁস ও software চেনা। এগুলো active request; ফল যাচাই করতে হবে। | Scope-এর নির্দিষ্ট host-প্রতি সর্বোচ্চ একটি HTTP origin। |
+
+Fallback চালু করতে Nuclei ও Nikto দুটোই বাছুন। Nuclei missing, unverified, timeout বা error হলে Nikto চলবে। Nuclei সফলভাবে শেষ হলেও finding না পেলে Nikto **চলবে না**। শুধু Nikto বাছলে এটি আলাদা phase হিসেবে চলে। Report-এ fallback আলাদা ধাপ হিসেবে থাকে এবং দেওয়া scope বাড়ায় না।
 
 Photon বা Arjun বেছে নিলে একই run-এ **Live hosts / HTTPX**-ও বেছে নিন। না হলে confirmed live-host list থাকবে না; ধাপগুলো skipped হবে। বর্তমান Photon/Arjun adapter `https://HOST`-এর মূল ঠিকানা ব্যবহার করে। আলাদা page path দেওয়া যায় না এবং HTTPS ব্যর্থ হলে নিজে থেকে HTTP-তে বদলায় না। HTTPX শুধু HTTP-তে সাড়া পেলেও এই HTTPS check সফল হবে—এমন নিশ্চয়তা নেই।
 
@@ -139,21 +142,22 @@ Form-এ নিজে পূর্ণসংখ্যা লিখুন: **স�
 | Nuclei | Request-rate setting হিসেবে দেয়; concurrency ও batch size এক, retry নেই। |
 | Arjun | Rate-limit setting হিসেবে দেয়; একটি worker। |
 | Photon | `1 / rate` সেকেন্ড delay দেয়; একটি worker। Rate ২ হলে চাওয়া delay ০.৫ সেকেন্ড। |
+| Nikto | একেক test-এর মাঝে `1 / rate` সেকেন্ড বিরতি দেয়। Rate ২ হলে চাওয়া বিরতি ০.৫ সেকেন্ড। |
 | Nmap | `--max-rate` দেয়। এটি scan-packet-এর setting, সব ধরনের web request-এর সর্বজনীন সীমা নয়। সব service check বা OS/network কাজ এতে বাঁধা থাকে না। |
 | DNSRecon, Subfinder, theHarvester | এই adapter-গুলোতে selected rate দেওয়া হয় না। DNS ও public provider-এর যোগাযোগ তাদের নিজস্ব আচরণ অনুযায়ী হয়। |
 
-একেক tool একেক ধরনের কাজ গোনে। তাই এই setting **সব টুলের জন্য একটি মিটারে মাপা মোট request budget নয়**। খুব কম rate বা অল্প সময় দিলে পরীক্ষা অসম্পূর্ণ থাকতে পারে।
+একেক tool একেক ধরনের কাজ গোনে। Nikto-র বিরতি একেক test-এর মাঝে; এটি সব network request গোনার কঠোর মিটার নয়। তাই এই setting **সব টুলের জন্য একটি মিটারে মাপা মোট request budget নয়**। খুব কম rate বা অল্প সময় দিলে পরীক্ষা অসম্পূর্ণ থাকতে পারে।
 
 ### Time per tool / host / প্রতি টুল-হোস্টের সময়
 
-Form-এ নিজে পূর্ণসংখ্যা লিখুন: **১০–১৮০ সেকেন্ড**; default **১২০ সেকেন্ড**। এটি **একটি host-এর জন্য একটি tool চালানোর process-এর সময়সীমা**। পুরো assessment-এর মোট সময়সীমা নয়।
+Form-এ নিজে পূর্ণসংখ্যা লিখুন: **১০–১৮০ সেকেন্ড**; default **১২০ সেকেন্ড**। এটি **একটি host-এর জন্য একটি tool চালানোর process-এর সময়সীমা**। পুরো assessment-এর মোট সময়সীমা নয়। Nikto-কে এই একই সময় সর্বোচ্চ scan সময় এবং dashboard-এর process timeout হিসেবে দেওয়া হয়।
 
 যেমন, ১২০ সেকেন্ড বেছে নিলে প্রথম scoped host-এর HTTPX নিজের সময় পায়। দ্বিতীয় host-এর HTTPX আবার আলাদা সময় পায়। এরপর অন্য selected tool নিজের সময় পায়। কিছু tool-এর ভেতরে আরও ছোট connection/request timeout আছে; তাই কোনো request আগেও ব্যর্থ হতে পারে।
 
 ধাপ ও তাদের host-গুলো একটির পরে আরেকটি চলে। সব কাজ মিলে একটি ১২০-সেকেন্ডের timer ভাগ করে না।
 
-- সহজ বড়সড় হিসাব: `৮ টুল × ৫ host × ১২০ সেকেন্ড = ৪,৮০০ সেকেন্ড`, অর্থাৎ **৮০ মিনিট** process allowance। বর্তমান pipeline-এ এই হিসাব বেশি হয়ে যায়, কারণ তিনটি tool শুধু primary domain-এ চলে।
-- বর্তমান code-এ আটটি check ও পাঁচটি উপযুক্ত host থাকলে সর্বোচ্চ `৩ + (৫ × ৫) = ২৮` বার scanner process চলে। তাই `২৮ × ১২০ = ৩,৩৬০ সেকেন্ড`, অর্থাৎ **৫৬ মিনিট** scanner allowance। Photon/Arjun কম host পেতে পারে বা skipped হতে পারে।
+- সহজ বড়সড় হিসাব: `৯ টুল × ৫ host × ১২০ সেকেন্ড = ৫,৪০০ সেকেন্ড`, অর্থাৎ **৯০ মিনিট** process allowance। বর্তমান pipeline-এ তিনটি tool শুধু primary domain-এ চলে, আর Nuclei বাছা থাকলে Nikto fallback হিসেবে কাজ করে—তাই এটি বেশি হিসাব।
+- পাঁচটি উপযুক্ত host-এ বর্তমান pipeline সর্বোচ্চ `৩ + (৬ × ৫) = ৩৩` বার scanner process চালাতে পারে। তাই `৩৩ × ১২০ = ৩,৯৬০ সেকেন্ড`, অর্থাৎ **৬৬ মিনিট** scanner allowance। Nuclei ও Nikto দুটো বাছলে শুধু যেসব host-এ Nuclei ব্যর্থ হয়েছে, সেখানে Nikto চলে। Photon/Arjun কম host পেতে পারে বা skipped হতে পারে।
 - কোনো হিসাবই ঘড়ি ধরে মোট সময়ের কঠোর সীমা বা আপনার run-এর নিশ্চিত সময় নয়। পরিচয়/help check, বারবার DNS preflight, process খোলা/বন্ধ করা, provider ও অন্যান্য overhead-এ আরও সময় লাগে। DNS lookup scanner process-এর timer-এর মধ্যে নয়। অনেক tool আগেই শেষ হবে, ব্যর্থ হবে বা missing থাকবে। আলাদা whole-job deadline নেই।
 
 কোনো process সময়সীমা পেরোলে সেটি বন্ধ করে **timeout** লেখা হয়। এর অর্থ **পরীক্ষা অসম্পূর্ণ**; “দুর্বলতা নেই” বা “সাইট নিরাপদ” নয়। অন্য selected ধাপ চলতে পারে। সব selected ধাপ সফলভাবে শেষ না হলে সাধারণত পুরো job **partial** হয়। Pipeline-এর গুরুতর সমস্যায় পুরো job **error**-ও হতে পারে। সময় বাড়ালে বেশি সময় পাবে; কিন্তু missing tool, ভুল scope বা বন্ধ provider ঠিক হবে না।
@@ -189,7 +193,7 @@ Job শেষ হলে **View report**, **HTML** বা **JSON** ব্যব�
 | `complete` | সব selected ধাপ `done` হয়েছে। Command সফল, কিন্তু সাইট নিরাপদ প্রমাণ নয়। |
 | `partial` | অন্তত একটি selected ধাপ অসম্পূর্ণ বা অসফল। |
 
-Report-এর **Selected Tools**, **Completed Phases** ও **Incomplete Phases** ধাপের সংখ্যা; যাচাই করা vulnerability-এর সংখ্যা নয়। **Automated Findings** হলো parse করা finding-এর সংখ্যা; সব নিরাপত্তা সমস্যার হিসাব নয়। Nuclei match হাতে পরীক্ষা না করা পর্যন্ত **unverified automated finding**। শূন্য finding-এর কারণ সীমিত coverage, template-এর সমস্যা, source বন্ধ থাকা বা এই run-এ match না পাওয়া হতে পারে।
+Report-এর **Selected Tools**, **Completed Phases** ও **Incomplete Phases** ধাপের সংখ্যা; যাচাই করা vulnerability-এর সংখ্যা নয়। **Automated Findings** হলো parse করা finding-এর সংখ্যা; সব নিরাপত্তা সমস্যার হিসাব নয়। Nuclei match হাতে পরীক্ষা না করা পর্যন্ত **unverified automated finding**। Nikto-র output report-এ evidence text হিসেবে থাকে, আলাদা finding হিসেবে parse হয় না। শূন্য finding-এর কারণ সীমিত coverage, template-এর সমস্যা, source বন্ধ থাকা বা এই run-এ match না পাওয়া হতে পারে।
 
 Report-এর **Tool execution time** scanner-এর record করা সময়ের যোগফল। আপনি মোট যতক্ষণ অপেক্ষা করেছেন তার সমান নয়; help check ও DNS-এর overhead এতে নেই। Report-এর timestamp UTC-তে থাকে; dashboard আপনার browser-এর স্থানীয় সময় দেখাতে পারে।
 

@@ -35,7 +35,7 @@ In the GitHub repository's **Settings → Secrets and variables → Actions**:
 
 Keep a protected backup of the private key. Do not commit it or send it in chat. The release workflow checks that the secret key matches the public fingerprint variable before publishing. After the first signed release, the public key and fingerprint appear in the generated `apt-repo` branch.
 
-Publish a Git tag matching `echo_recon/__init__.py`, for example `v6.5.0`, only after configuring these values. Each later package release needs a version bump and a matching `vX.Y.Z` tag. The first feed is not available until the signing key is configured and the first release workflow succeeds.
+Publish a Git tag matching `echo_recon/__init__.py`, for example `v6.6.0`, only after configuring these values. Each later package release needs a version bump and a matching `vX.Y.Z` tag. The first feed is not available until the signing key is configured and the first release workflow succeeds.
 
 ## Kali user: add the feed and install
 
@@ -109,7 +109,7 @@ GitHub repository-এর **Settings → Secrets and variables → Actions**-এ:
 
 Private key নিরাপদে backup রাখুন; GitHub-এ commit বা chat-এ পাঠাবেন না। Release workflow secret key ও public fingerprint মিলিয়ে তারপর publish করে। প্রথম signed release-এর পরে public key ও fingerprint `apt-repo` branch-এ থাকবে।
 
-এই মানগুলো বসানোর পর `echo_recon/__init__.py`-এর version-এর সঙ্গে মেলে এমন Git tag publish করুন—যেমন `v6.5.0`। পরের release-এ version bump করে একই version-এর `vX.Y.Z` tag দিন। Signing key configure এবং প্রথম release সফল না হওয়া পর্যন্ত APT feed চালু হবে না।
+এই মানগুলো বসানোর পর `echo_recon/__init__.py`-এর version-এর সঙ্গে মেলে এমন Git tag publish করুন—যেমন `v6.6.0`। পরের release-এ version bump করে একই version-এর `vX.Y.Z` tag দিন। Signing key configure এবং প্রথম release সফল না হওয়া পর্যন্ত APT feed চালু হবে না।
 
 ### Kali user: feed যোগ ও install করুন
 

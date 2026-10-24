@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.6.0 — 2026-10-24
+
+- Added Nikto as the ninth selectable tool and optional standalone check / Nuclei fallback, with bounded tuning categories and per-host time/rate controls.
+- Added pinned official Nikto source setup for portable Linux families and native Windows when Perl is already installed; Kali uses its distro package.
+- Updated English/Bengali setup, Windows, platform and usage guides; versioned the release for future signed APT packaging.
+
 ## 6.3.0 — 2026-10-24
 
 - Added in-app bilingual usage guidance and full English/Bengali guides for every field, rate/timeout semantics, tool behavior and evidence states.
