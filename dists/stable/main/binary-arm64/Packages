@@ -1,0 +1,18 @@
+Package: echo-recon
+Version: 6.6.0
+Architecture: all
+Maintainer: Echo Recon Contributors
+Depends: python3 (>= 3.11), python3-flask, python3-venv, git, ca-certificates
+Filename: pool/main/e/echo-recon/echo-recon_6.6.0_all.deb
+Size: 55544
+MD5sum: b28b7c15381b8b2350f15508b527d4f7
+SHA1: 40af201af97ac5d0929f5a639c17eb12bee5828d
+SHA256: c6c9e76d3090d036f414fec5a412d6c8854085f56e106be9490a9e370bd2cb14
+Section: utils
+Priority: optional
+Homepage: https://github.com/mdnhbn/echo-recon-workspace
+Description: local Echo Recon assessment dashboard
+ A local-only dashboard for authorized, scoped security assessments. The
+ package installs the dashboard; its optional scanner backends remain in the
+ normal user's home folder.
+

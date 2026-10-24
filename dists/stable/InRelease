@@ -1,0 +1,49 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Architectures: amd64 arm64
+Codename: stable
+Components: main
+Date: Sat, 24 Oct 2026 17:40:43 +0000
+Description: Echo Recon signed Kali/Debian package feed
+Label: Echo Recon
+Origin: Echo Recon
+Suite: stable
+MD5Sum:
+ 93077408549ed471892d74cac4c41131              206 Release
+ 952658aba6be661ae7232b8aa7155b91              719 main/binary-amd64/Packages
+ 7c68d98a395adbf1688bc514f5054d50              498 main/binary-amd64/Packages.gz
+ 952658aba6be661ae7232b8aa7155b91              719 main/binary-arm64/Packages
+ 7c68d98a395adbf1688bc514f5054d50              498 main/binary-arm64/Packages.gz
+SHA1:
+ 8a06057e277a8f34a55f41a4c33229f360fdc703              206 Release
+ 0a357770ee0de04018a08fbaae09b5768df7dcc6              719 main/binary-amd64/Packages
+ 40b0f9fb6fcb2ff904a7dba180d9996411f06c98              498 main/binary-amd64/Packages.gz
+ 0a357770ee0de04018a08fbaae09b5768df7dcc6              719 main/binary-arm64/Packages
+ 40b0f9fb6fcb2ff904a7dba180d9996411f06c98              498 main/binary-arm64/Packages.gz
+SHA256:
+ f4af38c80a5ddffb225d2b1e8f61da8e06a0bb812fc56c154d38958902fa010d              206 Release
+ 1c4ffc9f4602572b9a241f5ea51294c397eebe4be827105a457a58068fa5be1c              719 main/binary-amd64/Packages
+ f4b76dd4540f9f5ad14a759f53c738a072a6f1e4c4755fc3bbafbcb9d4dd83f7              498 main/binary-amd64/Packages.gz
+ 1c4ffc9f4602572b9a241f5ea51294c397eebe4be827105a457a58068fa5be1c              719 main/binary-arm64/Packages
+ f4b76dd4540f9f5ad14a759f53c738a072a6f1e4c4755fc3bbafbcb9d4dd83f7              498 main/binary-arm64/Packages.gz
+SHA512:
+ cfc6d9c8a4589f4da3ab054d745283b15d732e9deb7ce93847ae0de0afced68eda2b909f1c185e9091faf5fbeac65b75170686bcb74d41dd1e42826ce1016811              206 Release
+ 7989765bec30654c43b96674f6a1426bb79829f73a7a176e4b8cdb51e5e2b535ffaf5f7a91ff751f220ccd195bc09b768053eba863a9354032dfa7f8574dcb61              719 main/binary-amd64/Packages
+ 12a2c6f4b4971bacd61b5478da2f78b5e9f26d73538348d066a7329bcd686c9d7263d8c6d0ef90be9ee55a4eb4ded9a834c261006330d02b5b12a966a1fe8d94              498 main/binary-amd64/Packages.gz
+ 7989765bec30654c43b96674f6a1426bb79829f73a7a176e4b8cdb51e5e2b535ffaf5f7a91ff751f220ccd195bc09b768053eba863a9354032dfa7f8574dcb61              719 main/binary-arm64/Packages
+ 12a2c6f4b4971bacd61b5478da2f78b5e9f26d73538348d066a7329bcd686c9d7263d8c6d0ef90be9ee55a4eb4ded9a834c261006330d02b5b12a966a1fe8d94              498 main/binary-arm64/Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iQGzBAEBCgAdFiEES0rIXfZgi3vZUXjmse/gWGCQdHYFAmrc7ZsACgkQse/gWGCQ
+dHaasgv9FvfEBTd+HkK0e1i8iWQUI9vD5w8wX7CrHCY0ESCrwix/lWErTwT96bC6
+cm2RkjBDw4e39To6Dz4kP6SLX639mm8kiRHDN8lKpbp6DM10pJDoDCIs8Xbd5lsW
+vxpddfvOByDpi7RzD4HFqVn7MZNgn5nr76lnx9OOxPaAWglWo6O5nj2GjvQP6SOW
+yVkoEpFO1g9q6DEvsDIJu/H1TDEs86tBK2ErkuZcigWs1T/wyg1lcIRKluZ8evFX
+aU0kXNdrYdN/zPXnK5HyqMAS4/CpekkttTIU4rKkYQPc9nQJGNBAK3paMBjNG6Nl
+YBn2BxLZMCC+n1VWEL6YVttKTB7TpclIFPnfec2naZGFl176pAD4IiZsoS0SP1F6
+bT0YPvkZVPg3IdxPNoQIaf8V3u59nNRvYlPcr//MLzrMwy15aLmouTIn0ObXbsib
+L7FZTyfCvxcollkq8GM/Rd9Q72HDeS/2qrEi90cwvWkKEHNRc84x2WufYIGDEM4X
+gOEE+NZU
+=ttPq
+-----END PGP SIGNATURE-----
