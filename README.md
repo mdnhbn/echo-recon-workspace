@@ -105,7 +105,7 @@ Headless Linux/WSL runs the fixed setup directly in its terminal so sudo prompts
 1. On a normal startup, local help/identity checks run. If everything is ready, nothing is downloaded.
 2. Missing backends are set up together through the repository's fixed installer. Windows progress appears in the dashboard; a Linux desktop opens a visible setup terminal.
 3. An identical unsuccessful desktop automatic attempt is remembered in private `data/auto-setup.json` so each restart does not repeat the same failure. Read the error and click **Setup all tools** for a deliberate retry.
-4. **Check installed tools** refreshes readiness. `ready` means local help/identity passed; it does not certify API credentials, templates, upstream services or scan results. `unverified` means inspect the found path/version before reinstalling.
+4. **Check installed tools** refreshes readiness. `ready` means local help/identity passed; for Nuclei it also means the local official template version was found. This does not verify every template file, API credentials, upstream services or scan results. `unverified` means inspect the found path/version before reinstalling; **Setup all tools** can refresh Nuclei's official templates without reinstalling its engine.
 5. To skip startup setup, use `bash run.sh --no-tool-setup`, `.\run.ps1 -NoToolSetup`, or `python app.py --no-tool-setup`. To suppress browser opening too, add `--no-browser` / `-NoBrowser`.
 
 Working system tools stay in place. Unknown folders, conflicting wrappers and incomplete tool environments are preserved rather than overwritten. See [the tool setup and retry guide](docs/TOOLS.md).

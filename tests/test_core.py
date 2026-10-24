@@ -159,6 +159,18 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(job["phases"][0]["status"], "error")
         self.assertNotIn("No automated findings", job["phases"][0]["evidence"])
 
+    def test_manual_rate_and_timeout_values_are_kept_with_safe_bounds(self):
+        manager = self.manager(lambda *a, **kw: Result("done", 0, ""))
+        payload = self.payload(["nuclei"])
+        payload.update(rate=4, timeout=47)
+        job = self.store.get(manager.start(payload, background=False))
+        self.assertEqual(job["settings"], {"rate": 4, "timeout": 47})
+        for key, value in (("rate", 0), ("rate", 6), ("timeout", 9), ("timeout", 181), ("timeout", 1.5)):
+            invalid = self.payload(["nuclei"])
+            invalid[key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                manager.start(invalid, background=False)
+
     def test_subdomain_discovery_does_not_expand_active_scope(self):
         calls = []
         def execute(args, **kwargs):

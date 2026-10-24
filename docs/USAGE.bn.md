@@ -37,7 +37,7 @@ Default installer dashboard ও missing backend একসঙ্গে সেট�
 
 | অবস্থা | অর্থ | কী করবেন |
 |---|---|---|
-| `ready` | স্থানীয় help/পরিচয় ও adapter-এর প্রয়োজনীয় flag মিলেছে। | প্রয়োজনীয় check বেছে নিন; API/template/provider-এর নিশ্চয়তা নয়। |
+| `ready` | স্থানীয় help/পরিচয় ও adapter-এর flag মিলেছে; Nuclei-র স্থানীয় official template version-ও পাওয়া গেছে। | প্রতিটি template file বা provider যাচাই নয়। প্রয়োজনীয় check বেছে নিয়ে ফল দেখুন। |
 | `missing` | Managed path/PATH-এ উপযুক্ত command পাওয়া যায়নি। | এই server যে environment-এ চলে, সেখানেই install করে recheck করুন। |
 | `unverified` | Program পাওয়া গেছে, কিন্তু help/পরিচয় মেলেনি। | আগে resolved path ও version দেখুন; অন্ধভাবে reinstall নয়। |
 
@@ -131,7 +131,7 @@ Photon বা Arjun বেছে নিলে একই run-এ **Live hosts / H
 
 ### Tool rate ceiling / গতি সীমা
 
-Form-এ **সেকেন্ডে ১, ২ বা ৫** বেছে নেওয়া যায়। Default **২**। ১ দিলে যেসব adapter সেটি ব্যবহার করে, সেগুলোকে তুলনামূলক ধীর setting দেওয়া হয়। এর মানে পুরো কম্পিউটার, পুরো assessment বা প্রতিটি secondary connection মিলিয়ে সেকেন্ডে একটি request-এর নিশ্চয়তা নয়।
+Form-এ নিজে পূর্ণসংখ্যা লিখুন: **সেকেন্ডে ১–৫**। Default **২**। ১ দিলে যেসব adapter সেটি ব্যবহার করে, সেগুলোকে তুলনামূলক ধীর setting দেওয়া হয়। এর মানে পুরো কম্পিউটার, পুরো assessment বা প্রতিটি secondary connection মিলিয়ে সেকেন্ডে একটি request-এর নিশ্চয়তা নয়।
 
 | Adapter | বেছে দেওয়া rate কীভাবে ব্যবহার করে |
 |---|---|
@@ -146,7 +146,7 @@ Form-এ **সেকেন্ডে ১, ২ বা ৫** বেছে নেও
 
 ### Time per tool / host / প্রতি টুল-হোস্টের সময়
 
-Form-এ **৩০, ৬০, ১২০ বা ১৮০ সেকেন্ড** পাওয়া যায়; default **১২০ সেকেন্ড**। এটি **একটি host-এর জন্য একটি tool চালানোর process-এর সময়সীমা**। পুরো assessment-এর মোট সময়সীমা নয়।
+Form-এ নিজে পূর্ণসংখ্যা লিখুন: **১০–১৮০ সেকেন্ড**; default **১২০ সেকেন্ড**। এটি **একটি host-এর জন্য একটি tool চালানোর process-এর সময়সীমা**। পুরো assessment-এর মোট সময়সীমা নয়।
 
 যেমন, ১২০ সেকেন্ড বেছে নিলে প্রথম scoped host-এর HTTPX নিজের সময় পায়। দ্বিতীয় host-এর HTTPX আবার আলাদা সময় পায়। এরপর অন্য selected tool নিজের সময় পায়। কিছু tool-এর ভেতরে আরও ছোট connection/request timeout আছে; তাই কোনো request আগেও ব্যর্থ হতে পারে।
 

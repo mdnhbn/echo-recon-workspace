@@ -21,15 +21,15 @@ app.example.com</pre>এগুলো উদাহরণ—নিজের অন
   </section>
   <section class="guide-section" id="guide-rate">
     <h3>4. Rate ceiling / গতিসীমা কেন?</h3>
-    <p>Think of sending letters slowly instead of sending a pile at once. Lower rates reduce bursts and load. The default is <b>2/second</b>; available choices are 1, 2 and 5. A cautious first run can use 1.</p>
+    <p>Enter a whole number from <b>1 to 5 requests/second</b>; the default is <b>2</b>. Lower rates reduce bursts and load. A cautious first run can use 1.</p>
     <p>HTTPX, Arjun and Nuclei receive their rate-limit settings. Nmap uses a packet-rate ceiling. Photon uses a delay (2/second → 0.5-second delay). DNSRecon, Subfinder and theHarvester do not receive this rate setting. It is <b>not a guaranteed global request/packet budget</b>, and speed does not determine whether you have permission.</p>
-    <p>গতিসীমা কম রাখলে server-এর ওপর চাপ কমতে পারে, তবে শেষ হতে বেশি সময় লাগতে পারে। সব tool একভাবে গতি নিয়ন্ত্রণ করে না।</p>
+    <p>সেকেন্ডে ১–৫-এর মধ্যে পূর্ণসংখ্যা লিখুন; default ২। গতিসীমা কম রাখলে server-এর ওপর চাপ কমতে পারে, তবে শেষ হতে বেশি সময় লাগতে পারে। সব tool একভাবে গতি নিয়ন্ত্রণ করে না।</p>
   </section>
   <section class="guide-section" id="guide-time">
     <h3>5. Time per tool / host / ১২০ সেকেন্ড কী?</h3>
-    <p><b>120 seconds = a two-minute process budget for one tool's attempt on one host.</b> If it finishes in 8 seconds, the next attempt starts then; it does not wait for the full 120. If it is still running at the limit, the process is stopped and that attempt is marked <b>timeout</b>; cleanup can add a little time. Earlier output may be kept, but the result is incomplete.</p>
-    <p>This prevents a slow or stuck tool holding the queue indefinitely. A longer allowance may collect more evidence but also takes longer. Choose 30/60/120/180 seconds. Lower rate plus a short limit can leave a stage unfinished; inspect the report before changing the settings.</p>
-    <p>এটি পুরো job-এর মোট সময় নয়। আটটি tool এবং একটি host হলে শুধু process-এর সময়সীমাগুলো যোগ করে প্রায় ১৬ মিনিট পর্যন্ত হতে পারে। পাঁচটি host-এ সব ধাপ চললে বর্তমান pipeline-এ সর্বোচ্চ ২৮টি attempt: ১২০ সেকেন্ডে প্রায় ৫৬ মিনিট process allowance। Help/DNS/provider/startup/cleanup-এর বাড়তি সময় থাকতে পারে; এটি wall-clock deadline নয়। বাস্তবে দ্রুত শেষ হতে পারে বা কিছু ধাপ skipped হতে পারে।</p>
+    <p>Enter a whole number from <b>10 to 180 seconds</b>; the default is <b>120</b>. This is the process budget for one tool's attempt on one host. If it finishes in 8 seconds, the next attempt starts then; it does not wait for the full 120. If it is still running at the limit, the process is stopped and that attempt is marked <b>timeout</b>; cleanup can add a little time. Earlier output may be kept, but the result is incomplete.</p>
+    <p>This prevents a slow or stuck tool holding the queue indefinitely. A longer allowance may collect more evidence but also takes longer. Enter a whole-second value within the range. Lower rate plus a short limit can leave a stage unfinished; inspect the report before changing the settings.</p>
+    <p>১০–১৮০ সেকেন্ডের মধ্যে পূর্ণসংখ্যা লিখুন; default ১২০। এটি পুরো job-এর মোট সময় নয়। আটটি tool এবং একটি host হলে শুধু process-এর সময়সীমাগুলো যোগ করে প্রায় ১৬ মিনিট পর্যন্ত হতে পারে। পাঁচটি host-এ সব ধাপ চললে বর্তমান pipeline-এ সর্বোচ্চ ২৮টি attempt: ১২০ সেকেন্ডে প্রায় ৫৬ মিনিট process allowance। Help/DNS/provider/startup/cleanup-এর বাড়তি সময় থাকতে পারে; এটি wall-clock deadline নয়। বাস্তবে দ্রুত শেষ হতে পারে বা কিছু ধাপ skipped হতে পারে।</p>
   </section>
   <section class="guide-section" id="guide-checks">
     <h3>6. What each check does / কোন tool কী করে?</h3>

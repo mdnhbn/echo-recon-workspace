@@ -115,7 +115,7 @@ Desktop-এ browser নিজে থেকে **http://127.0.0.1:8001** খো�
 2. Missing থাকলে একসঙ্গে সেটআপ হয়। Windows-এর progress dashboard-এ; Linux desktop-এ আলাদা Terminal-এ দেখা যায়।
 3. Headless Linux/WSL-এ `run.sh` একই Terminal-এ setup চালায়, যাতে sudo prompt দেখা যায়।
 4. একই ব্যর্থ desktop automatic চেষ্টা `data/auto-setup.json`-এ মনে রাখে। শুধু restart দিলে বারবার একই download চালায় না। Error পড়ে **Setup all tools** দিয়ে retry করুন।
-5. **Check installed tools** আবার চাপুন। `ready` শুধু help/পরিচয় যাচাই পাস; API, template, provider বা scan-এর ফলের নিশ্চয়তা নয়। `unverified` হলে আগে version/path দেখুন।
+5. **Check installed tools** আবার চাপুন। `ready` হলে local help/পরিচয় পাস; Nuclei-র ক্ষেত্রে local official template version-ও পাওয়া গেছে। তবে প্রতিটি template file, API, provider বা scan result যাচাই হয় না। Nuclei template version না পাওয়া গেলে **Setup all tools** engine reinstall না করে official template refresh করার চেষ্টা করে। `unverified` হলে version/path ও দেখানো error দেখুন।
 6. অন্য project-এর wrapper, অচেনা folder বা অসম্পূর্ণ environment নিজে থেকে overwrite করে না।
 
 শুধু dashboard ইনস্টল করতে `bash install.sh --dashboard-only` বা `.\install.ps1 -DashboardOnly` দিন। পরে automatic backend setup-ও বন্ধ রাখতে চালান:

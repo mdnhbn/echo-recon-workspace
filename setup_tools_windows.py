@@ -474,7 +474,7 @@ class Installer:
     def update_templates(self, health):
         item = health.get("nuclei", {})
         command = item.get("command") or ([item["path"]] if item.get("path") else None)
-        if item.get("status") != "ready" or not command:
+        if item.get("engine_status", item.get("status")) != "ready" or not command:
             raise SetupError("Nuclei did not pass its local identity check; templates were not updated.")
         if isinstance(command, str) or any(not isinstance(arg, str) for arg in command):
             raise SetupError("Nuclei diagnostic command is invalid; templates were not updated.")
@@ -482,12 +482,20 @@ class Installer:
         self.command([*command, "-update-templates", "-duc"])
 
     def install(self, update_templates=False):
+        from echo_recon.tools import nuclei_templates_incomplete
+
         initial = self.health()
         needed = [name for name in TOOL_NAMES if initial.get(name, {}).get("status") != "ready"]
-        automatic = [name for name in needed if name in TOOL_VERSIONS]
+        missing_templates = nuclei_templates_incomplete(initial)
+        install_needed = [name for name in needed if not (name == "nuclei" and missing_templates)]
+        automatic = [name for name in install_needed if name in TOOL_VERSIONS]
         for name in TOOL_NAMES:
-            self.output(f"{name}: " + ("SKIP — existing tool passed local checks" if name not in needed else
-                                      ("MANUAL — " + MANUAL_TOOLS[name] if name in MANUAL_TOOLS else "needs setup")))
+            if name == "nuclei" and missing_templates:
+                status = "TEMPLATE CHECK NEEDS REPAIR — refresh official templates only"
+            else:
+                status = ("SKIP — existing tool passed local checks" if name not in needed else
+                          ("MANUAL — " + MANUAL_TOOLS[name] if name in MANUAL_TOOLS else "needs setup"))
+            self.output(f"{name}: {status}")
         if automatic:
             self.check_storage()
             # Check every collision before the first download or command.
@@ -505,10 +513,11 @@ class Installer:
             except (SetupError, OSError) as exc:
                 failures.append(name)
                 self.output(f"SETUP ERROR — {name}: {exc}")
-        final = self.health() if automatic or update_templates else initial
-        if new_nuclei or update_templates:
+        final = self.health() if automatic or update_templates or missing_templates else initial
+        if new_nuclei or update_templates or missing_templates:
             try:
                 self.update_templates(final)
+                final = self.health()
             except SetupError as exc:
                 failures.append("nuclei templates")
                 self.output(f"TEMPLATE ERROR — {exc}")
@@ -525,8 +534,8 @@ class Installer:
         if failures or not_ready:
             self.output("Setup is incomplete. Review the listed tools; existing files and tools were preserved.")
             return 2 if not failures and not_ready == ["nmap"] else 1
-        self.output("All 8 tools passed local help/identity checks. Refresh Check installed tools in the dashboard.")
-        self.output("Readiness does not guarantee API credentials, templates, upstream sources, or assessment results.")
+        self.output("All 8 tools passed local checks; the local Nuclei template version was also found. Refresh Check installed tools in the dashboard.")
+        self.output("These checks do not verify every template file, API credentials, upstream sources, or assessment results.")
         return 0
 
 

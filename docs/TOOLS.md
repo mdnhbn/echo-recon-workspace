@@ -64,7 +64,7 @@ The native adapter runs limited TCP connect/service detection (`-sT -sV`, top 10
 
 | Status | Meaning | What to do |
 |---|---|---|
-| `ready` | Local identity/help checks passed, including required adapter flags. | Select only the checks needed; this is not a full network/API compatibility or security audit. |
+| `ready` | Local identity/help checks passed, including required adapter flags; Nuclei also reports its local official template version. | This does not verify every template file or provider. Select only the checks needed; it is not a full compatibility or security audit. |
 | `missing` | No suitable command was found in the server's managed paths/PATH. | Install in that same environment and recheck. |
 | `unverified` | A command exists but identity/help requirements failed. | Inspect its path/version before reinstalling. |
 
@@ -89,7 +89,7 @@ Fixed releases/commits and their pins are visible in the installer source. Keep 
 
 ## Templates, accounts and retry
 
-New Nuclei engines download current official templates; existing ready engines/templates are kept by default. An explicit refresh is:
+New Nuclei engines download current official templates; existing ready engines/templates are kept by default. The readiness check separately reads Nuclei's local template version without updating or scanning. If its engine is healthy but the template version is missing or cannot be checked, **Setup all tools** retries only the official template download rather than reinstalling the Nuclei engine. This confirms the version metadata, not every template file or upstream provider. An explicit refresh is:
 
 ```bash
 .venv/bin/python setup_tools.py --install --update-templates
@@ -103,4 +103,4 @@ Windows equivalent:
 
 Templates are changing upstream content, not a pinned template snapshot or saved findings. Installation does not create paid accounts/API keys or enable out-of-band interaction. Configure needed accounts privately with the upstream tool's own instructions; do not paste secrets in the dashboard or commit them.
 
-If setup fails, read its progress, fix the stated Python/package/path/network issue, then use **Setup all tools** or the CLI `--install` command. Exit zero/final local checks is installation evidence, not proof that every provider or assessment works. Do not treat missing templates or failed providers as a clean security result.
+If setup fails, read its progress, fix the stated Python/package/path/network issue, then use **Setup all tools** or the CLI `--install` command. Exit zero/final local checks is installation evidence, not proof that every template file, provider or assessment works. Do not treat missing templates or failed providers as a clean security result.

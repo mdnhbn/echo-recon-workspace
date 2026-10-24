@@ -97,8 +97,15 @@ class WindowsSetupTests(unittest.TestCase):
 
     def installer(self, *states):
         iterator = iter(states or [health()])
+        last = [None]
+        def check_tools():
+            try:
+                last[0] = next(iterator)
+            except StopIteration:
+                pass
+            return last[0]
         return setup.Installer(local_app_data=self.local, run=self.commands, fetch=self.fetch,
-                               check_tools=lambda: next(iterator), output=self.messages.append,
+                               check_tools=check_tools, output=self.messages.append,
                                python=str(self.local / "trusted-python.exe"))
 
     def test_default_and_explicit_plan_are_read_only(self):
@@ -153,6 +160,16 @@ class WindowsSetupTests(unittest.TestCase):
         self.assertEqual(self.fetches, [])
         self.assertEqual(sentinel.read_text(), "keep")
         self.assertFalse(setup.managed_root(self.local).exists())
+
+    def test_nuclei_template_only_repair_does_not_reinstall_engine_or_other_tools(self):
+        initial, final = health(), health()
+        initial["nuclei"].update(status="unverified", engine_status="ready", template_status="missing")
+        final["nuclei"].update(engine_status="ready", template_status="ready", template_version="v10.5.0")
+        installer = self.installer(initial, final)
+        self.assertEqual(installer.install(), 0)
+        self.assertEqual(len(self.commands.calls), 1)
+        self.assertEqual(self.commands.calls[0][0], [str(Path("C:/mock-tools/nuclei.exe")), "-update-templates", "-duc"])
+        self.assertEqual(self.fetches, [])
 
     def test_missing_nmap_only_is_manual_exit_two_with_no_installer_launch(self):
         self.assertEqual(self.installer(health("nmap")).install(), 2)

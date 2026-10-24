@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import threading
 from urllib.parse import urlsplit
@@ -67,6 +68,27 @@ def resolve_tool(name):
     return (path,) if path else None
 
 
+def nuclei_templates_incomplete(health):
+    """True when the Nuclei engine is healthy but its local template metadata is not."""
+    item = health.get("nuclei", {}) if isinstance(health, dict) else {}
+    return item.get("engine_status") == "ready" and item.get("template_status") != "ready"
+
+
+def nuclei_template_health(prefix, cancel=None):
+    """Read Nuclei's local template version without auto-updating or scanning."""
+    result = run([*prefix, "-tv", "-duc"], cancel=cancel or threading.Event(), timeout=10, max_bytes=80_000)
+    output = result.stdout + "\n" + result.stderr
+    match = re.search(r"public nuclei-templates version:\s*([^\s(]+)", output, flags=re.IGNORECASE)
+    if result.status == "done" and result.returncode == 0 and match:
+        return {"template_status": "ready", "template_version": match.group(1),
+                "template_detail": f"Official Nuclei templates {match.group(1)} found locally"}
+    if result.status == "done" and result.returncode == 0:
+        return {"template_status": "missing", "template_version": None,
+                "template_detail": "Nuclei engine is present, but its local template version was not found; Setup all tools will retry the official template download"}
+    return {"template_status": "unverified", "template_version": None,
+            "template_detail": f"Local Nuclei template check did not finish ({result.status}); Setup all tools can retry the official template download"}
+
+
 def tool_sources():
     guide = "https://github.com/mdnhbn/echo-recon-workspace/blob/main/docs/TOOLS.md"
     return {name: {"label": TOOLS[name][0], "url": url, "setup_url": guide,
@@ -91,9 +113,22 @@ def diagnostics(cancel=None):
             valid = check.returncode == 0 and identity in banner
             # ProjectDiscovery's help identifies itself; Python HTTPX has different flags.
             valid = valid and all(flag in banner for flag in required.get(name, ()))
-            item.update(status="ready" if valid else "unverified",
-                        detail="Identity/help check passed" if valid else "Help/identity check failed; inspect version/PATH",
-                        banner=(check.stdout + check.stderr)[:350])
+            if name == "nuclei":
+                item["engine_status"] = "ready" if valid else "unverified"
+                if valid:
+                    item.update(nuclei_template_health(prefix, cancel=cancel))
+                else:
+                    item.update(template_status="unknown", template_version=None,
+                                template_detail="Engine check failed; template data was not checked")
+                ready = valid and item.get("template_status") == "ready"
+                detail = (item["template_detail"] if valid else
+                          "Help/identity check failed; inspect version/PATH")
+                item.update(status="ready" if ready else "unverified", detail=detail,
+                            banner=(check.stdout + check.stderr)[:350])
+            else:
+                item.update(status="ready" if valid else "unverified",
+                            detail="Identity/help check passed" if valid else "Help/identity check failed; inspect version/PATH",
+                            banner=(check.stdout + check.stderr)[:350])
         result[name] = item
     return result
 

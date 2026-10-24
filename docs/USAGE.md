@@ -37,7 +37,7 @@ The default installer sets up the dashboard and missing backends together. Norma
 
 | State | Meaning | Next step |
 |---|---|---|
-| `ready` | Matching identity/help and required adapter flags passed locally. | Select only needed checks; API/template/provider behavior still needs review. |
+| `ready` | Matching identity/help and required adapter flags passed locally; Nuclei also reports its local official template version. | This does not validate every template file or provider. Select only needed checks and review results. |
 | `missing` | No suitable command was found in managed paths/PATH. | Set up the tool in the same environment as this server, then recheck. |
 | `unverified` | A command exists but identity/help requirements failed. | Inspect its resolved path/version before reinstalling. |
 
@@ -65,7 +65,7 @@ Finish/stop any assessment first. From the repository, as your normal user:
 
 Default/`--plan` prints the fixed plan without running commands/help checks, downloading or writing. `--install` performs setup and accepts no target. Never run the full installer with sudo; only fixed OS package operations request elevation in their terminal. See [TOOLS.md](TOOLS.md) for supported package managers, architectures and Python requirements.
 
-New Nuclei engines download official templates; existing ready engines/templates are kept unless an explicit template update is requested. Setup does not create paid accounts or API keys. A changing template set or unavailable provider can affect results despite local readiness.
+New Nuclei engines download official templates; existing ready engines/templates are kept unless an explicit template update is requested. **Check installed tools** confirms Nuclei's local engine identity and reports an official template version when present. If the version is missing or cannot be checked, **Setup all tools** refreshes templates without reinstalling the engine. This local check does not validate every template file, provider access or assessment results. Setup does not create paid accounts or API keys.
 
 For dashboard-only installation use `bash install.sh --dashboard-only` or `.\install.ps1 -DashboardOnly`. To skip automatic setup on launch use `bash run.sh --no-tool-setup`, `.\run.ps1 -NoToolSetup` or `python app.py --no-tool-setup`. Browser suppression is separate: `--no-browser` / `-NoBrowser`.
 
@@ -131,7 +131,7 @@ Select **Live hosts / HTTPX** in the same run when using Photon or Arjun. Otherw
 
 ### Tool rate ceiling
 
-The form offers **1, 2 or 5 per second**; the default is **2**. Choosing 1 requests a slower setting where the adapter supports it. It does **not** guarantee the whole computer, whole assessment or every secondary connection stays under one request per second.
+Enter any whole number from **1 to 5 per second**; the default is **2**. Choosing 1 requests a slower setting where the adapter supports it. It does **not** guarantee the whole computer, whole assessment or every secondary connection stays under one request per second.
 
 | Adapter | How the selected rate is used |
 |---|---|
@@ -146,7 +146,7 @@ These tools count different operations. The setting is a collection of tool-spec
 
 ### Time per tool / host
 
-The form offers **30, 60, 120 or 180 seconds**; the default is **120 seconds**. This is the process allowance for **one tool invocation on one host**, not the deadline for the whole assessment.
+Enter any whole-second value from **10 to 180**; the default is **120 seconds**. This is the process allowance for **one tool invocation on one host**, not the deadline for the whole assessment.
 
 For example, with a 120-second allowance, HTTPX on the first scoped host can use up to that allowance; HTTPX on the next scoped host gets its own allowance. Another selected tool then gets its own allowance. Tools also have some shorter internal connection/request timeouts, so an individual request may fail sooner.
 

@@ -76,8 +76,15 @@ class PortableLinuxTests(unittest.TestCase):
 
     def installer(self, family="apt", *states):
         iterator = iter(states or [health()])
+        last = [None]
+        def check_tools():
+            try:
+                last[0] = next(iterator)
+            except StopIteration:
+                pass
+            return last[0]
         return setup.PortableInstaller(family, home=self.home, run=self.run_command,
-                                       check_tools=lambda: next(iterator), output=self.messages.append, fetch=self.fetch)
+                                       check_tools=check_tools, output=self.messages.append, fetch=self.fetch)
 
     def test_family_detection_uses_id_like_and_explicit_unsupported_matrix(self):
         pairs = [("kali", "kali"), ("ubuntu", "apt"), ("debian", "apt"), ("fedora", "dnf"),
@@ -96,6 +103,16 @@ class PortableLinuxTests(unittest.TestCase):
         self.assertEqual(self.calls, [])
         self.assertEqual(self.fetches, [])
         self.assertFalse(installer.base.exists())
+
+    def test_nuclei_template_only_repair_does_not_reinstall_engine_or_other_tools(self):
+        initial, final = health(), health()
+        initial["nuclei"].update(status="unverified", engine_status="ready", template_status="missing")
+        final["nuclei"].update(engine_status="ready", template_status="ready", template_version="v10.5.0")
+        installer = self.installer("apt", initial, final)
+        self.assertEqual(installer.install(), 0)
+        self.assertEqual(len(self.calls), 1)
+        self.assertEqual(self.calls[0][0], ["/usr/bin/nuclei", "-update-templates", "-duc"])
+        self.assertEqual(self.fetches, [])
 
     def test_fixed_package_manager_argv_for_nmap_and_no_system_upgrade(self):
         expected = {"apt": ["install", "--yes", "--no-install-recommends", "nmap"],

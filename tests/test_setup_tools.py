@@ -69,8 +69,15 @@ class InstallerTests(unittest.TestCase):
 
     def installer(self, *states):
         iterator = iter(states or [health()])
+        last = [None]
+        def check_tools():
+            try:
+                last[0] = next(iterator)
+            except StopIteration:
+                pass
+            return last[0]
         return setup.Installer(home=self.home, run=self.commands,
-                               check_tools=lambda: next(iterator), output=self.messages.append)
+                               check_tools=check_tools, output=self.messages.append)
 
     def test_plan_is_read_only_and_never_probes_or_runs_commands(self):
         with patch.object(setup, "ROOT", self.home), patch.object(setup.subprocess, "run", side_effect=AssertionError("command forbidden")), patch.object(setup, "diagnostics", side_effect=AssertionError("probe forbidden")), patch.object(Path, "mkdir", side_effect=AssertionError("write forbidden")), patch.object(Path, "write_text", side_effect=AssertionError("write forbidden")), redirect_stdout(io.StringIO()) as output:
@@ -103,6 +110,15 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(os.environ.get("PATH"), old_path)
         self.assertEqual(marker.read_text(), "do not change")
         self.assertFalse(setup.managed_root(self.home).exists())
+
+    def test_nuclei_template_only_repair_does_not_reinstall_engine_or_other_tools(self):
+        initial, final = health(), health()
+        initial["nuclei"].update(status="unverified", engine_status="ready", template_status="missing")
+        final["nuclei"].update(engine_status="ready", template_status="ready", template_version="v10.5.0")
+        installer = self.installer(initial, final)
+        self.assertEqual(installer.install(), 0)
+        self.assertEqual(len(self.commands.calls), 1)
+        self.assertEqual(self.commands.calls[0][0], ["/usr/bin/nuclei", "-update-templates", "-duc"])
 
     def test_unmanaged_wrapper_conflict_stops_before_apt_or_download(self):
         binary = self.home / ".local/bin/httpx"

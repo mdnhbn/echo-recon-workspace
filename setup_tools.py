@@ -24,7 +24,7 @@ import tempfile
 sys.dont_write_bytecode = True
 
 from echo_recon.locking import InstanceLock
-from echo_recon.tools import TOOLS, diagnostics
+from echo_recon.tools import TOOLS, diagnostics, nuclei_templates_incomplete
 
 
 ROOT = Path(__file__).resolve().parent
@@ -397,7 +397,7 @@ class Installer:
     def update_templates(self, health):
         item = health.get("nuclei", {})
         path = item.get("path") or shutil.which("nuclei", path=self.env["PATH"])
-        if item.get("status") != "ready" or not path:
+        if item.get("engine_status", item.get("status")) != "ready" or not path:
             raise SetupError("Nuclei did not pass its local identity check; templates were not updated.")
         self.output("Downloading current official Nuclei templates only; this does not scan a target.")
         self.command([path, "-update-templates", "-duc"])
@@ -405,9 +405,13 @@ class Installer:
     def install(self, update_templates=False):
         initial = self.health()
         needed = [name for name in TOOLS if initial.get(name, {}).get("status") != "ready"]
+        missing_templates = nuclei_templates_incomplete(initial)
+        install_needed = [name for name in needed if not (name == "nuclei" and missing_templates)]
         for name in TOOLS:
-            self.output(f"{name}: " + ("SKIP — existing tool passed local checks" if name not in needed else "needs setup/repair"))
-        for name in needed:
+            status = ("TEMPLATE CHECK NEEDS REPAIR — refresh official templates only" if name == "nuclei" and missing_templates else
+                      "SKIP — existing tool passed local checks" if name not in needed else "needs setup/repair")
+            self.output(f"{name}: {status}")
+        for name in install_needed:
             if name not in APT_TOOLS:
                 check_wrapper(self.home, name)
             else:
@@ -415,20 +419,20 @@ class Installer:
                 expected = Path("/usr/bin") / name
                 if current and Path(current).resolve() != expected.resolve():
                     raise SetupError(f"Unverified command shadows Kali's {name}: {current}. It was not replaced. Inspect your PATH/launcher before retrying; the official apt command is {expected}.")
-        if not needed and not update_templates:
-            self.output("All 8 tools passed local identity/help checks. No downloads or installations were needed. No scan was run.")
+        if not install_needed and not update_templates and not missing_templates:
+            self.output("All 8 tools and local Nuclei template data passed checks. No downloads or installations were needed. No scan was run.")
             return 0
-        custom_needed = any(name not in APT_TOOLS for name in needed)
+        custom_needed = any(name not in APT_TOOLS for name in install_needed)
         if custom_needed:
             self.check_storage()
             if self.base.exists():
                 self.check_managed_tree(self.base)
-        go = self.prerequisites(needed)
+        go = self.prerequisites(install_needed)
         if custom_needed:
             self.prepare()
         failures = []
         new_nuclei = False
-        for name in needed:
+        for name in install_needed:
             try:
                 if name in GO_MODULES:
                     self.install_go(name, go)
@@ -442,9 +446,10 @@ class Installer:
                 failures.append(f"{name}: {exc}")
                 self.output(f"SETUP ERROR — {name}: {exc}")
         final = self.health()
-        if new_nuclei or update_templates:
+        if new_nuclei or update_templates or missing_templates:
             try:
                 self.update_templates(final)
+                final = self.health()
             except SetupError as exc:
                 failures.append(str(exc))
                 self.output(f"TEMPLATE ERROR — {exc}")
@@ -459,8 +464,8 @@ class Installer:
             self.output("Setup is incomplete. Review errors above; existing tools were not deleted or moved.")
             self.output("Rerunning retries failed/missing tools and skips tools that now pass checks.")
             return 1
-        self.output("All 8 tools passed local checks. Restart the dashboard via bash run.sh and refresh Check installed tools.")
-        self.output("Tool readiness does not guarantee API credentials, upstream sources, templates or every assessment will succeed.")
+        self.output("All 8 tools passed local checks; the local Nuclei template version was also found. Restart the dashboard via bash run.sh and refresh Check installed tools.")
+        self.output("These checks do not verify every template file, API credentials, upstream sources or assessment results.")
         return 0
 
 
@@ -626,18 +631,22 @@ class PortableInstaller(Installer):
     def install(self, update_templates=False):
         initial = self.health()
         needed = [name for name in TOOLS if initial.get(name, {}).get("status") != "ready"]
+        missing_templates = nuclei_templates_incomplete(initial)
+        install_needed = [name for name in needed if not (name == "nuclei" and missing_templates)]
         for name in TOOLS:
-            self.output(f"{name}: " + ("needs setup" if name in needed else "SKIP — existing tool passed local checks"))
-        if not needed and not update_templates:
-            self.output("All 8 tools passed local checks. No install or scan was needed.")
+            status = ("TEMPLATE CHECK NEEDS REPAIR — refresh official templates only" if name == "nuclei" and missing_templates else
+                      "needs setup" if name in needed else "SKIP — existing tool passed local checks")
+            self.output(f"{name}: {status}")
+        if not install_needed and not update_templates and not missing_templates:
+            self.output("All 8 tools and local Nuclei template data passed checks. No install or scan was needed.")
             return 0
-        self.preflight(needed, initial)
-        self.prerequisites(needed)
-        if any(name != "nmap" for name in needed):
+        self.preflight(install_needed, initial)
+        self.prerequisites(install_needed)
+        if any(name != "nmap" for name in install_needed):
             self.prepare()
         failures, new_nuclei = [], False
         assets = _portable_assets()
-        for name in needed:
+        for name in install_needed:
             if name == "nmap":
                 continue
             try:
@@ -650,9 +659,10 @@ class PortableInstaller(Installer):
                 failures.append(name)
                 self.output(f"SETUP ERROR — {name}: {exc}")
         final = self.health()
-        if new_nuclei or update_templates:
+        if new_nuclei or update_templates or missing_templates:
             try:
                 self.update_templates(final)
+                final = self.health()
             except SetupError as exc:
                 failures.append("nuclei templates")
                 self.output(f"TEMPLATE ERROR — {exc}")
@@ -666,7 +676,7 @@ class PortableInstaller(Installer):
         if failures or not_ready:
             self.output("Setup is incomplete. Existing files were preserved; inspect errors before retrying.")
             return 1
-        self.output("All 8 tools passed local checks. Refresh Check installed tools. No scan was run.")
+        self.output("All 8 tools passed local checks; the local Nuclei template version was also found. Refresh Check installed tools. No scan was run.")
         return 0
 
 
