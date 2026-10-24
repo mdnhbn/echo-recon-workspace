@@ -1,13 +1,13 @@
 Package: echo-recon
-Version: 6.6.0
+Version: 6.6.2
 Architecture: all
 Maintainer: Echo Recon Contributors
 Depends: python3 (>= 3.11), python3-flask, python3-venv, git, ca-certificates
-Filename: pool/main/e/echo-recon/echo-recon_6.6.0_all.deb
-Size: 55544
-MD5sum: b28b7c15381b8b2350f15508b527d4f7
-SHA1: 40af201af97ac5d0929f5a639c17eb12bee5828d
-SHA256: c6c9e76d3090d036f414fec5a412d6c8854085f56e106be9490a9e370bd2cb14
+Filename: pool/main/e/echo-recon/echo-recon_6.6.2_all.deb
+Size: 54848
+MD5sum: 708a518169323dfe408819febf5b0136
+SHA1: 2568b8dc2c36ddedb145f7a66fd26fd19ae04021
+SHA256: fa144fa398f219b69d35700cd658a0f316df4344f2e46bde291748d0e068d0b7
 Section: utils
 Priority: optional
 Homepage: https://github.com/mdnhbn/echo-recon-workspace
