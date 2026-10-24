@@ -1,4 +1,4 @@
-"""Loopback-only Flask application, no installer or arbitrary-command API."""
+"""Loopback-only dashboard with a fixed local-terminal setup launcher."""
 import atexit
 import os
 from pathlib import Path
@@ -9,6 +9,7 @@ from . import __version__
 from .service import Manager
 from .storage import Store
 from .tools import diagnostics, tool_sources
+from .setup_launcher import SetupLauncher
 
 
 def create_app(data_dir=None, testing=False, **manager_options):
@@ -26,7 +27,8 @@ def create_app(data_dir=None, testing=False, **manager_options):
         store.path.chmod(0o600)
     manager_options.setdefault("allow_live", os.name != "nt")
     manager = Manager(store, folder, **manager_options)
-    app.extensions.update(echo_store=store, echo_manager=manager)
+    setup = SetupLauncher(root, folder)
+    app.extensions.update(echo_store=store, echo_manager=manager, echo_setup=setup)
     atexit.register(manager.close)
     cached = {"value": None}
 
@@ -78,6 +80,23 @@ def create_app(data_dir=None, testing=False, **manager_options):
     def sources():
         return jsonify(tool_sources())
 
+    @app.post("/api/setup-tools")
+    def setup_tools():
+        if request.get_json(silent=True) != {}:
+            abort(400, "This action takes no commands, paths or installer options.")
+        with setup.guard, manager.lock:
+            if manager.active:
+                abort(409, "Stop or finish the current assessment before setting up tools.")
+            try:
+                result = setup.launch()
+            except ValueError as exc:
+                abort(400, str(exc))
+            except RuntimeError as exc:
+                abort(409, str(exc))
+            except OSError:
+                abort(400, "The desktop terminal could not start. Use the setup guide from your Kali terminal.")
+        return jsonify(result), 202
+
     @app.get("/api/jobs")
     def jobs():
         return jsonify([{key: job[key] for key in ("id", "domain", "status", "created")}
@@ -89,7 +108,10 @@ def create_app(data_dir=None, testing=False, **manager_options):
         if not isinstance(payload, dict):
             abort(400, "Expected a JSON object")
         try:
-            job_id = manager.start(payload)
+            with setup.guard:
+                if setup.busy():
+                    raise RuntimeError("Tool setup is still open. Finish and close its terminal before starting an assessment.")
+                job_id = manager.start(payload)
         except ValueError as exc:
             abort(400, str(exc))
         except RuntimeError as exc:

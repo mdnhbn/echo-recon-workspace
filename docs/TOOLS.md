@@ -4,6 +4,23 @@ The dashboard installer installs **only the dashboard**. The eight tools are ind
 
 Dashboard-এর installer শুধু dashboard ইনস্টল করে। আটটি tool আলাদা project। আগে থেকে থাকলে আবার install করার প্রয়োজন নেই। System-এর executable সরাবেন না।
 
+## Set up all missing tools / একসঙ্গে সেটআপ
+
+On a Kali desktop, click **Setup all tools** beside the check/download controls. It opens this repository's fixed `setup_tools.py` in a visible terminal, runs local identity checks, skips ready tools and installs missing ones. Apt packages may ask for your sudo password in that terminal. The browser receives no password. Finish and close the terminal before starting an assessment; then click **Check installed tools** again.
+
+For manual/headless Kali or Kali WSL2, first finish/stop any assessment. From the repository directory, as your normal user:
+
+```bash
+.venv/bin/python setup_tools.py --plan
+.venv/bin/python setup_tools.py --install
+```
+
+The first line is a read-only plan; the second performs setup. The installer uses fixed Kali apt packages, exact Go module versions, an exact Photon commit and pinned isolated Python environments. Its pins live in `setup_tools.py`; these third-party dependencies are separate from the dashboard's hash lock. Custom tools live under `~/.local/share/echo-recon/tooling`, with managed launchers in `~/.local/bin`. Existing unrelated launchers are not overwritten; inspect any conflict it reports before retrying. Working system executables are kept in place. The helper supports normal-user Kali only; native Windows displays Kali/WSL instructions.
+
+New Nuclei installations download current official templates (a changing upstream snapshot); existing ready installations/templates are left alone. To explicitly refresh an existing Nuclei's templates, use `.venv/bin/python setup_tools.py --install --update-templates` while no assessment is running. This downloads templates, not scan results. Installation does not create API accounts or keys.
+
+বাংলায়: **Setup all tools** চাপলে আলাদা Kali terminal-এ যা হচ্ছে দেখতে পাবেন। ঠিক থাকা tool রেখে দেবে। Error হলে সফল ধরে নেবেন না—terminal-এর নির্দেশনা দেখুন। নিজের তৈরি wrapper-এর সঙ্গে নাম মিলে গেলে সেটা মুছে বা overwrite করবে না। Windows-এ tool setup করতে Kali WSL2-র terminal ব্যবহার করুন।
+
 ## First check / আগে যাচাই
 
 From the repository folder, as your normal user:

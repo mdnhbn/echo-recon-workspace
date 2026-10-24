@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.3.0 — 2026-10-24
+
+- Added in-app bilingual usage guidance and full English/Bengali guides for every field, rate/timeout semantics, tool behavior and evidence states.
+- Added a persisted one-click switch between the original dark and first-v6-style light layouts, with Matrix animation in both and no form reset.
+- Added a fixed one-click Kali terminal setup launcher and normal-user installer for missing tools, preserving verified working installations and requiring interactive terminal sudo where needed.
+- Setup requests accept no command/path/options, retain CSRF protection and refuse overlapping assessment/setup launches. Native Windows and headless sessions receive Kali/WSL instructions.
+
 ## 6.2.0 — 2026-10-24
 
 - Removed production demo generation and visible demo controls; legacy demos are excluded from history/report routes.

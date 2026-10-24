@@ -1,10 +1,12 @@
-# Echo Recon 6.2 — বাংলা নির্দেশনা
+# Echo Recon 6.3 — বাংলা নির্দেশনা
 
 এটি Kali Linux-এ নিজের কম্পিউটারে চালানোর একটি dashboard। আগের আটটি টুল—**DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap, theHarvester, Photon, Arjun ও Nuclei**—রয়েছে। নতুন সংস্করণে ভুল ফল শনাক্ত করা, পরীক্ষা বন্ধ করা, ইতিহাস রাখা ও প্রমাণসহ রিপোর্ট দেখানো উন্নত হয়েছে।
 
 6.2 সংস্করণে আগের Echo-এর মতো dark dashboard ও report-এর উপস্থাপন ফিরেছে। Demo তৈরি করা বা আগে থেকে বানানো scan result দেখানো হয় না। **Download / setup tools** থেকে আটটি tool-এর official source ও ইনস্টলের নির্দেশনা দেখা যায়।
 
 [English README](README.md) · [Windows/WSL নির্দেশনা](docs/WINDOWS.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [আটটি টুলের সেটআপ](docs/TOOLS.md) · [সীমাবদ্ধতা](SECURITY.md)
+
+**কোন ঘরে কী লিখবেন?** Dashboard-এর **How to use / ব্যবহারবিধি** খুলুন অথবা [সম্পূর্ণ বাংলা গাইড](docs/USAGE.bn.md) / [English guide](docs/USAGE.md) পড়ুন। গতিসীমা, ১২০ সেকেন্ডের সময়সীমা, আটটি check ও report-এর অর্থ বিস্তারিত আছে। উপরের **Light layout / Dark layout** বাটনে এক ক্লিকে দুই interface বদলায়; form-এর লেখা থাকে। দুটিতেই Matrix animation আছে; reduced-motion চালু থাকলে animation বন্ধ থাকে।
 
 ## শিক্ষার্থী ও সহপাঠীদের অবদান
 
@@ -71,7 +73,7 @@ Browser নিজে থেকে খুলতে না চাইলে `bash r
 
 1. **Check installed tools** চাপুন। এটি কম্পিউটারে tool-এর পরিচয় ও help output যাচাই করে।
 2. কোনো tool missing বা unverified হলে তার setup link অথবা পাশের **Download / setup tools** চাপুন।
-3. Official source ও [টুল সেটআপ গাইড](docs/TOOLS.md) পড়ুন। যে tool প্রয়োজন, Terminal থেকে সেটি নিজে ইনস্টল করুন। Dashboard নিজে privileged installer চালায় না বা sudo password চায় না।
+3. Kali desktop-এ **Setup all tools** চাপলে আলাদা দৃশ্যমান terminal-এ নির্দিষ্ট installer খুলবে। ঠিক থাকা tool রেখে missing tool সেটআপ করবে। প্রয়োজন হলে শুধু ওই terminal-এ sudo password দিন। কাজ শেষ হলে terminal বন্ধ করে আবার tool check করুন। আলাদা করে ইনস্টল করতে চাইলে official link ও [টুল সেটআপ গাইড](docs/TOOLS.md) আছে।
 4. ইনস্টল শেষে **Check installed tools** আবার চাপুন। নতুন করে যাচাই হবে। Shell-এর PATH বা environment বদলালে dashboard বন্ধ করে আবার চালান।
 5. Assessment তৈরি না করা পর্যন্ত dashboard-এ বানানো ফল বা sample history থাকবে না।
 

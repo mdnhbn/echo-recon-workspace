@@ -24,19 +24,25 @@ Flask API ── input/scope validation ── one assessment manager
 | `echo_recon/tools.py` | Fixed adapters, local executable diagnostics, Nuclei JSONL parsing. |
 | `echo_recon/runner.py` | No-shell subprocesses, bounded output, timeout and Linux group termination. |
 | `maintenance.py` | Offline cleanup of explicitly marked legacy demo jobs while the server is stopped. |
+| `setup_tools.py` | Fixed normal-user Kali installer; isolated third-party tools; interactive terminal sudo. |
+| `echo_recon/setup_launcher.py` | No-argument local terminal launcher and setup/assessment scheduling guard. |
 | `static/`, `templates/` | Original-style dark bilingual dashboard, tool-setup guidance and evidence report presentation. |
 
 ## API
 
 - `GET /`: dashboard and a CSRF session.
 - `GET /api/tools`: cached local tool identity/help diagnostics. `?refresh=1` reruns the local checks after manual tool setup.
+- `GET /api/tool-sources`: fixed official download/setup metadata.
+- `POST /api/setup-tools`: empty JSON only, CSRF required; opens the fixed installer in a local Kali desktop terminal. Passwords are entered there, never sent to HTTP.
 - `GET /api/jobs`: latest 50 persisted runs.
 - `POST /api/jobs`: an explicitly scoped assessment. JSON only, CSRF required. Demo-generation requests are not supported.
 - `GET /api/jobs/<id>`: state, evidence and progress.
 - `POST /api/jobs/<id>/cancel`: set cancellation signal; CSRF required.
 - `GET /reports/<id>.html` and `.json`: evidence exports. HTML is self-contained.
 
-The **Download / setup tools** control beside diagnostics exposes official sources and setup guidance for all eight adapters. Missing and unverified tool rows link to setup help too. It does not download or execute installers. There is no arbitrary command API, web installer, root/sudo request, remote-agent interface, automatic target expansion or AI integration.
+The **Download / setup tools** control exposes official sources and guidance. **Setup all tools** opens only the bundled installer with fixed arguments in a local Kali terminal. The installer skips ready tools, uses isolated user environments for custom tools, and can request sudo interactively for apt packages. There is no arbitrary command API, browser password prompt, stored sudo session, remote-agent interface, automatic target expansion or AI integration. A desktop terminal, Kali Linux and the same normal-user session are required; headless users run the fixed CLI themselves.
+
+`static/theme.js` switches the shared dashboard DOM between dark and first-v6-style light layouts; browser-local storage remembers the choice without creating jobs or resetting the form. Both use the same reduced-motion-aware Matrix canvas. `templates/usage.html` and the bilingual usage documents explain form and result semantics.
 
 Native Windows mode supports dashboard/history/report development and rejects live assessments server-side. Full Linux tool execution on Windows uses Kali WSL2 and a separate Linux environment. See `docs/WINDOWS.md`.
 

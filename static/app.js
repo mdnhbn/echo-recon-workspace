@@ -137,6 +137,7 @@ async function showDownloads(focusTool = null) {
       row.append(actions);
       return row;
     }));
+    dialog.scrollTop = 0;
   } catch (error) { $("download-list").textContent = error.message; }
 }
 $("download-tools").addEventListener("click", () => showDownloads());

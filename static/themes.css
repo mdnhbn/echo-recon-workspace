@@ -1,0 +1,162 @@
+/* The original dark Echo layout comes from style.css. This stylesheet adds
+   the first v6 light workspace using the same controls and assessment state. */
+#theme-toggle { min-width: 151px; }
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f7f6;
+  --panel: rgba(255, 255, 255, .96);
+  --paper: #fff;
+  --ink: #183831;
+  --muted: #5e756d;
+  --line: #d6e2da;
+  --accent: #14694f;
+  --green: #27824e;
+  --blue: #3f65a7;
+  --red: #a1433c;
+  --warning: #956326;
+}
+html[data-theme="light"] #rain {
+  /* The renderer paints dark trails. Invert them to white so the falling
+     digits remain visible on a light page without covering it in black. */
+  filter: invert(1) hue-rotate(180deg) blur(1.2px);
+  mix-blend-mode: multiply;
+  opacity: .5;
+}
+html[data-theme="light"] .sidebar {
+  width: 240px;
+  padding: 32px 22px 22px;
+  color: #d8e8df;
+  background: rgba(18, 47, 40, .98);
+  border-color: #355146;
+}
+html[data-theme="light"] .brand { color: #f2f6f2; font-family: "Segoe UI", system-ui, sans-serif; font-size: 28px; font-weight: 700; }
+html[data-theme="light"] .brand span { color: #a8d7b7; }
+html[data-theme="light"] .edition { color: #9ab7a8; margin-top: 13px; }
+html[data-theme="light"] .brand-credit { color: #a9c2b5; }
+html[data-theme="light"] .brand-credit span { color: #b0ddbd; }
+html[data-theme="light"] .info-box { border-color: #35594b; background: #ffffff05; }
+html[data-theme="light"] .info-box h2 { color: #b0ddbd; }
+html[data-theme="light"] .info-box ol { color: #d8e8df; }
+html[data-theme="light"] .nav { color: #c4d8cb; }
+html[data-theme="light"] .nav.active, html[data-theme="light"] .nav:hover { background: #25483a; color: #fff; border-color: #35594b; }
+html[data-theme="light"] .side-note { color: #a8d7b7; border-top: 1px solid #355146; padding-top: 20px; }
+html[data-theme="light"] .side-note p { color: #a9c2b5; }
+html[data-theme="light"] .sidebar .pulse { background: #85d49b; }
+html[data-theme="light"] .contact-btn { border-color: #456655; background: #1d3e32; color: #e3f0e8; }
+html[data-theme="light"] .contact-btn:hover { border-color: #b0ddbd; }
+html[data-theme="light"] main { margin-left: 240px; width: calc(100% - 240px); padding: 32px 38px 38px; }
+html[data-theme="light"] header { gap: 12px; }
+html[data-theme="light"] .local { color: #38684e; border-color: #b9d6c5; background: #edf6ef; }
+html[data-theme="light"] .center { width: min(1280px, 100%); margin-top: 30px; gap: 24px; }
+html[data-theme="light"] .greeting { justify-content: flex-start; text-align: left; text-shadow: none; padding: 0 0 4px; }
+html[data-theme="light"] .greeting h1 { font-family: "Segoe UI", "Noto Sans Bengali", system-ui, sans-serif; font-weight: 650; font-size: 31px; letter-spacing: -.6px; }
+html[data-theme="light"] .greeting h1 span { font-family: inherit; font-weight: 400; letter-spacing: 0; }
+html[data-theme="light"] .greeting p { font-size: 12px; }
+html[data-theme="light"] .gear { color: #56836a; font-size: 35px; }
+html[data-theme="light"] .composer,
+html[data-theme="light"] .progress,
+html[data-theme="light"] .tools-section,
+html[data-theme="light"] .history-section,
+html[data-theme="light"] #usage-guide,
+html[data-theme="light"] .guide-section {
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 3px 18px #173b2810;
+  backdrop-filter: blur(5px);
+}
+html[data-theme="light"] .section-mark { color: #56816b; border-color: #d6e2da; background: #e8f2ec; }
+html[data-theme="light"] input:not([type="checkbox"]),
+html[data-theme="light"] textarea,
+html[data-theme="light"] select { background: #fcfdfc; border-color: #c6d7cc; color: var(--ink); }
+html[data-theme="light"] input::placeholder, html[data-theme="light"] textarea::placeholder { color: #74897e; }
+html[data-theme="light"] input:focus,
+html[data-theme="light"] textarea:focus,
+html[data-theme="light"] select:focus { outline-color: #14694f66; border-color: var(--accent); }
+html[data-theme="light"] input[type="checkbox"] { accent-color: #14694f; }
+html[data-theme="light"] #domain { font-size: 17px; }
+html[data-theme="light"] .checks { grid-template-columns: 1fr 1fr; }
+html[data-theme="light"] .checks label { background: #f8fbf9; border-color: #e0e9e3; }
+html[data-theme="light"] .consent { color: #587164; }
+html[data-theme="light"] .composer-row { align-items: stretch; flex-direction: column; gap: 10px; }
+html[data-theme="light"] .composer-row .hint { margin: 0; }
+html[data-theme="light"] .button { color: var(--ink); background: #fff; border-color: #bfd1c5; }
+html[data-theme="light"] .button:hover { background: #eaf2ed; border-color: #8db09b; }
+html[data-theme="light"] .button.primary { color: #fff; background: #14694f; border-color: #14694f; }
+html[data-theme="light"] .button.danger { color: #a1433c; border-color: #dfb5b1; background: #fff8f7; }
+html[data-theme="light"] .download-button { color: #14694f; border-color: #98bda8; background: #f0f7f2; }
+html[data-theme="light"] .pill { color: #526b5f; background: #edf1ef; border-color: #d7e3da; }
+html[data-theme="light"] .pill.complete,
+html[data-theme="light"] .pill.ready,
+html[data-theme="light"] .pill.done { color: #237143; background: #e2f2e7; border-color: #b7d9c1; }
+html[data-theme="light"] .pill.partial,
+html[data-theme="light"] .pill.timeout,
+html[data-theme="light"] .pill.unverified { color: #87571e; background: #fff1de; border-color: #e5ccaa; }
+html[data-theme="light"] .pill.error,
+html[data-theme="light"] .pill.missing,
+html[data-theme="light"] .pill.cancelled { color: #a1433c; background: #f9e7e5; border-color: #e0b7b2; }
+html[data-theme="light"] .pill.running { color: #3f65a7; background: #e7effa; border-color: #b7cce8; }
+html[data-theme="light"] #empty { padding-top: 35px; padding-bottom: 35px; }
+html[data-theme="light"] .step { background: #f4f8f5; border-color: #d6e2da; color: #5c7466; }
+html[data-theme="light"] .step i, html[data-theme="light"] .indicator { background: #aabeb0; }
+html[data-theme="light"] #phases { grid-template-columns: 1fr; }
+html[data-theme="light"] .phase { background: #fcfdfc; border-color: #e1e9e3; }
+html[data-theme="light"] .phase.done .indicator { background: #4e9c69; }
+html[data-theme="light"] .phase.running .indicator { background: #528ac4; }
+html[data-theme="light"] .phase.error .indicator, html[data-theme="light"] .phase.timeout .indicator { background: #b96b43; }
+html[data-theme="light"] .phase.cancelled .indicator, html[data-theme="light"] .phase.skipped .indicator { background: #b7893e; }
+html[data-theme="light"] #logs { background: #f1f5f2; border-color: #d6e2da; color: #365b43; box-shadow: none; }
+html[data-theme="light"] .history-item { background: #fbfdfb; border-color: #e1e9e3; }
+html[data-theme="light"] .history-item:hover { border-color: #91b39e; }
+html[data-theme="light"] .tool-item { background: #fff; }
+html[data-theme="light"] .windows-note { background: #f0f5fc; border-color: #bfd0e5; }
+html[data-theme="light"] dialog { background: #fff; border-color: #b7cabc; box-shadow: 0 20px 80px #12302355; }
+html[data-theme="light"] dialog::backdrop { background: #102c246b; }
+html[data-theme="light"] .modal-head { background: #fff; }
+html[data-theme="light"] .download-item { background: #f8fbf9; }
+html[data-theme="light"] .download-item pre { background: #edf3ef; color: #365b43; }
+html[data-theme="light"] .field-help,
+html[data-theme="light"] .guide-section details,
+html[data-theme="light"] #usage-guide details { background: #f6faf7; border-color: #d6e2da; }
+html[data-theme="light"] .guide-section code,
+html[data-theme="light"] #usage-guide code { color: #245e43; background: #edf3ef; }
+
+@media (min-width: 1151px) {
+  html[data-theme="light"] .center { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); align-items: start; }
+  html[data-theme="light"] .center > .greeting,
+  html[data-theme="light"] .center > .windows-note,
+  html[data-theme="light"] .center > .tools-section,
+  html[data-theme="light"] .center > .history-section,
+  html[data-theme="light"] .center > #usage-guide,
+  html[data-theme="light"] .center > .guide-section,
+  html[data-theme="light"] .center > footer { grid-column: 1 / -1; }
+  html[data-theme="light"] .center > .setup { grid-column: 1; }
+  html[data-theme="light"] .center > .progress { grid-column: 2; }
+}
+@media (max-width: 1150px) and (min-width: 651px) {
+  html[data-theme="light"] .sidebar { width: 220px; padding: 25px 16px 18px; }
+  html[data-theme="light"] main { margin-left: 220px; width: calc(100% - 220px); padding: 25px 24px; }
+  html[data-theme="light"] .center { display: flex; }
+  html[data-theme="light"] header { flex-wrap: wrap; }
+  html[data-theme="light"] .greeting h1 span { display: inline; margin-left: 9px; }
+}
+@media (max-width: 650px) {
+  #theme-toggle { min-width: 0; }
+  html[data-theme="light"] .sidebar { position: relative; width: 100%; padding: 16px 20px; }
+  html[data-theme="light"] main { margin-left: 0; width: 100%; padding: 15px; }
+  html[data-theme="light"] header { flex-wrap: wrap; justify-content: flex-end; }
+  html[data-theme="light"] .center { display: flex; margin-top: 24px; }
+  html[data-theme="light"] .greeting h1 { font-size: 27px; }
+  html[data-theme="light"] .greeting h1 span { display: inline; font-size: 13px; }
+  html[data-theme="light"] .composer,
+  html[data-theme="light"] .progress,
+  html[data-theme="light"] .tools-section,
+  html[data-theme="light"] .history-section,
+  html[data-theme="light"] #usage-guide,
+  html[data-theme="light"] .guide-section { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="light"] #rain { display: none; }
+}

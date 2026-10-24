@@ -1,0 +1,54 @@
+<div class="guide-content">
+  <section class="guide-section" id="guide-start">
+    <h3>1. Start here / শুরু করবেন যেভাবে</h3>
+    <p>Use your normal Kali user. Keep the dashboard terminal open. This page organizes eight separate tools and saves their evidence; opening it does not start a scan.<br>সাধারণ Kali user থেকে চালান। শুধু পেজ খোলায় পরীক্ষা শুরু হয় না।</p>
+    <ol><li>Check installed tools → set up anything missing.</li><li>Enter your permitted domain and exact host list.</li><li>Select checks, rate and time limit; read and tick both confirmations.</li><li>Start assessment → watch progress → open the report.</li></ol>
+  </section>
+  <section class="guide-section" id="guide-setup">
+    <h3>2. Check and install / টুলের সেটআপ</h3>
+    <p><b>Check installed tools</b> runs local help/identity checks. <b>ready</b> means these checks passed; <b>missing</b> means not found on PATH; <b>unverified</b> means the found program/version needs attention.</p>
+    <p><b>Setup all tools</b> opens a visible Kali terminal. The fixed installer skips verified working tools and prepares missing ones in system-managed packages or separate user folders. If needed, type your sudo password in that terminal; characters normally stay hidden. Close the finished terminal, then check tools again. Internet and enough free disk space are required.</p>
+    <p>আগে থেকে ঠিক থাকা tool আবার ইনস্টল করে না। কোনো command ব্যর্থ হলে terminal-এর error দেখুন; সফল হয়েছে ধরে নেবেন না। নিজের wrapper-এর সঙ্গে নামের সংঘর্ষ হলে পুরোনো ফাইল overwrite করবে না।</p>
+    <p>Native Windows uses the dashboard and saved reports; install assessment tools inside Kali WSL2. For manual/headless setup, first finish or stop any assessment. Open your own Kali terminal in this repository and run <code>.venv/bin/python setup_tools.py --install</code>. Preview the fixed plan with <code>.venv/bin/python setup_tools.py --plan</code>.</p>
+  </section>
+  <section class="guide-section" id="guide-fields">
+    <h3>3. Fill the form / কোন ঘরে কী লিখবেন</h3>
+    <dl><dt>Primary domain / মূল ডোমেইন</dt><dd>Write the hostname only, such as <code>example.com</code>. Replace it with your own permitted domain. Do not include <code>https://</code>, a path, port, IP address or wildcard.</dd>
+    <dt>Exact authorized hosts / অনুমোদিত host</dt><dd>Put the primary domain here too. One hostname per line, maximum five total; additional hosts must be subdomains of the primary domain. Example structure: <pre>example.com
+app.example.com</pre>এগুলো উদাহরণ—নিজের অনুমোদিত domain দিয়ে বদলান। নতুন পাওয়া subdomain নিজে থেকে এই তালিকায় যোগ হবে না।</dd>
+    <dt>Select checks / পরীক্ষার ধাপ</dt><dd>Select only the steps you need. The first three are selected initially. Photon/Arjun need HTTPX selected in the same run and a confirmed live in-scope host; their current adapters use HTTPS.</dd>
+    <dt>Confirmations / নিচের দুই checkbox</dt><dd>Confirm you own the hosts or have explicit permission, and understand that external tools have their own network behavior. Then press <b>Start assessment</b>.</dd></dl>
+  </section>
+  <section class="guide-section" id="guide-rate">
+    <h3>4. Rate ceiling / গতিসীমা কেন?</h3>
+    <p>Think of sending letters slowly instead of sending a pile at once. Lower rates reduce bursts and load. The default is <b>2/second</b>; available choices are 1, 2 and 5. A cautious first run can use 1.</p>
+    <p>HTTPX, Arjun and Nuclei receive their rate-limit settings. Nmap uses a packet-rate ceiling. Photon uses a delay (2/second → 0.5-second delay). DNSRecon, Subfinder and theHarvester do not receive this rate setting. It is <b>not a guaranteed global request/packet budget</b>, and speed does not determine whether you have permission.</p>
+    <p>গতিসীমা কম রাখলে server-এর ওপর চাপ কমতে পারে, তবে শেষ হতে বেশি সময় লাগতে পারে। সব tool একভাবে গতি নিয়ন্ত্রণ করে না।</p>
+  </section>
+  <section class="guide-section" id="guide-time">
+    <h3>5. Time per tool / host / ১২০ সেকেন্ড কী?</h3>
+    <p><b>120 seconds = a two-minute process budget for one tool's attempt on one host.</b> If it finishes in 8 seconds, the next attempt starts then; it does not wait for the full 120. If it is still running at the limit, the process is stopped and that attempt is marked <b>timeout</b>; cleanup can add a little time. Earlier output may be kept, but the result is incomplete.</p>
+    <p>This prevents a slow or stuck tool holding the queue indefinitely. A longer allowance may collect more evidence but also takes longer. Choose 30/60/120/180 seconds. Lower rate plus a short limit can leave a stage unfinished; inspect the report before changing the settings.</p>
+    <p>এটি পুরো job-এর মোট সময় নয়। আটটি tool এবং একটি host হলে শুধু process-এর সময়সীমাগুলো যোগ করে প্রায় ১৬ মিনিট পর্যন্ত হতে পারে। পাঁচটি host-এ সব ধাপ চললে বর্তমান pipeline-এ সর্বোচ্চ ২৮টি attempt: ১২০ সেকেন্ডে প্রায় ৫৬ মিনিট process allowance। Help/DNS/provider/startup/cleanup-এর বাড়তি সময় থাকতে পারে; এটি wall-clock deadline নয়। বাস্তবে দ্রুত শেষ হতে পারে বা কিছু ধাপ skipped হতে পারে।</p>
+  </section>
+  <section class="guide-section" id="guide-checks">
+    <h3>6. What each check does / কোন tool কী করে?</h3>
+    <div class="guide-table"><table><thead><tr><th>Check</th><th>Purpose / কাজ</th></tr></thead><tbody>
+      <tr><td>DNSRecon</td><td>DNS records for the primary domain / DNS রেকর্ড।</td></tr>
+      <tr><td>Subfinder</td><td>Discover subdomain names; discoveries do not expand active scope.</td></tr>
+      <tr><td>HTTPX</td><td>Probe the explicit host list for responding web services.</td></tr>
+      <tr><td>Nmap</td><td>TCP connect/service checks of the top 100 ports on scoped hosts.</td></tr>
+      <tr><td>theHarvester</td><td>Public-source research about the primary domain (crtsh/otx).</td></tr>
+      <tr><td>Photon</td><td>Shallow web crawl of confirmed scoped hosts (HTTPS).</td></tr>
+      <tr><td>Arjun</td><td>Check HTTP parameter names on confirmed scoped hosts (HTTPS).</td></tr>
+      <tr><td>Nuclei</td><td>Template-based checks; automated findings require verification.</td></tr>
+    </tbody></table></div>
+  </section>
+  <section class="guide-section" id="guide-results">
+    <h3>7. Progress and reports / ফল কীভাবে পড়বেন?</h3>
+    <p><b>Stop</b> requests cancellation. <b>done</b> means the command exited successfully. <b>timeout/error/missing/unverified/skipped/output_limit</b> means review that phase's explanation. <b>partial</b> means the assessment has incomplete phases; <b>interrupted</b> means an unfinished saved job was recovered when the server restarted.</p>
+    <p><b>View report</b> opens saved evidence; expand a phase to see output, errors and host attempts. <b>HTML</b> saves a readable report; <b>JSON</b> saves structured data. <b>Saved history</b> reopens an earlier assessment without starting a new scan.</p>
+    <p>কোনো finding না পাওয়া মানে সাইট নিরাপদ—এমন সিদ্ধান্ত নয়। Findings আগে হাতে যাচাই করুন। Share করার আগে report-এ sensitive তথ্য আছে কি না দেখুন।</p>
+  </section>
+  <section class="guide-section"><h3>8. Change interface / interface বদলানো</h3><p>The header's <b>Light layout / Dark layout</b> button switches between the two layouts in one click and remembers your choice when browser storage is available. Form values and results stay in place. Matrix rain remains in both; reduced-motion preferences disable animation.</p><p><a href="https://github.com/mdnhbn/echo-recon-workspace/blob/main/docs/USAGE.md" target="_blank" rel="noopener noreferrer">Complete English guide ↗</a> · <a href="https://github.com/mdnhbn/echo-recon-workspace/blob/main/docs/USAGE.bn.md" target="_blank" rel="noopener noreferrer">সম্পূর্ণ বাংলা নির্দেশনা ↗</a></p></section>
+</div>

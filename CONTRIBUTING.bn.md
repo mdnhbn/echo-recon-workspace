@@ -68,7 +68,7 @@ Test-এ temporary directory-র মধ্যে mock scanner output, নকল 
 - User input দিয়ে shell command string বানাবেন না। গুরুত্বপূর্ণ bug fix-এর জন্য regression test দিন।
 - Portable path ও Python API ব্যবহার করুন। Linux-only সুবিধার Windows/WSL বিকল্প বা সীমাবদ্ধতা লিখুন।
 - Scanner optional রাখুন। অনুমতি ছাড়া অতিরিক্ত tool download বা চালু করবেন না।
-- **Download / setup tools**-এ যাচাই করা official source ও হাতে setup করার নির্দেশনা রাখুন। Missing/unverified আলাদা দেখান এবং health আবার check করার ব্যবস্থা রাখুন। Browser থেকে privileged installer চালাবেন না।
+- Setup-এর official source ও command নির্দিষ্ট এবং review করা রাখুন। **Setup all tools** শুধু স্থানীয় terminal খোলে; HTTP দিয়ে shell command, path, version বা sudo password নেবেন না। Missing/unverified আলাদা রাখুন, tool-এর নিজস্ব user environment বজায় রাখুন। CI-তে আসল apt/pip/Go install নয়—mock subprocess দিয়ে পরীক্ষা করুন।
 - Screenshot ও উদাহরণে নকল তথ্য ব্যবহার করুন। Secret ও ব্যক্তিগত তথ্য প্রকাশ করবেন না।
 
 সহজ শুরুর কাজ: বানান সংশোধন, পরিষ্কার error message, বাংলা অনুবাদ, form-এর label অথবা জানা bug-এর test।

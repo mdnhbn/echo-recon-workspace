@@ -25,6 +25,8 @@ jobs:
         if: runner.os == 'Linux'
       - run: |
           node --check static/app.js
+          node --check static/theme.js
+          node --check static/help.js
       - name: Parse PowerShell launchers
         if: runner.os == 'Windows'
         shell: pwsh

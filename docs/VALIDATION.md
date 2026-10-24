@@ -1,5 +1,13 @@
 # Release validation — 2026-10-24
 
+## 6.3 guidance, layout switch and tool setup
+
+- Windows: 58 tests total, 55 passed and three platform/privileged-symlink cases skipped. Kali: 58 total, 57 passed and the Windows process-tree case skipped. Installer tests mock every apt, Git, pip and Go command; no scan or fresh machine provisioning is performed by these tests.
+- The installer has 22 tests for skip-ready behavior, fixed sources, final readiness/failure reporting, private environments, wrapper conflicts, redirected directory refusal, interactive sudo requirements and locks.
+- Setup API tests verify CSRF, empty request bodies only, fixed terminal arguments, configured lock-directory parity, unsupported/headless guidance and setup/assessment scheduling. Passwords and arbitrary commands are never sent through HTTP.
+- Theme behavior was checked with DOM/storage fixtures: preserved shared form DOM, persisted choice, missing storage fallback, button accessibility and cross-tab updates. JavaScript syntax checks cover all three scripts; Kali shell syntax checks pass. The rendered usage dialog includes field, rate, timeout and report explanations.
+- Files were updated in the collaborator's Kali installation. Interactive desktop button validation could not be completed in this release environment because launching a new terminal/server was rejected by automatic approval review. The browser-control helper was also unavailable. This limitation is separate from the passing local suites; a full fresh-system installation and graphical end-to-end setup are not claimed.
+
 ## 6.2 demo removal and original dark presentation
 
 - Windows suite: 30 tests total; 28 passed, with Linux process groups and privileged directory symlinks skipped. Kali suite: 30 tests total; 29 passed and the Windows process test skipped. Cleanup tests check that real records are byte-for-byte unchanged, redirected scratch roots are refused, and maintenance refuses an active server lock. A history regression keeps older real entries visible behind newer legacy demos.

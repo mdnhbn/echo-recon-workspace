@@ -6,7 +6,10 @@
   <meta name="csrf-token" content="{{ csrf }}">
   <title>Echo · Recon {{ version }}</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/themes.css">
+  <script src="/static/theme.js" defer></script>
   <script src="/static/app.js" defer></script>
+  <script src="/static/help.js" defer></script>
 </head>
 <body>
 <canvas id="rain" aria-hidden="true"></canvas>
@@ -24,13 +27,14 @@
         <li>অগ্রগতি ও live log দেখুন। প্রয়োজনে <b>Stop</b> চাপুন।</li>
         <li>শেষে রিপোর্টে ফল, প্রমাণ ও পরীক্ষার সীমাবদ্ধতা দেখুন।</li>
       </ol>
+      <button id="open-guide" type="button" class="button" aria-haspopup="dialog">Full usage guide / বিস্তারিত নিয়ম</button>
     </div>
     <nav aria-label="Workspace"><a class="nav active" href="#assessment">Assessment / পরীক্ষা</a><a class="nav" href="#tools">Tool setup / টুল সেটআপ</a><a class="nav" href="#history">History / ইতিহাস</a></nav>
     <div class="side-note"><span class="pulse"></span> Local access only<p>Runs as your normal user.<br>সাধারণ user থেকেই চলে।</p></div>
     <a class="contact-btn" href="https://github.com/mdnhbn/echo-recon-workspace" target="_blank" rel="noopener noreferrer">Project & contributions ↗</a>
   </aside>
   <main>
-    <header><span class="local"><span class="pulse"></span> 127.0.0.1 · LOCAL</span><div class="header-actions"><button id="check-tools-top" class="button">Check installed tools</button><button id="download-tools-top" class="button download-button" aria-haspopup="dialog">Download / Setup ↗</button></div></header>
+    <header><span class="local"><span class="pulse"></span> 127.0.0.1 · LOCAL</span><div class="header-actions"><button id="theme-toggle" type="button" class="button" aria-pressed="false">Light layout / হালকা</button><button id="open-guide-top" type="button" class="button" aria-haspopup="dialog">How to use / ব্যবহারবিধি</button><button id="check-tools-top" class="button">Check installed tools</button><button id="download-tools-top" class="button download-button" aria-haspopup="dialog">Download / Setup ↗</button></div></header>
     <div class="center">
       <div class="greeting"><span class="gear" aria-hidden="true">⚙</span><div><h1>রিকন <span>Echo Recon</span></h1><p>Scope first. Evidence always. / প্রমাণসহ পরীক্ষা।</p></div></div>
       {% if native_windows %}<div class="windows-note"><strong>Windows native: dashboard, history & reports.</strong><p>Run the full eight-tool workflow inside Kali WSL2. See docs/WINDOWS.md.<br>আটটি tool-এর পুরো workflow Windows-এর Kali WSL2-তে চালান।</p></div>{% endif %}
@@ -39,9 +43,10 @@
         <form id="scan-form">
           <label for="domain">Primary domain / মূল ডোমেইন</label>
           <input id="domain" placeholder="your-authorized-domain.com" autocomplete="off" required>
+          <p class="hint">Write only the hostname, e.g. example.com. Replace this with your own permitted domain; no https://, path or port.<br>নিজের অনুমোদিত domain লিখুন; পুরো website link নয়।</p>
           <label for="scope">Exact authorized hosts / অনুমোদিত host <small>One per line · maximum 5</small></label>
           <textarea id="scope" rows="2" placeholder="your-authorized-domain.com&#10;app.your-authorized-domain.com" required></textarea>
-          <p class="hint">Discovered subdomains stay outside active scope. / নতুন পাওয়া subdomain স্বয়ংক্রিয়ভাবে পরীক্ষা হয় না।</p>
+          <p class="hint">Include the primary domain; add only its permitted subdomains, one per line (maximum 5 total). Discovered hosts are not added automatically.<br>মূল domain-টিও লিখুন; মোট পাঁচটি পর্যন্ত। নতুন পাওয়া subdomain নিজে থেকে পরীক্ষা হবে না।</p>
           <fieldset><legend>Select checks / পরীক্ষার ধাপ বেছে নিন</legend>
             <div id="checks" class="checks">
               <label><input type="checkbox" name="tool" value="dnsrecon" checked><span>DNS records</span></label>
@@ -55,6 +60,7 @@
             </div>
           </fieldset>
           <div class="fields"><div><label for="rate">Tool rate ceiling / গতি সীমা</label><select id="rate"><option value="1">1 / second</option><option value="2" selected>2 / second</option><option value="5">5 / second</option></select></div><div><label for="timeout">Time per tool / host</label><select id="timeout"><option value="30">30 seconds</option><option value="60">60 seconds</option><option value="120" selected>120 seconds</option><option value="180">180 seconds</option></select></div></div>
+          <div class="fields field-help"><p>Lower rate reduces traffic for tools that support it. Default: 2/second; choose 1 for a cautious start.<br>সব tool মিলিয়ে মোট গতি নয়। <button type="button" class="text-button" data-guide-target="guide-rate">গতিসীমার বিস্তারিত</button></p><p>120s = up to 2 minutes for each tool/host attempt. Finishing sooner moves to the next step; timeout means incomplete.<br>পুরো পরীক্ষার সময় নয়। <button type="button" class="text-button" data-guide-target="guide-time">সময়সীমার বিস্তারিত</button></p></div>
           <label class="consent"><input type="checkbox" id="authorized" required><span>I own these hosts or have explicit permission.<br>এই host পরীক্ষা করার মালিকানা বা অনুমতি আমার আছে।</span></label>
           <label class="consent"><input type="checkbox" id="limits" required><span>Third-party tools may contact secondary destinations; rate limits vary by tool.<br>এটি network sandbox নয়; tool অন্য গন্তব্যেও অনুরোধ পাঠাতে পারে।</span></label>
           <div class="composer-row"><span class="hint">Only assess authorized hosts.<br>শুধু অনুমোদিত host পরীক্ষা করুন।</span><button id="start" class="button primary" type="submit">Start assessment / শুরু করুন →</button></div>
@@ -73,8 +79,9 @@
       </section>
       <section id="tools" class="tools-section" aria-labelledby="tools-title">
         <div class="section-title"><span class="section-mark">03</span><h2 id="tools-title">Tool health / টুলের অবস্থা</h2></div>
-        <div class="tool-actions"><button id="check-tools" class="button">Check installed tools</button><button id="download-tools" class="button download-button" aria-haspopup="dialog">Download / Setup tools ↗</button></div>
-        <p class="hint">Check verifies local help output only. Download opens official resources and setup instructions.<br>প্রথমটি টুল যাচাই করে; দ্বিতীয়টি official download ও সেটআপ নির্দেশনা দেখায়।</p>
+        <div class="tool-actions"><button id="check-tools" class="button">Check installed tools</button><button id="download-tools" class="button download-button" aria-haspopup="dialog">Download / Setup tools ↗</button><button class="button primary" type="button" data-setup-tools>Setup all tools / সব টুল সেটআপ</button></div>
+        <p class="hint">Check verifies local help output. Download opens official resources. Setup all opens a Kali terminal to install missing tools; existing verified tools are kept.<br>সব টুল সেটআপ চাপলে আলাদা Kali terminal খুলবে; সেখানে অগ্রগতি ও প্রয়োজনীয় sudo prompt দেখা যাবে।</p>
+        <p id="setup-message" class="setup-status" role="status"></p>
         <div id="tool-list" class="tool-grid"></div>
       </section>
       <section id="history" class="history-section" aria-labelledby="history-title"><div class="section-title"><span class="section-mark">04</span><h2 id="history-title">Saved history / সংরক্ষিত ইতিহাস</h2></div><div id="history-list" class="history-list"><p class="hint">No saved assessments. / কোনো সংরক্ষিত পরীক্ষা নেই।</p></div></section>
@@ -84,8 +91,14 @@
 </div>
 <dialog id="tool-downloads" aria-labelledby="downloads-title">
   <div class="modal-head"><h2 id="downloads-title">Tool downloads & setup / টুল সেটআপ</h2><button id="close-downloads" class="modal-close" aria-label="Close / বন্ধ করুন">×</button></div>
-  <p class="download-note">Use the official resources below in your Kali terminal. Review each command before running it; installation may need your sudo password.<br>নিজের terminal-এ নির্দেশনা দেখে ইনস্টল করুন। Dashboard থেকে administrator command চালানো হয় না।</p>
+  <p class="download-note">Set up missing tools together, or use the individual official sources below. Installation opens in a visible Kali terminal; enter a sudo password only there if asked.<br>একসঙ্গে সেটআপ করুন, অথবা নিচের official link ব্যবহার করুন। Password শুধু Kali terminal-এ প্রয়োজন হতে পারে।</p>
+  <div class="tool-actions"><button class="button primary" type="button" data-setup-tools>Setup all tools / সব টুল সেটআপ</button><button class="button" type="button" data-guide-target="guide-setup">Setup help / সেটআপ নিয়ম</button></div>
+  <p class="setup-status" data-setup-message role="status"></p>
   <div id="download-list" class="download-list"></div>
+</dialog>
+<dialog id="usage-guide" aria-labelledby="guide-title">
+  <div class="modal-head"><h2 id="guide-title">How to use Echo Recon / বিস্তারিত ব্যবহারবিধি</h2><button id="close-guide" class="modal-close" aria-label="Close guide / বন্ধ করুন">×</button></div>
+  {% include 'usage.html' %}
 </dialog>
 </body>
 </html>

@@ -1,8 +1,10 @@
-# Echo Recon 6.2
+# Echo Recon 6.3
 
 A local assessment dashboard with explicit host scope, cancellable processes, persistent history and evidence-first reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); upgraded for the mdnhbn collaboration.
 
 **[বাংলা নির্দেশনা / Bengali guide →](README.bn.md)** · [Windows / WSL2](docs/WINDOWS.md) · [Contribute](CONTRIBUTING.md) · [বাংলায় অবদান](CONTRIBUTING.bn.md) · [Tool setup](docs/TOOLS.md) · [Security](SECURITY.md)
+
+**New to the form?** Open **How to use** in the dashboard or read the [complete English usage guide](docs/USAGE.md) / [বাংলা ব্যবহারবিধি](docs/USAGE.bn.md). Every field, rate limit, timeout and report state is explained. The header's **Light layout / Dark layout** button switches layouts without losing form values; both include Matrix animation and respect reduced-motion preferences.
 
 **Students, classmates and other contributors are welcome.** Fork this public repository, create a branch and submit a pull request. Maintainers review and merge changes; contributors do not need direct write access. Bug/feature issue forms and a PR template are included. See [CONTRIBUTING.md](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -17,7 +19,7 @@ The original eight tools remain: **DNSRecon, Subfinder, ProjectDiscovery HTTPX, 
 - One assessment at a time; per-tool/per-host timeouts; low rate/concurrency settings where each tool supports them; Stop kills the current Linux process group.
 - SQLite history survives restarts. In-progress work becomes `interrupted`, not resumed or marked safe.
 - HTML and JSON reports include phase evidence, stderr, exit status, limitations and unverified Nuclei findings with template-provided remediation where available.
-- Loopback-only listener, local-client/Host checks, CSRF protection, HTML escaping and a private data directory. No dashboard-triggered installer, root account or sudo session.
+- Loopback-only listener, local-client/Host checks, CSRF protection, HTML escaping and a private data directory. A fixed setup action opens a separate normal-user Kali terminal; the browser never receives sudo credentials or arbitrary commands.
 - Restored the original-style dark dashboard and report presentation while retaining scope controls and honest result states.
 - No demo generator, preloaded findings or sample scan history. Tests keep mock results in temporary directories only.
 - **Download / setup tools** opens official sources and setup guidance beside the health check. Installation stays in your terminal, under your control.
@@ -69,7 +71,7 @@ For a headless session or automated development test, use `bash run.sh --no-brow
 
 1. Click **Check installed tools** to inspect local executable identity and help output.
 2. If a tool is missing or unverified, use its setup link or **Download / setup tools** beside the check button.
-3. Review the official source and [tool setup guide](docs/TOOLS.md). Install only what is needed from your terminal. The dashboard does not run a privileged installer or request your sudo password.
+3. For automatic setup on a Kali desktop, click **Setup all tools**. A separate visible terminal opens the fixed installer, skips verified working tools and installs what is missing. Enter a sudo password only in that terminal if asked. Finish and close it, then check tools again. Individual official sources remain available in [the tool setup guide](docs/TOOLS.md).
 4. Click **Check installed tools** again after setup to refresh results. Restart the dashboard if you changed the shell's PATH or other inherited environment variables.
 5. The dashboard and history remain empty until an assessment is created. No example findings are generated.
 
