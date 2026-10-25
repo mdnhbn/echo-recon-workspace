@@ -25,7 +25,7 @@ def archive(entries):
 class PortableLinuxTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.home = Path(self.tmp.name)
+        self.home = Path(self.tmp.name).resolve()
         self.calls, self.fetches, self.messages = [], [], []
         self.payloads = {}
         self.release_pins = {name: dict(item) for name, item in assets.WINDOWS_RELEASES.items()}

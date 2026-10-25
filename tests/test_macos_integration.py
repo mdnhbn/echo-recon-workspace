@@ -1,5 +1,6 @@
 """macOS platform routing and a native local-server smoke check; no scan targets."""
 import os
+import http.client
 from pathlib import Path
 import signal
 import subprocess
@@ -8,8 +9,6 @@ import tempfile
 import threading
 import time
 import unittest
-import urllib.error
-import urllib.request
 from unittest.mock import Mock, patch
 
 from echo_recon import __version__, tools
@@ -45,7 +44,7 @@ class MacOSIntegrationTests(unittest.TestCase):
 
     def test_setup_worker_runs_without_linux_display_or_osascript(self):
         with tempfile.TemporaryDirectory(prefix="echo mac setup ") as folder:
-            root = Path(folder)
+            root = Path(folder).resolve()
             data = root / "data"
             data.mkdir()
             (root / "setup_tools_macos.py").write_text("# inert fixture", encoding="utf-8")
@@ -85,26 +84,36 @@ class MacOSIntegrationTests(unittest.TestCase):
 class NativeMacOSRuntimeTests(unittest.TestCase):
     def test_cli_server_responds_and_stops_without_running_scanners(self):
         with tempfile.TemporaryDirectory(prefix="echo native mac ") as folder:
+            folder = str(Path(folder).resolve())
             env = dict(os.environ, ECHO_RECON_DATA_DIR=folder)
             process = subprocess.Popen([sys.executable, str(ROOT / "app.py"), "--no-browser", "--no-tool-setup"],
                                        cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                        text=True, start_new_session=True)
             output = ""
             try:
-                opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
                 deadline = time.monotonic() + 15
+                last_error = "No connection attempted"
                 while time.monotonic() < deadline:
                     if process.poll() is not None:
                         output = process.communicate()[0]
                         self.fail("Local server exited before responding: " + output)
                     try:
-                        with opener.open("http://127.0.0.1:8001/", timeout=1) as response:
+                        connection = http.client.HTTPConnection("127.0.0.1", 8001, timeout=1)
+                        try:
+                            connection.request("GET", "/")
+                            response = connection.getresponse()
                             page = response.read().decode()
+                            self.assertEqual(response.status, 200, page)
+                        finally:
+                            connection.close()
                         break
-                    except (OSError, urllib.error.URLError):
+                    except (OSError, http.client.HTTPException) as exc:
+                        last_error = str(exc)
                         time.sleep(.1)
                 else:
-                    self.fail("Local macOS server did not become ready")
+                    process.send_signal(signal.SIGTERM)
+                    output = process.communicate(timeout=10)[0]
+                    self.fail(f"Local macOS server did not become ready ({last_error}): {output}")
                 self.assertIn(__version__, page)
                 self.assertIn("macOS setup:", page)
                 process.send_signal(signal.SIGTERM)

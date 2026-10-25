@@ -55,7 +55,9 @@ class FakeCommands:
 class WindowsSetupTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.local = Path(self.tmp.name)
+        # Keep fixture storage canonical on macOS (/var -> /private/var) so
+        # tests still exercise the installer's deliberate anti-symlink checks.
+        self.local = Path(self.tmp.name).resolve()
         self.messages = []
         self.commands = FakeCommands()
         self.fetches = []

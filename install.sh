@@ -28,7 +28,7 @@ if [[ "$(uname -s)" == Darwin ]]; then
   esac
   export PATH="$HOME/.local/bin:$brew_prefix/bin:$brew_prefix/sbin:$PATH"
   task_python=
-  for candidate in "$brew_prefix/opt/python@3.12/bin/python3.12" "$brew_prefix/bin/python3.12" "$brew_prefix/bin/python3" python3; do
+  for candidate in "$brew_prefix/opt/python@3.12/bin/python3.12" "$brew_prefix/bin/python3.12" python3 "$brew_prefix/bin/python3"; do
     if command -v "$candidate" >/dev/null && "$candidate" -c 'import platform,sys; sys.exit(0 if sys.version_info >= (3,12) and platform.machine() == sys.argv[1] else 1)' "$mac_arch" 2>/dev/null; then
       task_python="$candidate"
       break
