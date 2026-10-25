@@ -184,8 +184,19 @@ class MacSetupTests(unittest.TestCase):
         final["nuclei"].update(engine_status="ready", template_status="ready", template_version="v10.5.0")
         installer = self.installer(initial, final)
         self.assertEqual(installer.install(), 0)
-        self.assertEqual(self.calls[0][0], ["/usr/bin/nuclei", "-update-templates", "-duc"])
+        self.assertEqual(self.calls[0][0], ["/usr/bin/nuclei", "-update-templates"])
+        self.assertNotIn("-duc", self.calls[0][0])
+        self.assertNotIn("-update", self.calls[0][0])
         self.assertEqual(len(self.calls), 1)
+        self.assertEqual(self.fetches, [])
+
+    def test_template_setup_requires_a_verified_engine(self):
+        initial = health("nuclei")
+        initial["nuclei"].update(engine_status="unverified", path="/unverified/nuclei")
+        installer = self.installer()
+        with self.assertRaisesRegex(setup.SetupError, "identity check"):
+            installer.update_templates(initial)
+        self.assertEqual(self.calls, [])
         self.assertEqual(self.fetches, [])
 
     def test_existing_partial_folder_or_unverified_shadow_is_preserved(self):

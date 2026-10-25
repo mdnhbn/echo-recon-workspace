@@ -34,7 +34,7 @@
 | অন্যান্য সমর্থিত glibc Linux | Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE family; x86_64/aarch64 portable asset। DNSRecon/theHarvester source ইনস্টল করতে Python 3.12+ লাগে। |
 | অন্য distro/architecture | Dashboard Python 3.11+; compatible backend নিজে official source থেকে সেটআপ করতে হতে পারে। Alpine/musl automatic target নয়। |
 
-আগের version-এ Windows ও Kali-তে স্থানীয় tool/help এবং regression পরীক্ষা করা হয়েছিল। 6.6.0-এর Python syntax ও whitespace check পাস করেছে; test suite স্থানীয়ভাবে চালানো হয়নি। GitHub Actions-এর প্রথম automatic run-এ তিনটি পুরোনো assertion/fixture mismatch ধরা পড়ে, বর্তমান update-এ সেগুলো ঠিক করা হয়েছে। Fresh install চালানো হয়নি। [Validation নোটে](docs/VALIDATION.md) আগের desktop check কোন version-এর তা লেখা আছে। অন্য distro-গুলোর installer logic mock দিয়ে পরীক্ষা করা হয়েছিল; প্রতিটি distro-তে fresh install বা বাইরের website-এ পূর্ণ scan হয়েছে—এমন দাবি করা হচ্ছে না।
+বর্তমান CI Windows/Linux এবং native macOS 15 Apple Silicon/Intel-এ চলে। Mac পরীক্ষায় local HTTP startup, process বন্ধ করা, আলাদা Python environment এবং Bash install/run script আছে; PR-এ Apple Silicon-এর পুরো backend installation-ও target scan ছাড়া যাচাই হয়। Intel backend পাওয়া Homebrew-এর support tier-এর ওপর নির্ভর করে। প্রতিটি OS version বা বাইরের provider-এর কাজ নিশ্চিত হয়েছে—এমন দাবি করা হচ্ছে না। আগের desktop পরীক্ষাগুলোর version [Validation নোটে](docs/VALIDATION.md) আছে।
 
 Linux/macOS-এ **root দিয়ে app চালাবেন না**। Windows-এ administrator terminal লাগে না; Nmap installer দরকার হলে নিজে admin confirmation চাইবে। Password chat/dashboard-এ লিখবেন না।
 

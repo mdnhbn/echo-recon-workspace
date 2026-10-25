@@ -190,6 +190,19 @@ class MacInstaller(PortableInstaller):
         os.chmod(target, 0o755)
         self.write_wrapper(name)
 
+    def update_templates(self, health):
+        item = health.get("nuclei", {})
+        path = item.get("path") or shutil.which("nuclei", path=self.env["PATH"])
+        if item.get("engine_status", item.get("status")) != "ready" or not path:
+            raise SetupError("Nuclei did not pass its local identity check; templates were not updated.")
+        self.output("Downloading current official Nuclei templates only; this does not scan a target or update the engine.")
+        # In upstream v3.11.1, -duc calls Config.DisableUpdateCheck(), which
+        # gates the template installer too. Combining it with the explicit
+        # -update-templates request exits successfully without installing any
+        # missing template data. Keep -duc in read-only health/scan commands,
+        # but omit it from this explicit, target-free template setup action.
+        self.command([path, "-update-templates"])
+
     def install(self, update_templates=False):
         initial = self.health()
         needed = [name for name in TOOLS if initial.get(name, {}).get("status") != "ready"]

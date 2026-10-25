@@ -20,6 +20,7 @@ Flask API → input/scope validation → one assessment manager
 | File | Responsibility |
 |---|---|
 | `app.py` | Normal-user entry point; bind loopback before browser/setup startup; signals; `--no-tool-setup`; optional per-user data directory for packages. |
+| `echo_recon/server.py` | Fixed loopback WSGI server; macOS startup avoids unnecessary reverse-hostname lookup. |
 | `echo_recon/bootstrap.py` | Asynchronous help checks, skip-ready behavior and owned automatic-attempt fingerprints. Cancels checking on shutdown without terminating installation. |
 | `echo_recon/locking.py` | POSIX/Windows instance lock acquired before history recovery; shared setup lock. |
 | `echo_recon/web.py` | Local/Host boundaries, session/CSRF, fixed setup routes and escaped reports. |
