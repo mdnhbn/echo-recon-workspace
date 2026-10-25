@@ -85,18 +85,18 @@ class NativeMacOSRuntimeTests(unittest.TestCase):
     def test_cli_server_responds_and_stops_without_running_scanners(self):
         with tempfile.TemporaryDirectory(prefix="echo native mac ") as folder:
             folder = str(Path(folder).resolve())
-            env = dict(os.environ, ECHO_RECON_DATA_DIR=folder)
+            env = dict(os.environ, ECHO_RECON_DATA_DIR=folder, PYTHONUNBUFFERED="1")
+            log_path = Path(folder) / "server.log"
+            log = log_path.open("w", encoding="utf-8")
             process = subprocess.Popen([sys.executable, str(ROOT / "app.py"), "--no-browser", "--no-tool-setup"],
-                                       cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
                                        text=True, start_new_session=True)
-            output = ""
             try:
                 deadline = time.monotonic() + 15
                 last_error = "No connection attempted"
                 while time.monotonic() < deadline:
                     if process.poll() is not None:
-                        output = process.communicate()[0]
-                        self.fail("Local server exited before responding: " + output)
+                        self.fail("Local server exited before responding: " + log_path.read_text())
                     try:
                         connection = http.client.HTTPConnection("127.0.0.1", 8001, timeout=1)
                         try:
@@ -111,18 +111,17 @@ class NativeMacOSRuntimeTests(unittest.TestCase):
                         last_error = str(exc)
                         time.sleep(.1)
                 else:
-                    process.send_signal(signal.SIGTERM)
-                    output = process.communicate(timeout=10)[0]
-                    self.fail(f"Local macOS server did not become ready ({last_error}): {output}")
+                    self.fail(f"Local macOS server did not become ready ({last_error}): {log_path.read_text()}")
                 self.assertIn(__version__, page)
                 self.assertIn("macOS setup:", page)
                 process.send_signal(signal.SIGTERM)
-                output = process.communicate(timeout=10)[0]
-                self.assertEqual(process.returncode, 0, output)
+                process.wait(timeout=10)
+                self.assertEqual(process.returncode, 0, log_path.read_text())
             finally:
                 if process.poll() is None:
                     os.killpg(process.pid, signal.SIGKILL)
-                    process.communicate(timeout=5)
+                    process.wait(timeout=5)
+                log.close()
 
     def test_cancel_stops_the_macos_process_group(self):
         event = threading.Event()
