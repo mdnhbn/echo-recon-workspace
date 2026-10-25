@@ -25,7 +25,7 @@ def archive(entries):
 class PortableLinuxTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.home = Path(self.tmp.name)
+        self.home = Path(self.tmp.name).resolve()
         self.calls, self.fetches, self.messages = [], [], []
         self.payloads = {}
         self.release_pins = {name: dict(item) for name, item in assets.WINDOWS_RELEASES.items()}
@@ -165,7 +165,7 @@ class PortableLinuxTests(unittest.TestCase):
                 # Separate fixture homes prevent replacing an existing version.
                 self.tmp.cleanup()
                 self.tmp = tempfile.TemporaryDirectory()
-                self.home = Path(self.tmp.name)
+                self.home = Path(self.tmp.name).resolve()
         self.assertTrue(any("linux_amd64.zip" in url for url in self.fetches))
         self.assertTrue(any("linux_arm64.zip" in url for url in self.fetches))
         self.assertEqual(self.calls, [])  # No Go SDK or downloaded shell scripts.

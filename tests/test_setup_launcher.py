@@ -81,7 +81,7 @@ class SetupLauncherTests(unittest.TestCase):
         self.assertFalse(self.launcher.busy())
 
     def test_unsupported_platform_and_headless_fallback(self):
-        with patch("echo_recon.setup_launcher.sys.platform", "darwin"), patch("echo_recon.setup_launcher.is_kali", return_value=False):
+        with patch("echo_recon.setup_launcher.sys.platform", "freebsd14"), patch("echo_recon.setup_launcher.is_kali", return_value=False):
             with self.assertRaisesRegex(ValueError, "supported Linux"):
                 self.launcher.launch()
         with patch("echo_recon.setup_launcher.sys.platform", "linux"), patch("echo_recon.setup_launcher.is_kali", return_value=True), patch.dict(os.environ, {}, clear=True):

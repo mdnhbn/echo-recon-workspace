@@ -5,12 +5,12 @@ import argparse
 from pathlib import Path
 import signal
 import threading
-from werkzeug.serving import make_server
 from echo_recon import __version__
 from echo_recon.browser import URL, has_desktop, open_when_ready
 from echo_recon.web import create_app
 from echo_recon.locking import InstanceLock
 from echo_recon.bootstrap import StartupToolSetup
+from echo_recon.server import make_local_server
 
 
 def parse_args(argv=None):
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     server = None
     try:
         # Bind first: never open another app's page if this port is already occupied.
-        server = make_server("127.0.0.1", 8001, app, threaded=True)
+        server = make_local_server(app)
         if not args.no_tool_setup:
             startup_setup = StartupToolSetup(app.extensions["echo_setup"],
                                              app.extensions["echo_manager"], version=__version__)

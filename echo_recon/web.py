@@ -3,6 +3,7 @@ import atexit
 import os
 from pathlib import Path
 import secrets
+import sys
 from urllib.parse import urlsplit
 from flask import Flask, abort, jsonify, render_template, request, session, Response
 from . import __version__
@@ -67,7 +68,8 @@ def create_app(data_dir=None, testing=False, **manager_options):
     def index():
         session.setdefault("csrf", secrets.token_hex(32))
         return render_template("index.html", csrf=session["csrf"], version=__version__,
-                               native_windows=os.name == "nt", assessment_enabled=manager.allow_live)
+                               native_windows=sys.platform == "win32", native_macos=sys.platform == "darwin",
+                               assessment_enabled=manager.allow_live)
 
     @app.get("/api/tools")
     def tools():

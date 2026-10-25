@@ -1,14 +1,16 @@
-# Echo Recon 6.6.5 — বাংলা নির্দেশনা
+# Echo Recon 6.7.0 — বাংলা নির্দেশনা
 
 এটি নিজের কম্পিউটারে চালানোর dashboard। নয়টি আলাদা tool-এর কাজ নির্দিষ্ট ক্রমে চালায়, প্রমাণ রাখে এবং HTML/JSON report তৈরি করে। মূল project [Ahammed-এর Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); mdnhbn সহযোগিতায় এই সংস্করণ উন্নত হয়েছে।
 
-## 6.6.5-এ যা বদলেছে
+## 6.7.0-এ যা বদলেছে
+
+- Native Homebrew ও Python 3.12+ থাকলে macOS-এ setup করা যাবে; Apple Silicon/Intel path ও dashboard-এ installation progress যোগ হয়েছে। [macOS নির্দেশনা](docs/MACOS.bn.md) দেখুন।
 
 - Domain অথবা page path/port-সহ public HTTP(S) URL দিন; hostname scope নির্ধারণ করে এবং URL-aware tool path/port পায়।
 - Scan ও tool check-এর process time limit সরানো হয়েছে; tool নিজে শেষ হয়, output cap-এ থামে, অথবা **Stop** চাপলে বন্ধ হয়।
 - Progress bar, elapsed time ও আনুমানিক বাকি সময় আগের মতো আছে।
 
-[English README](README.md) · [Kali APT update](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [টুল সেটআপ](docs/TOOLS.md) · [পূর্ণ ব্যবহারবিধি](docs/USAGE.bn.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [সীমাবদ্ধতা](SECURITY.md)
+[English README](README.md) · [Kali APT update](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [macOS](docs/MACOS.bn.md) · [টুল সেটআপ](docs/TOOLS.md) · [পূর্ণ ব্যবহারবিধি](docs/USAGE.bn.md) · [অবদান রাখুন](CONTRIBUTING.bn.md) · [সীমাবদ্ধতা](SECURITY.md)
 
 ## কী উন্নতি হয়েছে
 
@@ -27,13 +29,14 @@
 | কোথায় চালাবেন | প্রয়োজন ও সীমা |
 |---|---|
 | সরাসরি Windows x64 | Backend setup-এর জন্য **Python 3.12 x64**, Git, সাধারণ user। আগের সাতটি tool স্বয়ংক্রিয়; Nikto-র জন্য আগে Strawberry Perl install করে PATH-এ রাখতে হবে। Nmap-এর official installer-এ নিজে confirmation দিতে হবে। |
+| Native macOS, Apple Silicon / Intel | পুরো backend setup-এর জন্য native Homebrew ও **Python 3.12+**। একই `install.sh` / `run.sh` macOS installer বেছে নেয়। Nmap/Nikto Homebrew দিয়ে, অন্য tool verified Darwin release বা আলাদা Python environment-এ বসে। Homebrew-এর OS/architecture support ও package availability প্রযোজ্য; [macOS guide](docs/MACOS.bn.md) দেখুন। |
 | Kali Linux / VirtualBox / Kali WSL | Signed APT package বসাতে feed ও package-এর জন্য একবার sudo লাগবে; Git clone পদ্ধতিতে Git, Python ও venv লাগবে। Missing Go tool build করতে Go 1.26+ লাগতে পারে। |
 | অন্যান্য সমর্থিত glibc Linux | Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE family; x86_64/aarch64 portable asset। DNSRecon/theHarvester source ইনস্টল করতে Python 3.12+ লাগে। |
 | অন্য distro/architecture | Dashboard Python 3.11+; compatible backend নিজে official source থেকে সেটআপ করতে হতে পারে। Alpine/musl automatic target নয়। |
 
-আগের version-এ Windows ও Kali-তে স্থানীয় tool/help এবং regression পরীক্ষা করা হয়েছিল। 6.6.0-এর Python syntax ও whitespace check পাস করেছে; test suite স্থানীয়ভাবে চালানো হয়নি। GitHub Actions-এর প্রথম automatic run-এ তিনটি পুরোনো assertion/fixture mismatch ধরা পড়ে, বর্তমান update-এ সেগুলো ঠিক করা হয়েছে। Fresh install চালানো হয়নি। [Validation নোটে](docs/VALIDATION.md) আগের desktop check কোন version-এর তা লেখা আছে। অন্য distro-গুলোর installer logic mock দিয়ে পরীক্ষা করা হয়েছিল; প্রতিটি distro-তে fresh install বা বাইরের website-এ পূর্ণ scan হয়েছে—এমন দাবি করা হচ্ছে না।
+বর্তমান CI Windows/Linux এবং native macOS 15 Apple Silicon/Intel-এ চলে। Mac পরীক্ষায় local HTTP startup, process বন্ধ করা, আলাদা Python environment এবং Bash install/run script আছে; PR-এ Apple Silicon-এর পুরো backend installation-ও target scan ছাড়া যাচাই হয়। Intel backend পাওয়া Homebrew-এর support tier-এর ওপর নির্ভর করে। প্রতিটি OS version বা বাইরের provider-এর কাজ নিশ্চিত হয়েছে—এমন দাবি করা হচ্ছে না। আগের desktop পরীক্ষাগুলোর version [Validation নোটে](docs/VALIDATION.md) আছে।
 
-Linux-এ **root দিয়ে app চালাবেন না**। Windows-এ administrator terminal লাগে না; Nmap installer দরকার হলে নিজে admin confirmation চাইবে। Password chat/dashboard-এ লিখবেন না।
+Linux/macOS-এ **root দিয়ে app চালাবেন না**। Windows-এ administrator terminal লাগে না; Nmap installer দরকার হলে নিজে admin confirmation চাইবে। Password chat/dashboard-এ লিখবেন না।
 
 ## ২. Kali-তে APT দিয়ে install ও update
 
@@ -68,6 +71,22 @@ bash run.sh
 - `run.sh` dashboard চালায়।
 
 অন্য Linux family-তে আগে তার package manager দিয়ে Git, উপযুক্ত Python ও venv support ইনস্টল করে একই clone/install/run command দিন। নির্দিষ্ট OS package-এর জন্য Terminal-এ sudo চাইতে পারে। পুরো installer/app `sudo` দিয়ে চালাবেন না।
+
+### Native macOS-এ install
+
+[Homebrew-এর official নির্দেশনা](https://docs.brew.sh/Installation) মেনে Homebrew এবং তার **Next steps** শেষ করুন। Apple Silicon হলে Rosetta ছাড়া native Terminal খুলুন। তারপর:
+
+```bash
+brew install python@3.12 git
+mkdir -p ~/Tools
+cd ~/Tools
+git clone https://github.com/mdnhbn/echo-recon-workspace.git
+cd echo-recon-workspace
+bash install.sh
+bash run.sh
+```
+
+Script Apple Silicon-এর `/opt/homebrew` বা Intel-এর `/usr/local` prefix এবং উপযুক্ত Python খুঁজে নেয়। Missing backend একসঙ্গে বসে; Go SDK লাগে না। Local browser interface ব্যবহার করার সময় Terminal খোলা রাখুন। Dashboard-এর **Setup all tools** চাপলে macOS setup-এর progress dashboard-এ দেখা যাবে। পুরোনো macOS/Intel Mac-এ Homebrew package পাওয়া নির্ভর করে তার বর্তমান support tier-এর ওপর। [বিস্তারিত বাংলা macOS guide](docs/MACOS.bn.md) বা [English guide](docs/MACOS.md) দেখুন। Native Mac-এ Kali APT update command প্রযোজ্য নয়।
 
 ## ৩. সরাসরি Windows-এ install
 
@@ -163,7 +182,7 @@ Nmap top-100 port-এ TCP connect/service check করে। Windows-এ `-Pn` �
 
 ## ৬. Update, backup এবং uninstall
 
-Server বন্ধ করে `data/`-এর private backup রাখুন। Kali/Linux-এ Git clone দিয়ে ইনস্টল করলে repo folder-এর terminal-এ:
+Server বন্ধ করে `data/`-এর private backup রাখুন। Kali/Linux বা macOS-এ Git clone দিয়ে ইনস্টল করলে repo folder-এর terminal-এ:
 
 ```bash
 git status

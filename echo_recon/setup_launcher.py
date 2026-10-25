@@ -32,7 +32,7 @@ class SetupLauncher:
         self.startup_message = None
 
     def supports_platform(self):
-        return sys.platform in {"win32", "linux"}
+        return sys.platform in {"win32", "linux", "darwin"}
 
     def begin_startup_check(self):
         with self.guard:
@@ -69,8 +69,10 @@ class SetupLauncher:
                 raise RuntimeError("Tool setup is already open. Wait for it to finish or close its terminal first.")
             if sys.platform == "win32":
                 return self.launch_windows()
+            if sys.platform == "darwin":
+                return self.launch_macos()
             if not self.supports_platform():
-                raise ValueError("Automatic tool setup supports native Windows and supported Linux distributions. See the setup guide for this platform.")
+                raise ValueError("Automatic tool setup supports native Windows, macOS and supported Linux distributions. See the setup guide for this platform.")
             script = self.root / "setup_tools.py"
             if not script.is_file():
                 raise ValueError("Installer file is missing. Update the complete repository first.")
@@ -100,24 +102,32 @@ class SetupLauncher:
 
     def launch_windows(self):
         """Run a fixed hidden worker; installer output is shown in the dashboard."""
-        script = self.root / "setup_tools_windows.py"
+        return self.launch_logged_worker("setup_tools_windows.py", "Windows")
+
+    def launch_macos(self):
+        """Use native Homebrew as the normal user; no password passes over HTTP."""
+        return self.launch_logged_worker("setup_tools_macos.py", "macOS")
+
+    def launch_logged_worker(self, filename, label):
+        script = self.root / filename
         if not script.is_file():
-            raise ValueError("Windows installer file is missing. Update the complete repository first.")
+            raise ValueError(f"{label} installer file is missing. Update the complete repository first.")
         logs = self.data / "setup-logs"
         logs.mkdir(parents=True, exist_ok=True, mode=0o700)
         log_path = logs / f"{uuid.uuid4().hex}.log"
         env = os.environ.copy()
         env.update(PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8")
         args = [sys.executable, str(script), "--install", "--data-dir", str(self.data)]
+        options = ({"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)}
+                   if label == "Windows" else {"start_new_session": True})
         with log_path.open("xb") as output:
             process = subprocess.Popen(args, cwd=self.root, shell=False,
-                                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
                                        stdin=subprocess.DEVNULL, stdout=output,
-                                       stderr=subprocess.STDOUT, env=env)
+                                       stderr=subprocess.STDOUT, env=env, **options)
         self.process, self.log_path = process, log_path
         self.pending_until = 0
         return {"launched": True,
-                "message": "Windows tool setup started. Follow progress here; the final result will identify any manual steps."}
+                "message": f"{label} tool setup started. Follow progress here; the final result will identify any manual steps."}
 
     def status(self):
         with self.guard:
@@ -134,7 +144,7 @@ class SetupLauncher:
             elif exit_code == 0:
                 message = "Tool setup finished successfully. Installed tools are being checked again."
             elif exit_code == 2:
-                message = "Tool setup needs manual action. Review the progress below, including any Nmap installation steps."
+                message = "Tool setup needs manual action. Review the progress below, including any platform prerequisite steps."
             elif exit_code is not None:
                 message = f"Tool setup failed (exit {exit_code}). Review the progress below before retrying."
             else:

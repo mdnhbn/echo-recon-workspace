@@ -65,7 +65,9 @@ class StartupToolSetupTests(unittest.TestCase):
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.data = Path(self.tmp.name)
+        # macOS tempfile may use /var, which is a system symlink to /private/var.
+        # Canonicalize this trusted fixture without relaxing state-path guards.
+        self.data = Path(self.tmp.name).resolve()
         self.setup = FakeLauncher(self.data)
         self.manager = SimpleNamespace(lock=threading.RLock(), active=None)
 

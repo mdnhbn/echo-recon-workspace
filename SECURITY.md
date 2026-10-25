@@ -20,6 +20,8 @@ Windows uses normal-user, separate versioned environments in `~/Tools/EchoRecon/
 
 Linux uses the supported distribution's fixed package manager for necessary system packages. Sudo is entered only in the local terminal, never over HTTP. Kali's Go builds use exact module versions; portable Linux assets and source projects have reviewed pins, while some upstream Python dependencies resolve by platform rather than a complete transitive hash lock. OS packages/templates change upstream. No `curl | shell` installer pipe is used.
 
+macOS setup requires an existing native Homebrew installation and Python 3.12+. It runs as the normal user, uses fixed Homebrew formulas for missing Nmap/Nikto, verifies pinned upstream Darwin release archives and keeps Python tools in separate user environments. The dashboard shows the installer's log; it never accepts passwords, shell commands or arbitrary package names. Homebrew packages and Nuclei templates can change upstream; Intel availability follows Homebrew's legacy support tier.
+
 Unknown/incomplete folders, conflicting wrappers and redirected managed paths are preserved. Downloads/pins reduce accidental drift but do not eliminate third-party supply-chain risk. Review installer plans and upstream licenses; tool authors retain control of their programs' behavior.
 
 ## Assessment boundary
@@ -28,7 +30,7 @@ Only an explicit user action starts an assessment. Exact host scope is validated
 
 Rate/output bounds are per adapter or tool/host attempt, not one guaranteed global request budget. There is no wall-clock deadline; use **Stop** to cancel a tool that does not finish. Some DNS/OSINT behavior lacks an equivalent rate knob. Missing/error/timeout/output-limited work cannot become a clean complete assessment.
 
-On Linux, cancellation terminates the active process group. On native Windows, each tool is created suspended, assigned to a kill-on-close Job Object, then resumed; assignment failure prevents uncontained execution. The job closes on normal completion, cancellation or output limits, including descendants holding pipes after a parent exits. Local process fixtures test this behavior. Abnormal OS shutdown, power loss or tool/OS defects can still require system inspection; history marks interrupted jobs without relaunching arbitrary PIDs.
+On Linux and macOS, cancellation terminates the active process group. On native Windows, each tool is created suspended, assigned to a kill-on-close Job Object, then resumed; assignment failure prevents uncontained execution. The job closes on normal completion, cancellation or output limits, including descendants holding pipes after a parent exits. Local process fixtures test this behavior. Abnormal OS shutdown, power loss or tool/OS defects can still require system inspection; history marks interrupted jobs without relaunching arbitrary PIDs.
 
 Native Windows adapters use verified managed command prefixes. Nmap is limited TCP connect/service detection with `-Pn`; UDP, OS/raw-packet modes are not exposed. Local help checks and mocked adapter tests do not certify external provider/API behavior, every operating-system release or the absence of vulnerabilities.
 
