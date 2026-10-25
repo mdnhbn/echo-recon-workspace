@@ -20,12 +20,11 @@ skip_tools=false
 for option in "$@"; do
   [[ "$option" != --no-tool-setup ]] || skip_tools=true
 done
-extra=()
 # WSL/headless package-manager prompts stay in this terminal.
 if [[ "$(uname -s)" == Linux && "$skip_tools" == false ]] && { [[ -n "${WSL_DISTRO_NAME:-}${WSL_INTEROP:-}" ]] || [[ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; }; then
   if ! .venv/bin/python setup_tools.py --install; then
     echo 'Some backends need attention. Read the installer output and use Tool health / Setup all tools to retry.' >&2
   fi
-  extra+=(--no-tool-setup)
+  set -- --no-tool-setup "$@"
 fi
-exec .venv/bin/python app.py "${extra[@]}" "$@"
+exec .venv/bin/python app.py "$@"
