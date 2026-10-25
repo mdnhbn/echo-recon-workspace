@@ -1,14 +1,16 @@
-# Echo Recon 6.6.5
+# Echo Recon 6.7.0
 
 A local assessment dashboard with nine fixed tool adapters, explicit host scope, cancellable processes, saved history and evidence reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec), upgraded for the mdnhbn collaboration.
 
-## 6.6.5 update
+## 6.7.0 update
+
+- Add native macOS setup with existing Homebrew and Python 3.12+, including Apple Silicon/Intel paths and dashboard installation progress. See the [macOS guide](docs/MACOS.md).
 
 - Enter a domain or public HTTP(S) URL, including a page path or port; the hostname sets scope, and URL-aware tools receive the path/port.
 - Removed the subprocess wall-clock deadline from scans and installed-tool checks; tools end on their own, at the output cap, or when you press **Stop**.
 - Progress bars, elapsed time and rough remaining-time estimates remain available.
 
-**[বাংলা নির্দেশনা](README.bn.md)** · [Kali APT updates](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [Tool setup](docs/TOOLS.md) · [Complete usage guide](docs/USAGE.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
+**[বাংলা নির্দেশনা](README.bn.md)** · [Kali APT updates](docs/APT.md) · [Windows / WSL](docs/WINDOWS.md) · [macOS](docs/MACOS.md) · [Tool setup](docs/TOOLS.md) · [Complete usage guide](docs/USAGE.md) · [Contribute](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## What 6.6.0 changes
 
@@ -23,11 +25,12 @@ The eight original tools are **DNSRecon, Subfinder, ProjectDiscovery HTTPX, Nmap
 
 ## Requirements and support
 
-Use a normal user account and internet access. The dashboard refuses root on Linux. The source-checkout path also needs Git; the Kali APT path installs as a signed system package and stores reports in the user's data folder.
+Use a normal user account and internet access. The dashboard refuses root on Linux and macOS. The source-checkout path also needs Git; the Kali APT path installs as a signed system package and stores reports in the user's data folder.
 
 | Environment | Setup path and requirements | Verification limits |
 |---|---|---|
 | Native Windows x64 | Python **3.12 x64** for bundled backend setup; `install.ps1` and `run.ps1`. The original seven backends install automatically; Nikto also installs when Strawberry Perl is already on PATH. Nmap and the Perl runtime require manual setup. | Native installation/local help checks and local process/cancellation fixtures have been checked. No public-target scan certification. |
+| Native macOS, Apple Silicon / Intel | Native Homebrew and Python **3.12+** for full backend setup; `install.sh` / `run.sh` select the macOS installer. Missing Nmap/Nikto use Homebrew; other tools use verified Darwin releases or isolated Python environments. | Native architecture setup paths are provided; Homebrew's current support tier and package availability apply. No fresh installation on every Mac/OS version or public-target scan certification is claimed. See [macOS guide](docs/MACOS.md). |
 | Kali Linux, including VirtualBox and Kali WSL | Signed APT package needs sudo once for feed/package setup; source checkout needs Git, Python and venv support. Missing compiled Go tools require Go **1.26+**. | Kali local tool checks and regression tests; provider/network availability still varies. |
 | Other supported glibc Linux families | Debian/Ubuntu (`apt`), Fedora/RHEL (`dnf`), Arch (`pacman`), openSUSE (`zypper`); portable assets for x86_64/aarch64. Python **3.12+** is required when installing pinned DNSRecon/theHarvester sources. | Installer logic is tested with mocked downloads/package managers. A fresh full installation on every distribution is **not** claimed. |
 | Other distributions/architectures | Dashboard requires Python 3.11+; install compatible backend tools manually. Alpine/musl is not an automatic-install target. | Not an automatically provisioned platform. |
@@ -67,6 +70,22 @@ bash run.sh
 `git clone` downloads the repository. `install.sh` creates the project's `.venv`, verifies dashboard dependency hashes and sets up missing tools together. Fixed system packages may request sudo **in your terminal**. Do not run `sudo bash install.sh` or `sudo python app.py`.
 
 On another supported Linux family, install Git, a suitable Python and its venv support using that distribution's package manager first, then use the same clone/install/run commands. See [TOOLS.md](docs/TOOLS.md) for package-manager and Python limits.
+
+### Native macOS
+
+Install Homebrew yourself using its [official installation guide](https://docs.brew.sh/Installation), complete its **Next steps**, then open a native Terminal (no Rosetta on Apple Silicon):
+
+```bash
+brew install python@3.12 git
+mkdir -p ~/Tools
+cd ~/Tools
+git clone https://github.com/mdnhbn/echo-recon-workspace.git
+cd echo-recon-workspace
+bash install.sh
+bash run.sh
+```
+
+The scripts detect the native Apple Silicon `/opt/homebrew` or Intel `/usr/local` prefix and a suitable Python. Missing backends are set up together; a Go SDK is not required. Keep Terminal open while using the local browser interface. Dashboard **Setup all tools** retries macOS setup with progress in the dashboard. See [the English macOS guide](docs/MACOS.md) or [বাংলা নির্দেশনা](docs/MACOS.bn.md) for prerequisites, package availability, troubleshooting and Git updates. This path does not use the Kali APT feed.
 
 ### Native Windows
 
@@ -118,7 +137,7 @@ Headless Linux/WSL runs the fixed setup directly in its terminal so sudo prompts
 ## Automatic setup and deliberate retry
 
 1. On a normal startup, local help/identity checks run. If everything is ready, nothing is downloaded.
-2. Missing backends are set up together through the repository's fixed installer. Windows progress appears in the dashboard; a Linux desktop opens a visible setup terminal.
+2. Missing backends are set up together through the repository's fixed installer. Windows/macOS progress appears in the dashboard; a Linux desktop opens a visible setup terminal.
 3. An identical unsuccessful desktop automatic attempt is remembered in private `data/auto-setup.json` so each restart does not repeat the same failure. Read the error and click **Setup all tools** for a deliberate retry.
 4. **Check installed tools** refreshes readiness. `ready` means local help/identity passed; for Nuclei it also means the local official template version was found. This does not verify every template file, API credentials, upstream services or scan results. `unverified` means inspect the found path/version before reinstalling; **Setup all tools** can refresh Nuclei's official templates without reinstalling its engine.
 5. To skip startup setup, use `bash run.sh --no-tool-setup`, `.\run.ps1 -NoToolSetup`, or `python app.py --no-tool-setup`. To suppress browser opening too, add `--no-browser` / `-NoBrowser`.
@@ -133,7 +152,7 @@ Read [the English usage guide](docs/USAGE.md) or [বাংলা ব্যব�
 2. The URL/domain's hostname is included automatically. Optionally list up to four additional authorized subdomains; maximum five hosts total. URL entries are normalized to their host for scope checks.
 3. Select checks and rate ceiling. There is no dashboard process time limit; tools run until they exit or you press Stop. Photon/Arjun require HTTPX-confirmed live scoped hosts in the same run.
 4. Confirm permission and network limitations, then start deliberately. Setup and assessments cannot start together.
-5. Read progress and evidence. Overall progress counts resolved tool phases; each tool row counts completed host attempts. Elapsed time is shown, with a rough remaining-time estimate when enough work has finished. Tools do not always report within-host percentage. Stop cancels the current process group on Linux or the contained process tree on Windows. Reports label incomplete work honestly; Nuclei findings remain **unverified** until human review.
+5. Read progress and evidence. Overall progress counts resolved tool phases; each tool row counts completed host attempts. Elapsed time is shown, with a rough remaining-time estimate when enough work has finished. Tools do not always report within-host percentage. Stop cancels the current process group on Linux/macOS or the contained process tree on Windows. Reports label incomplete work honestly; Nuclei findings remain **unverified** until human review.
 
 The rate is a ceiling for tools that support it, not one global traffic budget. The dashboard no longer stops tools based on elapsed time; each tool can still report its own network/provider errors. Output stays capped and you can manually stop the run. Nmap uses limited top-100 TCP connect/service detection; Windows also skips raw-packet host discovery with `-Pn`.
 
@@ -141,7 +160,7 @@ This is an application-level scope boundary, **not a network sandbox**. Third-pa
 
 ## Update, backups and data
 
-Stop the server first, keep private backups of `data/`, and inspect local changes. For a Kali/Linux Git checkout, run:
+Stop the server first, keep private backups of `data/`, and inspect local changes. For a Kali/Linux or macOS Git checkout, run:
 
 ```bash
 git status

@@ -2,8 +2,10 @@
 import json
 import os
 from pathlib import Path
+import platform
 import re
 import shutil
+import sys
 import threading
 from urllib.parse import urlsplit
 from .runner import run
@@ -48,6 +50,12 @@ def managed_windows_command(name):
 
 def native_tool_command(name):
     if not is_windows():
+        if sys.platform == "darwin":
+            prefix = "/opt/homebrew" if platform.machine().lower() in {"arm64", "aarch64"} else "/usr/local"
+            search_path = os.pathsep.join((str(Path.home() / ".local/bin"), prefix + "/bin",
+                                           prefix + "/sbin", os.environ.get("PATH", "")))
+            path = shutil.which(name, path=search_path)
+            return (path,) if path else None
         return None
     managed = managed_windows_command(name)
     if managed:
@@ -92,12 +100,15 @@ def nuclei_template_health(prefix, cancel=None):
 
 
 def tool_sources():
-    guide = "https://github.com/mdnhbn/echo-recon-workspace/blob/main/docs/TOOLS.md"
+    guide_file = "MACOS.md" if sys.platform == "darwin" else "TOOLS.md"
+    guide = f"https://github.com/mdnhbn/echo-recon-workspace/blob/main/docs/{guide_file}"
     return {name: {"label": TOOLS[name][0], "url": url, "setup_url": guide,
                    "note": (("Nikto requires Strawberry Perl on PATH; Nmap uses its official installer. Windows setup does not install runtimes or drivers unattended."
                              if name == "nikto" else
                              "Native Windows setup uses isolated compatible tools; Nmap uses its official installer and TCP connect scans without raw packet privileges.")
-                            if is_windows() else "Use the official source and follow the Kali setup guide.")}
+                            if is_windows() else
+                            "macOS setup uses native Homebrew prerequisites and separate user tool folders. Follow the macOS guide."
+                            if sys.platform == "darwin" else "Use the official source and follow the Linux setup guide.")}
             for name, url in SOURCES.items()}
 
 

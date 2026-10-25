@@ -37,6 +37,7 @@
     <div class="center">
       <div class="greeting"><span class="gear" aria-hidden="true">⚙</span><div><h1>রিকন <span>Echo Recon</span></h1><p>Scope first. Evidence always. / প্রমাণসহ পরীক্ষা।</p></div></div>
       {% if native_windows %}<div class="windows-note"><strong>Windows native: automatic backend setup and scoped assessments.</strong><p>First startup prepares missing tools together. Nmap uses its official Windows installer and TCP connect scans (-sT -Pn). Nikto setup needs Perl available on PATH; the installer will show how to add it if missing.<br>প্রথমবার চালালে প্রয়োজনীয় tool-গুলো একসঙ্গে সেটআপ হবে। Nmap-এর official installer-এ প্রয়োজনীয় confirmation দিন। Nikto চালাতে Perl লাগবে; না থাকলে installer নির্দেশনা দেখাবে।</p></div>{% endif %}
+      {% if native_macos %}<div class="windows-note"><strong>macOS: native Apple Silicon / Intel setup.</strong><p>Install native Homebrew and Python 3.12+ first. Setup all tools prepares missing backends and shows progress here. Intel Homebrew availability can vary.<br>প্রথমে native Homebrew ও Python 3.12+ রাখুন। Setup all tools দিয়ে প্রয়োজনীয় tool সেটআপ করুন; অগ্রগতি এখানেই দেখা যাবে।</p></div>{% endif %}
       <section id="assessment" class="composer setup" aria-labelledby="setup-title">
         <div class="section-title"><span class="section-mark">01</span><h2 id="setup-title">Assessment / পরীক্ষার সেটআপ</h2></div>
         <form id="scan-form">
@@ -83,7 +84,7 @@
       <section id="tools" class="tools-section" aria-labelledby="tools-title">
         <div class="section-title"><span class="section-mark">03</span><h2 id="tools-title">Tool health / টুলের অবস্থা</h2></div>
         <div class="tool-actions"><button id="check-tools" class="button">Check installed tools</button><button id="download-tools" class="button download-button" aria-haspopup="dialog">Download / Setup tools ↗</button><button class="button primary" type="button" data-setup-tools>Setup all tools / সব টুল সেটআপ</button></div>
-        <p class="hint">Check verifies local help output. Setup all keeps verified working tools and installs missing ones.<br>{% if native_windows %}Windows-এর setup progress এই পেজে দেখা যাবে। Nmap-এর official installer আলাদা ধাপ।{% else %}Linux-এ আলাদা terminal খুলবে; প্রয়োজন হলে শুধু সেখানে sudo password দিন।{% endif %}</p>
+        <p class="hint">Check verifies local help output. Setup all keeps verified working tools and installs missing ones.<br>{% if native_windows %}Windows-এর setup progress এই পেজে দেখা যাবে। Nmap-এর official installer আলাদা ধাপ।{% elif native_macos %}macOS-এর setup progress এই পেজে দেখা যাবে। আগে native Homebrew ও Python 3.12+ ইনস্টল করুন।{% else %}Linux-এ আলাদা terminal খুলবে; প্রয়োজন হলে শুধু সেখানে sudo password দিন।{% endif %}</p>
         <p id="setup-message" class="setup-status" role="status"></p>
         <pre class="setup-log" data-setup-log hidden aria-live="polite"></pre>
         <div id="tool-list" class="tool-grid"></div>
@@ -95,7 +96,7 @@
 </div>
 <dialog id="tool-downloads" aria-labelledby="downloads-title">
   <div class="modal-head"><h2 id="downloads-title">Tool downloads & setup / টুল সেটআপ</h2><button id="close-downloads" class="modal-close" aria-label="Close / বন্ধ করুন">×</button></div>
-  <p class="download-note">Set up missing tools together, or use the individual official sources below.<br>{% if native_windows %}Windows setup progress নিচে দেখা যাবে। আগের সাতটি compatible tool স্বয়ংক্রিয়ভাবে ইনস্টল হবে; Nikto-র জন্য Strawberry Perl PATH-এ থাকতে হবে। Nmap-এর <a href="https://nmap.org/download.html" target="_blank" rel="noopener noreferrer">official Windows installer</a>-এ প্রয়োজনীয় confirmation নিজে সম্পন্ন করুন।{% else %}Linux-এ ইনস্টল আলাদা terminal-এ চলবে; প্রয়োজন হলে শুধু ওই terminal-এ sudo password দিন।{% endif %}</p>
+  <p class="download-note">Set up missing tools together, or use the individual official sources below.<br>{% if native_windows %}Windows setup progress নিচে দেখা যাবে। আগের সাতটি compatible tool স্বয়ংক্রিয়ভাবে ইনস্টল হবে; Nikto-র জন্য Strawberry Perl PATH-এ থাকতে হবে। Nmap-এর <a href="https://nmap.org/download.html" target="_blank" rel="noopener noreferrer">official Windows installer</a>-এ প্রয়োজনীয় confirmation নিজে সম্পন্ন করুন।{% elif native_macos %}macOS-এ native Homebrew দরকার। Nmap ও Nikto Homebrew দিয়ে এবং বাকি tool আলাদা user folder-এ সেটআপ হবে; progress নিচে দেখুন।{% else %}Linux-এ ইনস্টল আলাদা terminal-এ চলবে; প্রয়োজন হলে শুধু ওই terminal-এ sudo password দিন।{% endif %}</p>
   <div class="tool-actions"><button class="button primary" type="button" data-setup-tools>Setup all tools / সব টুল সেটআপ</button><button class="button" type="button" data-guide-target="guide-setup">Setup help / সেটআপ নিয়ম</button></div>
   <p class="setup-status" data-setup-message role="status"></p>
   <pre class="setup-log" data-setup-log hidden aria-live="polite"></pre>

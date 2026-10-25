@@ -1,6 +1,7 @@
 """Open our local dashboard after the already-bound server becomes ready."""
 import http.client
 import os
+import sys
 import time
 import webbrowser
 
@@ -40,4 +41,6 @@ def open_when_ready(stop, *, probe=ready, opener=webbrowser.open, timeout=10):
 
 def has_desktop():
     # A headless Linux/WSL session should not unexpectedly start lynx/w3m in its terminal.
+    if sys.platform == "darwin":
+        return not bool(os.environ.get("SSH_CONNECTION") or os.environ.get("SSH_TTY"))
     return os.name == "nt" or bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))

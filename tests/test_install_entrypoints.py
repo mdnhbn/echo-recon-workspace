@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -85,7 +86,7 @@ function Join-Path {
         self.assertFalse(any("venv" in entry["argv"] or "pip" in entry["argv"] for entry in entries))
 
 
-@unittest.skipUnless(os.name == "posix" and shutil.which("bash"), "Linux Bash installer entrypoint")
+@unittest.skipUnless(sys.platform == "linux" and shutil.which("bash"), "Linux Bash installer entrypoint")
 class LinuxInstallEntrypointTests(unittest.TestCase):
     def test_mismatched_existing_venv_stops_before_venv_or_pip(self):
         if hasattr(os, "geteuid") and os.geteuid() == 0:

@@ -1,6 +1,6 @@
 # Backend tool setup / নয়টি টুল একসঙ্গে সেটআপ
 
-[Install and run](../README.md) · [বাংলা নির্দেশনা](../README.bn.md) · [Windows / WSL](WINDOWS.md) · [Usage](USAGE.md)
+[Install and run](../README.md) · [বাংলা নির্দেশনা](../README.bn.md) · [Windows / WSL](WINDOWS.md) · [macOS](MACOS.md) · [Usage](USAGE.md)
 
 These are nine independent third-party tools with their own licenses and dependencies. The repository installs missing backends together and preserves tools that already pass local help/identity checks. Downloading source, finishing installation and passing a local check are different steps. No installer accepts a target or starts an assessment.
 
@@ -11,6 +11,7 @@ These are nine independent third-party tools with their own licenses and depende
 - **Linux desktop:** a visible local terminal opens. Fixed OS package installation may ask for sudo there.
 - **Headless Linux/WSL:** `run.sh` uses the same interactive terminal for CLI setup; it rechecks ready tools on subsequent runs. Use `--no-tool-setup` to skip that step.
 - **Windows:** the seven original compatible backends install as a normal user, with progress in the dashboard. Nikto's pinned source also installs when Strawberry Perl is already on PATH. Nmap requires its official Windows installer and the user's license/administrator confirmations; Perl itself is a separate manual prerequisite.
+- **macOS:** native Apple Silicon/Intel setup uses an already installed Homebrew and Python 3.12+. Nmap/Nikto use fixed Homebrew formulae only when missing; seven other tools use pinned official Darwin releases or isolated Python environments. Dashboard setup shows the worker log. Follow the [macOS prerequisite guide](MACOS.md); Homebrew itself is not installed unattended.
 - **Check installed tools:** refreshes local health. A displayed error or incomplete setup is not success.
 
 বাংলায়: installer একসঙ্গে কাজগুলো করে, কিন্তু tool ইনস্টল হলেই scan হয় না। ঠিক থাকা tool আবার নামায় না। Windows-এর progress dashboard-এ, Linux desktop-এর progress আলাদা Terminal-এ দেখা যায়। Sudo password শুধু ওই Terminal-এ দিন। একই desktop automatic চেষ্টা ব্যর্থ হলে error পড়ে **Setup all tools** চাপুন; শুধু restart দিয়ে সমস্যাটি ঢাকবেন না।
@@ -36,6 +37,16 @@ export PATH="$HOME/.local/bin:$HOME/go/bin:/usr/local/go/bin:$PATH"
 .venv/bin/python doctor.py
 ```
 
+**Native macOS, from a native Terminal:**
+
+```bash
+.venv/bin/python setup_tools_macos.py --plan
+.venv/bin/python setup_tools_macos.py --install
+.venv/bin/python doctor.py
+```
+
+Use `bash install.sh` / `bash run.sh` for normal installation and launch; they select the native macOS setup and tool paths. See [MACOS.md](MACOS.md) or [বাংলা macOS guide](MACOS.bn.md).
+
 Default/`--plan` is read-only: it prints sources and local paths without probing help, running commands, downloading or writing. `--install` performs the actual fixed setup. The browser API accepts no custom commands, paths, versions or passwords. Never use `sudo python setup_tools.py`; the normal-user installer invokes the needed package manager separately.
 
 To suppress automatic startup installation: `bash run.sh --no-tool-setup`, `.\run.ps1 -NoToolSetup` or `python app.py --no-tool-setup`. Explicit setup controls remain available.
@@ -45,6 +56,7 @@ To suppress automatic startup installation: `bash run.sh --no-tool-setup`, `.\ru
 | Platform | Installation method and location |
 |---|---|
 | Windows x64 | Python **3.12 x64**; separate versioned folders under `~/Tools/EchoRecon/tooling`. Three official ProjectDiscovery Windows ZIPs have pinned archive/checksum-manifest hashes; Python tool sources and runtime pins live in `setup_tools_windows.py`. No global PATH/profile/registry change. |
+| Native macOS arm64/x86_64 | Python **3.12+** and native Homebrew already installed under `/opt/homebrew` (Apple Silicon) or `/usr/local` (Intel). Missing Nmap/Nikto use Homebrew; other backends use versioned `~/.local/share/echo-recon/tooling` folders and `~/.local/bin` launchers. Existing working tools are kept. Current Homebrew OS/architecture support and package availability apply. |
 | Kali Linux | Fixed distro packages for DNSRecon, theHarvester and Nmap. Go **1.26+** for missing compiled Go tools; exact public Go module versions/checksums. Isolated Python environments for Arjun/Photon. |
 | Other supported glibc Linux | Debian/Ubuntu `apt`, Fedora/RHEL `dnf`, Arch `pacman`, openSUSE `zypper`. Nmap/necessary prerequisites use the fixed distro package manager. Official Linux x86_64/aarch64 ProjectDiscovery ZIPs use the reviewed checksum manifest. Pinned DNSRecon/theHarvester source installs require Python **3.12+**; their upstream dependencies resolve for that interpreter/platform from PyPI. |
 | Linux managed storage | `~/.local/share/echo-recon/tooling`, with exact installer-owned wrappers in `~/.local/bin`. Working system executables remain in place. |
@@ -88,7 +100,7 @@ Run `doctor.py` with the environment's venv Python to see resolved paths/command
 
 Select both Nuclei and Nikto to use Nikto as a fallback: it runs only if the Nuclei phase is missing, unverified or fails. A completed Nuclei phase does not trigger fallback, even when it reports no matches. Select Nikto without Nuclei to run it by itself. The adapter checks only Nikto tuning groups **1, 2, 3 and b** (interesting files, misconfiguration/default files, information disclosure and software identification); it excludes the other groups. These are active web requests and can be visible in server logs. Use it only on exact hosts you are authorized to assess.
 
-On Kali, the setup uses the distro's `nikto` package. Other supported Linux package families install Perl prerequisites and the pinned official Nikto 2.6.1 source. Native Windows setup needs Strawberry Perl already installed and `perl.exe` on `PATH`; Echo Recon downloads the pinned source but does not install the Perl runtime for you. Nikto's own license remains separate from Echo Recon's MIT license.
+On Kali, the setup uses the distro's `nikto` package. Other supported Linux package families install Perl prerequisites and the pinned official Nikto 2.6.1 source. Native macOS uses the official Homebrew `nikto` formula and its dependencies. Native Windows setup needs Strawberry Perl already installed and `perl.exe` on `PATH`; Echo Recon downloads the pinned source but does not install the Perl runtime for you. Nikto's own license remains separate from Echo Recon's MIT license.
 
 Fixed releases/commits and their pins are visible in the installer source. Keep original license notices when contributing or redistributing.
 
@@ -104,6 +116,12 @@ Windows equivalent:
 
 ```powershell
 .\.venv\Scripts\python.exe setup_tools_windows.py --install --update-templates
+```
+
+macOS equivalent:
+
+```bash
+.venv/bin/python setup_tools_macos.py --install --update-templates
 ```
 
 Templates are changing upstream content, not a pinned template snapshot or saved findings. Installation does not create paid accounts/API keys or enable out-of-band interaction. Configure needed accounts privately with the upstream tool's own instructions; do not paste secrets in the dashboard or commit them.

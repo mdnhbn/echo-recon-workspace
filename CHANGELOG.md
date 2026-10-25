@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.7.0 — 2026-10-25
+
+- Add native macOS setup for Apple Silicon and Intel with an existing native Homebrew installation and Python 3.12+. Missing Nmap/Nikto use fixed Homebrew formulas; other backends use verified Darwin release archives or isolated pinned Python sources.
+- Route install/startup and the dashboard's Setup all tools action to the macOS installer with visible progress logs. Recognize native Homebrew paths and open the local browser from normal macOS Terminal sessions.
+- Add English/Bangla macOS install and Git update guides plus native macOS CI for both processor architectures. Intel backend availability remains subject to Homebrew's legacy support tier.
+
 ## 6.6.5 — 2026-10-24
 
 - Correct the live-URL discovery expectation so in-scope URLs keep custom ports without allowing a different hostname into scope.
