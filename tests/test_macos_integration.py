@@ -14,6 +14,7 @@ from unittest.mock import Mock, patch
 from echo_recon import __version__, tools
 from echo_recon.browser import has_desktop
 from echo_recon.runner import run
+from echo_recon.server import LoopbackWSGIServer
 from echo_recon.setup_launcher import SetupLauncher
 from echo_recon.web import create_app
 
@@ -22,6 +23,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class MacOSIntegrationTests(unittest.TestCase):
+    def test_loopback_bind_needs_no_reverse_dns(self):
+        with patch("socket.getfqdn", side_effect=AssertionError("Reverse DNS must not block local startup")):
+            server = LoopbackWSGIServer("127.0.0.1", 0, lambda environ, start_response: [])
+            try:
+                self.assertEqual(server.server_address[0], "127.0.0.1")
+                self.assertEqual(server.server_name, "localhost")
+                self.assertGreater(server.server_port, 0)
+            finally:
+                server.server_close()
+
     def test_native_macos_desktop_does_not_require_x11_but_ssh_is_headless(self):
         with patch("echo_recon.browser.sys.platform", "darwin"), patch.dict(os.environ, {}, clear=True):
             self.assertTrue(has_desktop())
