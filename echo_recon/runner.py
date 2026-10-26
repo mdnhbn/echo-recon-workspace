@@ -122,10 +122,26 @@ class Result:
 
 
 def terminate(proc, job=None):
-    try:
-        if os.name == "posix":
+    if os.name == "posix":
+        # The leader can exit while a descendant ignores SIGTERM, including
+        # after closing inherited output pipes. Always clean our own group;
+        # waiting only for the leader does not establish that it is empty.
+        try:
             os.killpg(proc.pid, signal.SIGTERM)
-        elif job is not None:
+        except ProcessLookupError:
+            pass
+        try:
+            proc.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            pass
+        finally:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        return
+    try:
+        if job is not None:
             job.close()
         else:
             # taskkill is invoked directly; no shell or interpolated command text.
@@ -139,10 +155,7 @@ def terminate(proc, job=None):
         proc.wait(timeout=1)
     except (ProcessLookupError, subprocess.TimeoutExpired):
         try:
-            if os.name == "posix":
-                os.killpg(proc.pid, signal.SIGKILL)
-            else:
-                proc.kill()
+            proc.kill()
         except (ProcessLookupError, OSError):
             pass
 
@@ -215,6 +228,9 @@ def run(args, *, cancel, stdin="", cwd=None, max_bytes=250_000):
     if job:
         # Close before draining: a surviving descendant may still hold pipes.
         job.close()
+    elif os.name == "posix" and state is None:
+        # Normal leader exit must not leave background tool descendants alive.
+        terminate(proc)
     # A child may hold inherited pipes open after the parent exits.
     for reader in readers:
         reader.join(timeout=1)

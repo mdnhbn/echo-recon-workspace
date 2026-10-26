@@ -29,7 +29,7 @@ jobs:
           node --check static/app.js
           node --check static/theme.js
           node --check static/help.js
-          bash -n install.sh run.sh packaging/build-deb.sh
+          bash -n install.sh run.sh packaging/build-deb.sh packaging/check-feed-version.sh
       - name: Build the Debian package
         run: bash packaging/build-deb.sh "$RUNNER_TEMP/deb"
       - name: Publish package and signed repository metadata
@@ -65,12 +65,10 @@ jobs:
           fi
           cd "$APT_REPO"
 
-          printf '%s\n' "$actual_fingerprint" > KEY-FINGERPRINT.txt
-          gpg --batch --export "$actual_fingerprint" > archive-keyring.gpg
-
           version="${PACKAGE_VERSION#v}"
           package="$RUNNER_TEMP/deb/echo-recon_${version}_all.deb"
           test -s "$package"
+          bash "$GITHUB_WORKSPACE/packaging/check-feed-version.sh" "$version" pool/main/e/echo-recon
           mkdir -p pool/main/e/echo-recon
           destination="pool/main/e/echo-recon/echo-recon_${version}_all.deb"
           if [[ -f "$destination" ]]; then
@@ -81,6 +79,8 @@ jobs:
             echo "Version $version was already published with different package contents. Bump the version." >&2
             exit 1
           fi
+          printf '%s\n' "$actual_fingerprint" > KEY-FINGERPRINT.txt
+          gpg --batch --export "$actual_fingerprint" > archive-keyring.gpg
           find pool/main/e/echo-recon -maxdepth 1 -type f -name 'echo-recon_*.deb' -delete
           cp "$package" "$destination"
           for architecture in amd64 arm64; do
@@ -102,7 +102,7 @@ jobs:
           printf '%s' "$APT_REPO_SIGNING_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --local-user "$actual_fingerprint" --clearsign --output dists/stable/InRelease dists/stable/Release
           printf '%s' "$APT_REPO_SIGNING_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --local-user "$actual_fingerprint" --armor --detach-sign --output dists/stable/Release.gpg dists/stable/Release
           cat > README.md <<EOF
-          Echo Recon stable APT repository. Packages are published from signed v* release tags.
+          Echo Recon stable APT repository. Packages are published from matching v* version tags; repository metadata is signed with the archive key.
           Repository URL: https://raw.githubusercontent.com/mdnhbn/echo-recon-workspace/apt-repo
           Archive signing fingerprint: $actual_fingerprint
           EOF

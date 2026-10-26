@@ -1,4 +1,8 @@
-# Release validation — 2026-10-24
+# Release validation
+
+## 6.7.1 project audit — 2026-10-27
+
+Current findings, corrective tests, native macOS evidence, dependency-audit results and platform limits are recorded in the [English audit](AUDIT-2026-10-27.md) and [বাংলা report](AUDIT-2026-10-27.bn.md). Historical entries below describe their named releases rather than current-version guarantees.
 
 ## 6.6.0 Nikto integration status
 

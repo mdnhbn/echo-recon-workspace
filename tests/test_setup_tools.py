@@ -118,7 +118,15 @@ class InstallerTests(unittest.TestCase):
         installer = self.installer(initial, final)
         self.assertEqual(installer.install(), 0)
         self.assertEqual(len(self.commands.calls), 1)
-        self.assertEqual(self.commands.calls[0][0], ["/usr/bin/nuclei", "-update-templates", "-duc"])
+        self.assertEqual(self.commands.calls[0][0], ["/usr/bin/nuclei", "-update-templates"])
+        self.assertNotIn("-duc", self.commands.calls[0][0])
+
+    def test_nuclei_scan_keeps_updates_disabled_after_setup_change(self):
+        from echo_recon.tools import command
+        with patch("echo_recon.tools.native_tool_command", return_value=None):
+            args = command("nuclei", "example.com", 2, self.home)
+        self.assertIn("-duc", args)
+        self.assertNotIn("-update-templates", args)
 
     def test_unmanaged_wrapper_conflict_stops_before_apt_or_download(self):
         binary = self.home / ".local/bin/httpx"
@@ -167,7 +175,9 @@ class InstallerTests(unittest.TestCase):
             self.assertTrue(Path(env["GOBIN"]).is_relative_to(setup.managed_root(self.home)))
         for name in setup.GO_MODULES:
             self.assertEqual((self.home / ".local/bin" / name).read_text(), setup.wrapper_text(self.home, name))
-        self.assertTrue(any(args[-2:] == ["-update-templates", "-duc"] for args, _ in self.commands.calls))
+        updates = [args for args, _ in self.commands.calls if "-update-templates" in args]
+        self.assertEqual(len(updates), 1)
+        self.assertNotIn("-duc", updates[0])
 
     def test_apt_needs_tty_and_only_fixed_missing_packages(self):
         installer = self.installer()

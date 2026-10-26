@@ -504,7 +504,9 @@ class Installer:
         if isinstance(command, str) or any(not isinstance(arg, str) for arg in command):
             raise SetupError("Nuclei diagnostic command is invalid; templates were not updated.")
         self.output("Downloading current official Nuclei templates; no target is scanned.")
-        self.command([*command, "-update-templates", "-duc"])
+        # In the pinned engine, -duc also gates explicit template setup.
+        # This target-free action deliberately requests template updates.
+        self.command([*command, "-update-templates"])
 
     def install(self, update_templates=False):
         from echo_recon.tools import nuclei_templates_incomplete
