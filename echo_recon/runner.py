@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import os
 import signal
 import subprocess
+import sys
 import threading
 import time
 
@@ -121,24 +122,49 @@ class Result:
     duration: float = 0
 
 
+def _darwin_group_exited(pgid):
+    """Verify Darwin's EPERM race before treating a group as already stopped.
+
+    XNU filters zombies out of killpg's iteration and returns EPERM when no
+    signalable member is found. Live protected members must remain an error.
+    """
+    try:
+        snapshot = subprocess.run(["/bin/ps", "-axo", "pgid=,stat="],
+                                  capture_output=True, text=True, check=False,
+                                  timeout=2)
+        if snapshot.returncode or not snapshot.stdout.strip():
+            return False
+        for row in snapshot.stdout.splitlines():
+            group, state = row.split()
+            if int(group) == pgid and not state.startswith(("Z", "X")):
+                return False
+        return True
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        return False
+
+
+def _signal_group(pgid, signum):
+    try:
+        os.killpg(pgid, signum)
+    except ProcessLookupError:
+        pass
+    except PermissionError:
+        if sys.platform != "darwin" or not _darwin_group_exited(pgid):
+            raise
+
+
 def terminate(proc, job=None):
     if os.name == "posix":
         # The leader can exit while a descendant ignores SIGTERM, including
         # after closing inherited output pipes. Always clean our own group;
         # waiting only for the leader does not establish that it is empty.
-        try:
-            os.killpg(proc.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
+        _signal_group(proc.pid, signal.SIGTERM)
         try:
             proc.wait(timeout=1)
         except subprocess.TimeoutExpired:
             pass
         finally:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            _signal_group(proc.pid, signal.SIGKILL)
         return
     try:
         if job is not None:
@@ -235,10 +261,7 @@ def run(args, *, cancel, stdin="", cwd=None, max_bytes=250_000):
     for reader in readers:
         reader.join(timeout=1)
     if any(reader.is_alive() for reader in readers) and os.name == "posix":
-        try:
-            os.killpg(proc.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
+        _signal_group(proc.pid, signal.SIGKILL)
         for reader in readers:
             reader.join(timeout=1)
     state = state or ("output_limit" if exceeded.is_set() else
