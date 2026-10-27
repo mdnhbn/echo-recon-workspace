@@ -177,7 +177,8 @@ class WindowsSetupTests(unittest.TestCase):
         installer = self.installer(initial, final)
         self.assertEqual(installer.install(), 0)
         self.assertEqual(len(self.commands.calls), 1)
-        self.assertEqual(self.commands.calls[0][0], [str(Path("C:/mock-tools/nuclei.exe")), "-update-templates", "-duc"])
+        self.assertEqual(self.commands.calls[0][0], [str(Path("C:/mock-tools/nuclei.exe")), "-update-templates"])
+        self.assertNotIn("-duc", self.commands.calls[0][0])
         self.assertEqual(self.fetches, [])
 
     def test_missing_nmap_only_is_manual_exit_two_with_no_installer_launch(self):
@@ -204,7 +205,9 @@ class WindowsSetupTests(unittest.TestCase):
             self.assertFalse(any(arg.endswith((".cmd", ".bat")) for arg in command))
             folder = setup.tool_folder(name, self.local)
             self.assertEqual(json.loads((folder / setup.TOOL_MARKER).read_text()), setup.marker_data(name))
-        self.assertTrue(any(args[-2:] == ["-update-templates", "-duc"] for args, _ in self.commands.calls))
+        updates = [args for args, _ in self.commands.calls if "-update-templates" in args]
+        self.assertEqual(len(updates), 1)
+        self.assertNotIn("-duc", updates[0])
         for args, options in self.commands.calls:
             self.assertFalse(options["shell"])
             self.assertNotIn("--break-system-packages", args)
@@ -351,7 +354,8 @@ class WindowsSetupTests(unittest.TestCase):
         self.assertEqual(self.installer(health()).install(), 0)
         self.assertEqual(self.commands.calls, [])
         self.assertEqual(self.installer(health(), health()).install(update_templates=True), 0)
-        self.assertEqual(self.commands.calls[-1][0][-2:], ["-update-templates", "-duc"])
+        self.assertEqual(self.commands.calls[-1][0][-1:], ["-update-templates"])
+        self.assertNotIn("-duc", self.commands.calls[-1][0])
         self.commands.failure = lambda args: "-update-templates" in args
         self.assertEqual(self.installer(health(), health()).install(update_templates=True), 1)
         self.assertTrue(any("TEMPLATE ERROR" in message for message in self.messages))

@@ -17,9 +17,9 @@ body:
     id: reproduce
     attributes:
       label: Steps to reproduce / সমস্যা ঘটানোর ধাপ
-      description: Prefer the offline demo, mock data or a local test. No public target scan is needed for a bug report.
+      description: Prefer mock data or a local test fixture. Production has no offline demo mode. No public target scan is needed for a bug report.
       placeholder: |
-        1. Open the offline demo
+        1. Start the local dashboard or test fixture
         2. Select ...
         3. Observe ...
     validations:
@@ -33,6 +33,8 @@ body:
         - Other Linux
         - Windows native
         - Windows with WSL
+        - macOS Apple Silicon
+        - macOS Intel
         - Other (describe below)
     validations:
       required: true

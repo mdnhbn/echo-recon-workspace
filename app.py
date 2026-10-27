@@ -34,7 +34,7 @@ if __name__ == "__main__":
         raise SystemExit("Run as your normal user, not root.")
     os.umask(0o077)
     data = data_directory()
-    data.mkdir(mode=0o700, exist_ok=True)
+    data.mkdir(parents=True, mode=0o700, exist_ok=True)
     # Acquire before recovery so a second instance cannot mark an active run interrupted.
     try:
         instance_lock = InstanceLock(data / "server.lock").acquire()

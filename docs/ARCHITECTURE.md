@@ -5,7 +5,7 @@ Normal-user CLI / launcher
   ├─ dashboard dependency setup
   └─ startup local tool checks → fixed platform setup when missing
                                    │
-Browser (127.0.0.1:8001)             ├─ Windows user-local worker + bounded log
+Browser (127.0.0.1:8001)             ├─ Windows/macOS user-local worker + bounded log
   │ same-origin session + CSRF      └─ Linux terminal / fixed OS packages
   ▼
 Flask API → input/scope validation → one assessment manager
@@ -35,7 +35,7 @@ Flask API → input/scope validation → one assessment manager
 | `echo_recon/service.py` | Sequential state machine, cancellation and complete/partial classification. |
 | `echo_recon/storage.py` | Short-lived SQLite connections and persistent snapshots. |
 | `maintenance.py` | Stopped-server cleanup of explicitly marked legacy demo jobs. |
-| `static/`, `templates/` | Shared bilingual dashboard/report DOM, setup progress, guidance and dark/light Matrix layouts. |
+| `static/`, `templates/` | Shared bilingual dashboard/report DOM, setup progress, guidance and static dark/light layouts. |
 
 ## Setup lifecycle
 

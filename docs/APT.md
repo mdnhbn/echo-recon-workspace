@@ -37,6 +37,8 @@ Keep a protected backup of the private key. Do not commit it or send it in chat.
 
 For every later package release, update `echo_recon/__init__.py` to the new version, commit the release changes, then push the matching tag (for example, version `6.7.0` uses tag `v6.7.0`). The workflow validates, builds, signs, and publishes the package automatically. Confirm the workflow succeeds before telling Kali users to upgrade.
 
+From 6.7.1 onward, the publisher rejects an incoming version older than a package already in the feed. This guard belongs to the tagged source: rerunning a workflow from an older tag still uses that historical workflow and cannot gain the new guard. Do not rerun pre-6.7.1 publishing workflows after a newer release. If historical publication replaces the feed, restore it by rerunning the latest matching release workflow; do not move old tags or bypass APT signature checks.
+
 ## Kali user: add the feed and install
 
 Supported architectures are `amd64` and `arm64`. The signed feed already contains its public key and initial package. Download and inspect the public key once on each Kali installation:
@@ -48,7 +50,13 @@ gpg --show-keys --with-fingerprint /tmp/echo-recon-archive-keyring.gpg
 cat <(curl -fsSL "$BASE/KEY-FINGERPRINT.txt")
 ```
 
-Check that the two fingerprints match the `APT_REPO_SIGNING_FINGERPRINT` variable in the GitHub repository settings before trusting the key. Then install the key and source:
+The expected full archive-signing fingerprint published in this guide is:
+
+```text
+4B4AC85DF6608B7BD95178E6B1EFE05860907476
+```
+
+Check that the downloaded key and `KEY-FINGERPRINT.txt` both match this fingerprint before trusting the key. Repository settings are only needed by maintainers, not package users. If the fingerprint differs, stop and ask the maintainer to confirm a documented key rotation through a trusted channel; do not bypass the mismatch. Then install the key and source:
 
 ```bash
 sudo install -d -m 0755 /etc/apt/keyrings
@@ -111,6 +119,8 @@ Private key নিরাপদে backup রাখুন; GitHub-এ commit ব�
 
 পরের package release-এ `echo_recon/__init__.py`-এর version বাড়িয়ে সেই version-এর tag দিন—যেমন version `6.7.0` হলে `v6.7.0`। Workflow পরীক্ষা, package build, sign ও publish করবে। Kali user-দের upgrade বলতে হলে আগে workflow সফল হয়েছে নিশ্চিত করুন।
 
+6.7.1 থেকে publisher feed-এ থাকা package-এর চেয়ে পুরোনো version প্রত্যাখ্যান করে। এই সুরক্ষা tagged source-এর অংশ; পুরোনো tag-এর workflow আবার চালালে সেই ঐতিহাসিক code-ই চলে, নতুন সুরক্ষা যোগ হয় না। নতুন release-এর পরে 6.7.1-এর আগের publishing workflow আবার চালাবেন না। এমন পুরোনো publisher feed বদলে ফেললে সর্বশেষ matching release workflow আবার চালিয়ে feed ফিরিয়ে আনুন; পুরোনো tag সরাবেন না এবং APT signature check এড়াবেন না।
+
 ### Kali user: feed যোগ ও install করুন
 
 সমর্থিত architecture `amd64` ও `arm64`। Feed-এ public key ও প্রথম package প্রকাশিত আছে। প্রতিটি Kali-তে public key একবার নামিয়ে fingerprint দেখুন:
@@ -122,7 +132,13 @@ gpg --show-keys --with-fingerprint /tmp/echo-recon-archive-keyring.gpg
 cat <(curl -fsSL "$BASE/KEY-FINGERPRINT.txt")
 ```
 
-দুই fingerprint GitHub repository settings-এর `APT_REPO_SIGNING_FINGERPRINT` variable-এর সঙ্গে মিলিয়ে নিন। তারপর key ও source যোগ করুন:
+এই guide-এ প্রকাশিত প্রত্যাশিত archive-signing fingerprint:
+
+```text
+4B4AC85DF6608B7BD95178E6B1EFE05860907476
+```
+
+নামানো key ও `KEY-FINGERPRINT.txt`—দুটিই এই fingerprint-এর সঙ্গে মিলিয়ে নিন। সাধারণ package user-এর repository settings-এ প্রবেশের প্রয়োজন নেই। অমিল হলে থামুন এবং trusted channel-এ maintainer-এর কাছে documented key rotation নিশ্চিত করুন; অমিল উপেক্ষা করবেন না। তারপর key ও source যোগ করুন:
 
 ```bash
 sudo install -d -m 0755 /etc/apt/keyrings

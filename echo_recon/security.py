@@ -5,11 +5,17 @@ from urllib.parse import urlsplit, urlunsplit
 
 HOST = re.compile(r"^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 SECRET = re.compile(r"(?i)((?:password|passwd|api[_-]?key|access[_-]?token|secret|authorization|cookie)\s*[=:]\s*)([^\s&\"<>]+)")
+SECRET_HEADER = re.compile(
+    r"(?im)^([ \t]*(?:authorization|proxy-authorization|cookie|set-cookie)[ \t]*:[ \t]*)"
+    r"[^\r\n]*(?:\r?\n[ \t]+[^\r\n]*)*")
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 def redact(value):
     text = ANSI.sub("", str(value))
+    # A header value can contain spaces, multiple cookies, or legacy folded
+    # lines. Redact the whole value before the generic single-token fallback.
+    text = SECRET_HEADER.sub(r"\1[REDACTED]", text)
     text = re.sub(r"(https?://)[^/\s@]+@", r"\1[REDACTED]@", text)
     return SECRET.sub(r"\1[REDACTED]", text)
 

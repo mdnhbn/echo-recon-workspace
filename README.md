@@ -1,8 +1,11 @@
-# Echo Recon 6.7.0
+# Echo Recon 6.7.1
 
 A local assessment dashboard with nine fixed tool adapters, explicit host scope, cancellable processes, saved history and evidence reports. Based on [Ahammed's Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec), upgraded for the mdnhbn collaboration.
 
-## 6.7.0 update
+## 6.7.1 update
+
+- Fix POSIX child-process cleanup on Stop and normal tool exit, first startup with a new nested data folder, and explicit Nuclei template updates on Linux/Windows. Add a version guard to the current APT publisher; historical publisher workflows must not be rerun for older releases.
+- Read the [project audit](docs/AUDIT-2026-10-27.md) or [বাংলা audit report](docs/AUDIT-2026-10-27.bn.md) for findings, evidence and remaining verification limits.
 
 - Add native macOS setup with existing Homebrew and Python 3.12+, including Apple Silicon/Intel paths and dashboard installation progress. See the [macOS guide](docs/MACOS.md).
 

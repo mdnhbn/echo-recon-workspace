@@ -146,7 +146,7 @@ def show_plan(home=None, output=print):
     output(f"  photon: {PHOTON_URL} at exact commit {PHOTON_COMMIT}; isolated venv")
     output("    Pinned PyPI runtime: " + ", ".join(PHOTON_PINS))
     output("  Python build helpers: " + ", ".join(BUILD_PINS))
-    output("Nuclei: newly installed engines download official templates with -update-templates -duc.")
+    output("Nuclei: newly installed engines download official templates with -update-templates.")
     output("Existing ready Nuclei/templates are untouched unless --update-templates is explicitly added.")
     output("Template refresh downloads current official templates (not a pinned template snapshot); no target is scanned.")
     output("Nikto: Kali uses the official distro package. Other supported Linux families use the pinned Nikto 2.6.1 source and Perl runtime packages.")
@@ -414,7 +414,9 @@ class Installer:
         if item.get("engine_status", item.get("status")) != "ready" or not path:
             raise SetupError("Nuclei did not pass its local identity check; templates were not updated.")
         self.output("Downloading current official Nuclei templates only; this does not scan a target.")
-        self.command([path, "-update-templates", "-duc"])
+        # In the pinned engine, -duc also disables explicit template setup.
+        # Read-only diagnostics/scans keep their separate update-disable flag.
+        self.command([path, "-update-templates"])
 
     def install(self, update_templates=False):
         initial = self.health()

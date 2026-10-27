@@ -68,7 +68,7 @@ Tests should use mocked scanner responses, simulated DNS and local child process
 - Keep user input out of shell command strings. Add regression coverage for a meaningful behavior fix.
 - Use portable paths and Python APIs when possible. Linux-only commands need a documented Windows/WSL alternative or an explicit unsupported result.
 - Keep each scanner optional. Document its identity, supported platform and limitations; do not silently download or launch additional tools.
-- Keep official sources and setup commands reviewed and fixed. The no-argument **Setup all tools** launcher opens a local terminal; never accept shell input, versions, paths or sudo credentials through HTTP. Preserve missing/unverified distinctions, isolated user environments and refreshable diagnostics. Test installation with mocked subprocesses, not real apt/pip/Go changes in CI.
+- Keep official sources and setup commands reviewed and fixed. The no-argument **Setup all tools** launcher uses a Linux terminal or a logged Windows/macOS worker; never accept shell input, versions, paths or sudo credentials through HTTP. Preserve missing/unverified distinctions, isolated user environments and refreshable diagnostics. Unit tests mock package managers/downloads. A separate macOS integration job installs backends without scan targets; keep it isolated from secrets and production data.
 - Use mock or synthetic evidence in examples. Redact any screenshot before sharing it.
 
 Good starting points include a documentation typo, a clearer error message, a Bengali translation, an accessible form label or a test for a previously reported bug.

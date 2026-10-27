@@ -115,7 +115,8 @@ class PortableLinuxTests(unittest.TestCase):
         installer = self.installer("apt", initial, final)
         self.assertEqual(installer.install(), 0)
         self.assertEqual(len(self.calls), 1)
-        self.assertEqual(self.calls[0][0], ["/usr/bin/nuclei", "-update-templates", "-duc"])
+        self.assertEqual(self.calls[0][0], ["/usr/bin/nuclei", "-update-templates"])
+        self.assertNotIn("-duc", self.calls[0][0])
         self.assertEqual(self.fetches, [])
 
     def test_fixed_package_manager_argv_for_nmap_and_no_system_upgrade(self):

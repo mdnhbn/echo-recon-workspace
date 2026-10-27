@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.7.1 — 2026-10-27
+
+- Clean up the owned POSIX process group after cancellation and normal tool exit, including descendants that ignore SIGTERM and redirect their output. Keep unrelated process groups intact and add native Linux/macOS regressions.
+- Create missing parents of the configured user data directory before taking the startup lock, allowing first launch with the APT user's new data path.
+- Redact full Authorization/Proxy-Authorization and Cookie/Set-Cookie header values, including folded continuations, before evidence is persisted or exported. Existing saved reports are not rewritten.
+- Remove the incompatible `-duc` flag only from explicit Linux/Windows Nuclei template updates; retain disabled automatic updates during tool checks and assessments.
+- Add a version guard to the current APT publisher before feed mutation, with Debian version-comparison regressions. Historical workflows lack this guard and must not be rerun to publish old releases. Correct public key verification and contribution/issue documentation.
+- Publish a dated English/Bangla project audit with test evidence, dashboard dependency audit and explicit platform/coverage limits. Native macOS support from 6.7.0 remains available.
+
 ## 6.7.0 — 2026-10-25
 
 - Add native macOS setup for Apple Silicon and Intel with an existing native Homebrew installation and Python 3.12+. Missing Nmap/Nikto use fixed Homebrew formulas; other backends use verified Darwin release archives or isolated pinned Python sources.
