@@ -1,8 +1,10 @@
-# Echo Recon 6.7.1 — বাংলা নির্দেশনা
+# Echo Recon 6.7.2 — বাংলা নির্দেশনা
 
 এটি নিজের কম্পিউটারে চালানোর dashboard। নয়টি আলাদা tool-এর কাজ নির্দিষ্ট ক্রমে চালায়, প্রমাণ রাখে এবং HTML/JSON report তৈরি করে। মূল project [Ahammed-এর Echo Recon / Auto-Recon](https://github.com/ahammed18122002-art/auto-rec); mdnhbn সহযোগিতায় এই সংস্করণ উন্নত হয়েছে।
 
-## 6.7.1-এ যা বদলেছে
+## 6.7.2-এ যা বদলেছে
+
+- Mac-এ process ইতিমধ্যে বন্ধ হয়ে যাওয়ার পরে cleanup-এর বিশেষ permission error সামলানো হয়েছে; আসল permission সমস্যা আড়াল করা হয় না।
 
 - Stop দেওয়ার পরে child process থেকে যাওয়া, নতুন user data folder-এ প্রথমবার চালু হওয়া ও Linux/Windows-এ Nuclei templates আপডেটের সমস্যা সংশোধন করা হয়েছে। বর্তমান APT publisher-এ পুরোনো version আটকে দেওয়ার পরীক্ষা যোগ হয়েছে; আগের version-এর পুরোনো workflow আবার প্রকাশের জন্য চালাবেন না।
 - কী পরীক্ষা হয়েছে ও কোন সীমাবদ্ধতা আছে, দেখুন [পুরো প্রজেক্টের audit report](docs/AUDIT-2026-10-27.bn.md) অথবা [English report](docs/AUDIT-2026-10-27.md)।

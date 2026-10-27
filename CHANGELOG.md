@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.7.2 — 2026-10-27
+
+- Fix an intermittent native Intel macOS post-exit cleanup failure discovered in the main-branch CI after 6.7.1 publication. Darwin may return EPERM for a zombie-only process group. Verify a fixed system process snapshot before treating that condition as already stopped; live/unknown group permission errors remain errors.
+- Keep the full owned-group cleanup, no scan deadline and all audit corrections from 6.7.1. Add regression cases for empty/zombie-only, live, failed and malformed process snapshots.
+
 ## 6.7.1 — 2026-10-27
 
 - Clean up the owned POSIX process group after cancellation and normal tool exit, including descendants that ignore SIGTERM and redirect their output. Keep unrelated process groups intact and add native Linux/macOS regressions.
